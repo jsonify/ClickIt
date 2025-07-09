@@ -1,0 +1,7 @@
+# Swift Extensions
+
+This directory will contain Swift extensions:
+- CoreGraphics extensions
+- SwiftUI extensions
+- Foundation extensions
+- Utility extensions

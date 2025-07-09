@@ -1,0 +1,7 @@
+# Click Engine Module
+
+This directory will contain the core clicking functionality:
+- Click timing and precision logic
+- CPS (Clicks Per Second) management
+- Click event generation
+- Randomization patterns
