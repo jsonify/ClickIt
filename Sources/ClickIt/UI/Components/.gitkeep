@@ -1,0 +1,7 @@
+# UI Components
+
+This directory will contain reusable SwiftUI components:
+- Configuration panels
+- Click point selectors
+- Status indicators
+- Preset management UI

@@ -1,0 +1,7 @@
+# Window Management Module
+
+This directory will contain window targeting functionality:
+- Window detection and enumeration
+- Background window targeting
+- Window coordinate management
+- Visual overlay system

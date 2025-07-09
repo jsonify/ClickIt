@@ -1,0 +1,7 @@
+# Permissions Module
+
+This directory will contain macOS permissions handling:
+- Accessibility permissions
+- Screen recording permissions
+- Permission request flows
+- Permission status checking
