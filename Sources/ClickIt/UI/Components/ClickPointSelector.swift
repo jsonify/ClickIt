@@ -12,7 +12,7 @@ struct ClickPointSelector: View {
     let onPointSelected: (CGPoint) -> Void
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             // Header
             HStack {
                 Image(systemName: "target")
@@ -24,46 +24,40 @@ struct ClickPointSelector: View {
             
             // Current selection display
             if let point = selectedPoint {
-                VStack(spacing: 8) {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Selected Point:")
-                            .font(.subheadline)
-                        Spacer()
-                    }
-                    
-                    HStack {
-                        Text("X: \(Int(point.x)), Y: \(Int(point.y))")
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("Selected Point:")
+                        .font(.subheadline)
+                    Spacer()
+                    Text("X: \(Int(point.x)), Y: \(Int(point.y))")
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundColor(.secondary)
                 }
-                .padding(12)
+                .padding(10)
                 .background(Color.green.opacity(0.1))
                 .cornerRadius(8)
             }
             
             // Selection methods
-            VStack(spacing: 12) {
+            HStack(spacing: 12) {
                 // Click-to-set button
                 Button(action: startClickSelection) {
                     HStack {
                         Image(systemName: isSelecting ? "stop.circle.fill" : "hand.tap.fill")
-                        Text(isSelecting ? "Cancel Selection" : "Click to Set Point")
+                        Text(isSelecting ? "Cancel" : "Click to Set Point")
                     }
                     .foregroundColor(isSelecting ? .red : .blue)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.large)
+                .controlSize(.regular)
                 .disabled(isSelecting)
                 
                 // Manual input toggle
                 Button(action: { showingManualInput.toggle() }) {
                     HStack {
                         Image(systemName: "keyboard")
-                        Text(showingManualInput ? "Hide Manual Input" : "Manual Input")
+                        Text("Manual Input")
                     }
                 }
                 .buttonStyle(.bordered)
@@ -72,35 +66,31 @@ struct ClickPointSelector: View {
             
             // Manual input section
             if showingManualInput {
-                VStack(spacing: 12) {
-                    Text("Manual Coordinate Input")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    HStack(spacing: 16) {
+                VStack(spacing: 10) {
+                    HStack(spacing: 12) {
                         VStack(alignment: .leading) {
                             Text("X:")
                                 .font(.caption)
-                            TextField("X coordinate", text: $manualX)
+                            TextField("X", text: $manualX)
                                 .textFieldStyle(.roundedBorder)
                         }
                         
                         VStack(alignment: .leading) {
                             Text("Y:")
                                 .font(.caption)
-                            TextField("Y coordinate", text: $manualY)
+                            TextField("Y", text: $manualY)
                                 .textFieldStyle(.roundedBorder)
                         }
+                        
+                        Button("Set Point") {
+                            setManualPoint()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .disabled(manualX.isEmpty || manualY.isEmpty)
                     }
-                    
-                    Button("Set Point") {
-                        setManualPoint()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                    .disabled(manualX.isEmpty || manualY.isEmpty)
                 }
-                .padding(12)
+                .padding(10)
                 .background(Color.blue.opacity(0.1))
                 .cornerRadius(8)
             }
@@ -120,7 +110,7 @@ struct ClickPointSelector: View {
             }
             
             // Instructions
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Instructions:")
                     .font(.caption)
                     .fontWeight(.medium)
@@ -133,11 +123,11 @@ struct ClickPointSelector: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            .padding(12)
+            .padding(10)
             .background(Color.gray.opacity(0.1))
             .cornerRadius(8)
         }
-        .padding()
+        .padding(12)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(12)
     }
