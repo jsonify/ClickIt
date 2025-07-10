@@ -7,110 +7,112 @@ struct ContentView: View {
     @State private var selectedClickPoint: CGPoint?
     
     var body: some View {
-        VStack(spacing: 24) {
-            // App Icon Placeholder
-            Image(systemName: "cursorarrow.click.2")
-                .font(.system(size: 48))
-                .foregroundColor(.accentColor)
-            
-            // App Title
-            Text("ClickIt")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            // Subtitle
-            Text("Precision Auto-Clicker for macOS")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            // Permission Status
-            VStack(spacing: 12) {
-                if permissionManager.allPermissionsGranted {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.shield.fill")
-                            .foregroundColor(.green)
-                        Text("Ready to use")
-                            .font(.headline)
-                            .foregroundColor(.green)
-                    }
-                    .padding()
-                    .background(Color.green.opacity(0.1))
-                    .cornerRadius(8)
-                } else {
-                    VStack(spacing: 8) {
+        ScrollView {
+            VStack(spacing: 20) {
+                // App Icon Placeholder
+                Image(systemName: "cursorarrow.click.2")
+                    .font(.system(size: 40))
+                    .foregroundColor(.accentColor)
+                
+                // App Title
+                Text("ClickIt")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                // Subtitle
+                Text("Precision Auto-Clicker for macOS")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                // Permission Status
+                VStack(spacing: 10) {
+                    if permissionManager.allPermissionsGranted {
                         HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.shield")
-                                .foregroundColor(.orange)
-                            Text("Permissions Required")
+                            Image(systemName: "checkmark.shield.fill")
+                                .foregroundColor(.green)
+                            Text("Ready to use")
                                 .font(.headline)
-                                .foregroundColor(.orange)
+                                .foregroundColor(.green)
                         }
-                        
-                        Button("Setup Permissions") {
-                            showingPermissionSetup = true
+                        .padding(12)
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(8)
+                    } else {
+                        VStack(spacing: 8) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.shield")
+                                    .foregroundColor(.orange)
+                                Text("Permissions Required")
+                                    .font(.headline)
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            Button("Setup Permissions") {
+                                showingPermissionSetup = true
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        .padding(12)
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(8)
                     }
-                    .padding()
-                    .background(Color.orange.opacity(0.1))
+                    
+                    // Compact permission status
+                    CompactPermissionStatus()
+                }
+                
+                // Click Point Selection (only show when permissions are granted)
+                if permissionManager.allPermissionsGranted {
+                    ClickPointSelector { point in
+                        selectedClickPoint = point
+                    }
+                    
+                    // Development Tools
+                    VStack(spacing: 10) {
+                        Text("Development Tools")
+                            .font(.headline)
+                        
+                        VStack(spacing: 8) {
+                            Button("Test Window Detection") {
+                                showingWindowDetectionTest = true
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
+                            
+                            if let point = selectedClickPoint {
+                                Button("Test Click at Selected Point") {
+                                    testClickAtPoint(point)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.regular)
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .background(Color.blue.opacity(0.1))
                     .cornerRadius(8)
                 }
                 
-                // Compact permission status
-                CompactPermissionStatus()
-            }
-            
-            // Click Point Selection (only show when permissions are granted)
-            if permissionManager.allPermissionsGranted {
-                ClickPointSelector { point in
-                    selectedClickPoint = point
-                }
-                
-                // Development Tools
-                VStack(spacing: 12) {
-                    Text("Development Tools")
-                        .font(.headline)
+                // Version Info
+                VStack(spacing: 4) {
+                    Text("Version \(AppConstants.appVersion)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     
-                    Button("Test Window Detection") {
-                        showingWindowDetectionTest = true
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
+                    Text("Build \(AppConstants.buildNumber)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     
-                    if let point = selectedClickPoint {
-                        Button("Test Click at Selected Point") {
-                            testClickAtPoint(point)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                    }
+                    Text("Requires \(AppConstants.minimumOSVersion) or later")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(8)
+                .padding(.top, 8)
             }
-            
-            Spacer()
-            
-            // Version Info
-            VStack(spacing: 4) {
-                Text("Version \(AppConstants.appVersion)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text("Build \(AppConstants.buildNumber)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            // System Requirements
-            Text("Requires \(AppConstants.minimumOSVersion) or later")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+            .padding()
         }
         .frame(width: 450, height: 700)
-        .padding()
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             permissionManager.updatePermissionStatus()
