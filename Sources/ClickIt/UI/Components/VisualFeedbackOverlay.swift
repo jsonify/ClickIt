@@ -40,26 +40,26 @@ class VisualFeedbackOverlay: ObservableObject {
     func showOverlay(at location: CGPoint, isActive: Bool = false) {
         print("VisualFeedbackOverlay: showOverlay called at \(location), isActive: \(isActive)")
         
-        // Ensure all UI operations happen on main thread
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            guard !self.isVisible else {
-                print("VisualFeedbackOverlay: overlay already visible, updating...")
-                self.updateOverlay(at: location, isActive: isActive)
-                return
-            }
-            
-            self.clickLocation = location
-            self.isAutomationActive = isActive
-            
-            print("VisualFeedbackOverlay: creating overlay window on main thread")
-            self.createOverlayWindow()
-            self.positionOverlay(at: location)
-            self.showOverlayWindow()
-            
-            self.isVisible = true
-            print("VisualFeedbackOverlay: overlay created and shown successfully")
+        clickLocation = location
+        isAutomationActive = isActive
+        
+        // Create window if it doesn't exist, otherwise reuse it
+        if overlayWindow == nil {
+            print("VisualFeedbackOverlay: creating new overlay window")
+            createOverlayWindow()
+        } else {
+            print("VisualFeedbackOverlay: reusing existing overlay window")
+        }
+        
+        positionOverlay(at: location)
+        
+        if !isVisible {
+            showOverlayWindow()
+            isVisible = true
+            print("VisualFeedbackOverlay: overlay shown successfully")
+        } else {
+            print("VisualFeedbackOverlay: overlay already visible, just updated position")
+            updateOverlayAppearance(isActive: isActive)
         }
     }
     
@@ -68,44 +68,41 @@ class VisualFeedbackOverlay: ObservableObject {
     ///   - location: New screen coordinates
     ///   - isActive: Whether automation is currently active
     func updateOverlay(at location: CGPoint, isActive: Bool) {
-        guard isVisible, overlayWindow != nil else { return }
+        guard overlayWindow != nil else { return }
         
         clickLocation = location
         isAutomationActive = isActive
         
         positionOverlay(at: location)
-        
-        // Update the overlay view appearance
-        overlayViewController?.updateAppearance(isActive: isActive)
+        updateOverlayAppearance(isActive: isActive)
     }
     
     /// Hides the visual feedback overlay
     func hideOverlay() {
         print("VisualFeedbackOverlay: hideOverlay() called, isVisible: \(isVisible)")
         
-        // Ensure all UI operations happen on main thread
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            guard self.isVisible else { 
-                print("VisualFeedbackOverlay: overlay not visible, returning early")
-                return 
-            }
-            
-            print("VisualFeedbackOverlay: closing overlay window on main thread")
-            
-            // More careful cleanup to prevent crashes
-            if let window = self.overlayWindow {
-                window.orderOut(nil)  // Remove from screen first
-                window.close()        // Then close
-            }
-            
-            self.overlayWindow = nil
-            self.overlayViewController = nil
-            self.isVisible = false
-            
-            print("VisualFeedbackOverlay: overlay hidden successfully")
+        guard isVisible else { 
+            print("VisualFeedbackOverlay: overlay not visible, returning early")
+            return 
         }
+        
+        // Mark as hidden immediately
+        isVisible = false
+        
+        // Simply hide the window - DON'T close it to avoid crashes
+        if let window = overlayWindow {
+            print("VisualFeedbackOverlay: hiding overlay window (keeping for reuse)")
+            window.orderOut(nil)
+            print("VisualFeedbackOverlay: overlay hidden successfully")
+        } else {
+            print("VisualFeedbackOverlay: no window to hide")
+        }
+    }
+    
+    /// Updates the overlay appearance without changing position
+    /// - Parameter isActive: Whether automation is currently active
+    private func updateOverlayAppearance(isActive: Bool) {
+        overlayViewController?.updateAppearance(isActive: isActive)
     }
     
     /// Shows a brief pulse animation at the specified location
@@ -114,12 +111,28 @@ class VisualFeedbackOverlay: ObservableObject {
         // Show overlay briefly for visual feedback
         showOverlay(at: location, isActive: isAutomationActive)
         
-        // Hide after a short duration
+        // Hide after a short duration (only if automation is not active)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             if let self = self, !self.isAutomationActive {
                 self.hideOverlay()
             }
         }
+    }
+    
+    /// Completely cleans up the overlay (only call when app is terminating)
+    func cleanup() {
+        print("VisualFeedbackOverlay: cleanup() called - destroying window")
+        
+        if let window = overlayWindow {
+            window.orderOut(nil)
+            window.close()
+        }
+        
+        overlayWindow = nil
+        overlayViewController = nil
+        isVisible = false
+        
+        print("VisualFeedbackOverlay: cleanup completed")
     }
     
     // MARK: - Private Methods

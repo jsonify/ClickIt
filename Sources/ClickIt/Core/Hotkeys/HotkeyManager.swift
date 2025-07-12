@@ -19,8 +19,8 @@ class HotkeyManager: ObservableObject {
     
     private var globalEventMonitor: Any?
     private var localEventMonitor: Any?
-    private var lastEscKeyTime: TimeInterval = 0
-    private let escKeyDebounceInterval: TimeInterval = 0.5 // 500ms debounce
+    private var lastHotkeyTime: TimeInterval = 0
+    private let hotkeyDebounceInterval: TimeInterval = 0.5 // 500ms debounce
     
     // MARK: - Initialization
     
@@ -40,16 +40,16 @@ class HotkeyManager: ObservableObject {
         // Unregister existing hotkey first
         unregisterGlobalHotkey()
         
-        // Only monitor ESC key specifically (keyCode 53) to reduce false triggers
+        // Only monitor DELETE key specifically (keyCode 51) to reduce false triggers
         globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.keyCode == 53 { // Only handle ESC key
+            if event.keyCode == 51 { // Only handle DELETE key
                 self?.handleKeyEvent(event)
             }
         }
         
-        // Install local event monitor for ESC key (when app is active)
+        // Install local event monitor for DELETE key (when app is active)
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.keyCode == 53 { // Only handle ESC key
+            if event.keyCode == 51 { // Only handle DELETE key
                 self?.handleKeyEvent(event)
             }
             return event // Always pass through the event
@@ -59,7 +59,7 @@ class HotkeyManager: ObservableObject {
             currentHotkey = config
             isRegistered = true
             lastError = nil
-            print("HotkeyManager: Successfully registered ESC key monitoring (keyCode 53 only)")
+            print("HotkeyManager: Successfully registered DELETE key monitoring (keyCode 51 only)")
             return true
         } else {
             lastError = "Failed to register key event monitors"
@@ -87,45 +87,48 @@ class HotkeyManager: ObservableObject {
     private func registerDefaultHotkey() {
         let success = registerGlobalHotkey(.default)
         if !success {
-            print("HotkeyManager: Failed to register default ESC hotkey")
+            print("HotkeyManager: Failed to register default DELETE hotkey")
         }
     }
     
     private func handleKeyEvent(_ event: NSEvent) {
         let currentTime = CFAbsoluteTimeGetCurrent()
         
-        // Debounce ESC key presses to prevent rapid fire
-        if currentTime - lastEscKeyTime < escKeyDebounceInterval {
-            print("HotkeyManager: ESC key debounced (too soon after last press)")
+        // Debounce hotkey presses to prevent rapid fire
+        if currentTime - lastHotkeyTime < hotkeyDebounceInterval {
+            print("HotkeyManager: Hotkey debounced (too soon after last press)")
             return
         }
         
-        print("HotkeyManager: ESC key event received - keyCode: \(event.keyCode)")
+        print("HotkeyManager: DELETE key event received - keyCode: \(event.keyCode)")
         
-        // Check if this is the ESC key (keyCode 53) - should always be true now
+        // Check if this is the DELETE key (keyCode 51) - should always be true now
         if event.keyCode == currentHotkey.keyCode {
             // Check modifiers if any are required
             let requiredModifiers = NSEvent.ModifierFlags(rawValue: UInt(currentHotkey.modifiers))
             let eventModifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
             
             if requiredModifiers.isEmpty || eventModifiers == requiredModifiers {
-                print("HotkeyManager: ESC hotkey MATCHED - dispatching to ClickCoordinator")
-                lastEscKeyTime = currentTime
-                handleEscKeyPressed()
+                print("HotkeyManager: DELETE hotkey MATCHED - dispatching to ClickCoordinator")
+                lastHotkeyTime = currentTime
+                handleDeleteKeyPressed()
             } else {
-                print("HotkeyManager: ESC key pressed but modifiers don't match (required: \(requiredModifiers.rawValue), got: \(eventModifiers.rawValue))")
+                print("HotkeyManager: DELETE key pressed but modifiers don't match (required: \(requiredModifiers.rawValue), got: \(eventModifiers.rawValue))")
             }
         }
     }
     
-    private func handleEscKeyPressed() {
-        let coordinator = ClickCoordinator.shared
-        
-        if coordinator.isActive {
-            print("HotkeyManager: Stopping automation (ESC pressed)")
-            coordinator.stopAutomation()
-        } else {
-            print("HotkeyManager: ESC pressed but no automation is running")
+    private func handleDeleteKeyPressed() {
+        // Safely access the coordinator and stop automation
+        Task { @MainActor in
+            let coordinator = ClickCoordinator.shared
+            
+            if coordinator.isActive {
+                print("HotkeyManager: Stopping automation (DELETE pressed)")
+                coordinator.stopAutomation()
+            } else {
+                print("HotkeyManager: DELETE pressed but no automation is running")
+            }
         }
     }
 }
@@ -138,9 +141,9 @@ struct HotkeyConfiguration {
     let description: String
     
     static let `default` = HotkeyConfiguration(
-        keyCode: FrameworkConstants.CarbonConfig.escKeyCode,
-        modifiers: 0, // No modifiers for ESC key
-        description: "ESC Key"
+        keyCode: FrameworkConstants.CarbonConfig.deleteKeyCode,
+        modifiers: 0, // No modifiers for DELETE key
+        description: "DELETE Key"
     )
     
     init(keyCode: UInt16, modifiers: UInt32, description: String) {
@@ -154,21 +157,28 @@ struct HotkeyConfiguration {
 
 extension HotkeyConfiguration {
     
+    static let deleteKey = HotkeyConfiguration(
+        keyCode: 51, // DELETE key
+        modifiers: 0,
+        description: "DELETE Key"
+    )
+    
+    static let cmdDelete = HotkeyConfiguration(
+        keyCode: 51, // DELETE key
+        modifiers: UInt32(NSEvent.ModifierFlags.command.rawValue),
+        description: "Cmd + DELETE"
+    )
+    
+    static let optionDelete = HotkeyConfiguration(
+        keyCode: 51, // DELETE key
+        modifiers: UInt32(NSEvent.ModifierFlags.option.rawValue),
+        description: "Option + DELETE"
+    )
+    
+    // Legacy ESC configurations (deprecated)
     static let escapeKey = HotkeyConfiguration(
         keyCode: 53, // ESC key
         modifiers: 0,
-        description: "ESC Key"
-    )
-    
-    static let cmdEscape = HotkeyConfiguration(
-        keyCode: 53, // ESC key
-        modifiers: UInt32(NSEvent.ModifierFlags.command.rawValue),
-        description: "Cmd + ESC"
-    )
-    
-    static let optionEscape = HotkeyConfiguration(
-        keyCode: 53, // ESC key
-        modifiers: UInt32(NSEvent.ModifierFlags.option.rawValue),
-        description: "Option + ESC"
+        description: "ESC Key (deprecated)"
     )
 }

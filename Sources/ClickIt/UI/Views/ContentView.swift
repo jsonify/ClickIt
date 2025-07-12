@@ -70,7 +70,7 @@ struct ContentView: View {
                         HStack(spacing: 8) {
                             Image(systemName: hotkeyManager.isRegistered ? "keyboard.fill" : "keyboard")
                                 .foregroundColor(hotkeyManager.isRegistered ? .blue : .orange)
-                            Text(hotkeyManager.isRegistered ? "ESC Hotkey Active" : "Hotkey Registration Failed")
+                            Text(hotkeyManager.isRegistered ? "DELETE Hotkey Active" : "Hotkey Registration Failed")
                                 .font(.caption)
                                 .foregroundColor(hotkeyManager.isRegistered ? .blue : .orange)
                         }
@@ -114,7 +114,7 @@ struct ContentView: View {
                                 .controlSize(.regular)
                             }
                             
-                            Button("Test ESC Hotkey") {
+                            Button("Test DELETE Hotkey") {
                                 testHotkeySystem()
                             }
                             .buttonStyle(.bordered)
@@ -177,9 +177,9 @@ struct ContentView: View {
     
     private func testHotkeySystem() {
         if hotkeyManager.isRegistered {
-            print("ESC hotkey is registered. Press ESC to test.")
+            print("DELETE hotkey is registered. Press DELETE to test.")
             
-            // Start a test automation to demonstrate ESC key stopping it
+            // Start a test automation to demonstrate DELETE key stopping it
             if let point = selectedClickPoint {
                 let config = AutomationConfiguration(
                     location: point,
@@ -188,12 +188,12 @@ struct ContentView: View {
                     showVisualFeedback: true
                 )
                 clickCoordinator.startAutomation(with: config)
-                print("Started test automation - press ESC to stop it")
+                print("Started test automation - press DELETE to stop it")
             } else {
-                print("Please select a click point first to test ESC hotkey")
+                print("Please select a click point first to test DELETE hotkey")
             }
         } else {
-            print("ESC hotkey is not registered")
+            print("DELETE hotkey is not registered")
         }
     }
 }

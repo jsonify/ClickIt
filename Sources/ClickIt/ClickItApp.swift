@@ -16,6 +16,19 @@ struct ClickItApp: App {
         Task { @MainActor in
             HotkeyManager.shared.initialize()
         }
+        
+        // Register app termination handler for cleanup
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Cleanup visual feedback overlay when app terminates
+            Task { @MainActor in
+                VisualFeedbackOverlay.shared.cleanup()
+                HotkeyManager.shared.cleanup()
+            }
+        }
     }
     
     var body: some Scene {

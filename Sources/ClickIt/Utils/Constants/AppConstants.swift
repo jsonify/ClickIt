@@ -61,7 +61,8 @@ struct AppConstants {
 struct FrameworkConstants {
     // Carbon Framework
     struct CarbonConfig {
-        static let escKeyCode: UInt16 = 53
+        static let deleteKeyCode: UInt16 = 51  // DELETE/Backspace key
+        static let escKeyCode: UInt16 = 53     // ESC key (legacy, avoid using)
         
         // Private initializer to prevent instantiation
         private init() {}
