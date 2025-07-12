@@ -150,22 +150,28 @@ class ClickEngine: @unchecked Sendable {
         
         let startTime = mach_absolute_time()
         
+        print("ClickEngine: About to post mouse down event")
         // Post mouse down event
         let downResult = postEvent(downEvent, targetPID: targetPID)
         guard downResult.success else {
+            print("ClickEngine: Mouse down event failed: \(String(describing: downResult.error))")
             return (false, downResult.error)
         }
+        print("ClickEngine: Mouse down event posted successfully")
         
         // Precise delay between down and up
         if delay > 0 {
             usleep(UInt32(delay * 1_000_000)) // Convert to microseconds
         }
         
+        print("ClickEngine: About to post mouse up event")
         // Post mouse up event
         let upResult = postEvent(upEvent, targetPID: targetPID)
         guard upResult.success else {
+            print("ClickEngine: Mouse up event failed: \(String(describing: upResult.error))")
             return (false, upResult.error)
         }
+        print("ClickEngine: Mouse up event posted successfully")
         
         let endTime = mach_absolute_time()
         
@@ -176,9 +182,11 @@ class ClickEngine: @unchecked Sendable {
         let elapsedMillis = Double(elapsedNanos) / 1_000_000.0
         
         if elapsedMillis > (delay * 1000 + AppConstants.maxClickTimingDeviation * 1000) {
+            print("ClickEngine: Timing constraint violation: \(elapsedMillis)ms > \((delay * 1000 + AppConstants.maxClickTimingDeviation * 1000))ms")
             return (false, .timingConstraintViolation)
         }
         
+        print("ClickEngine: Click events completed successfully in \(elapsedMillis)ms")
         return (true, nil)
     }
     
@@ -190,18 +198,22 @@ class ClickEngine: @unchecked Sendable {
     private func postEvent(_ event: CGEvent, targetPID: pid_t?) -> (success: Bool, error: ClickError?) {
         // Check if we have Accessibility permissions
         guard AXIsProcessTrusted() else {
+            print("ClickEngine: Accessibility permission denied")
             return (false, .permissionDenied)
         }
         
         if let pid = targetPID {
             // Validate that the process exists
             guard kill(pid, 0) == 0 else {
+                print("ClickEngine: Target process \(pid) not found")
                 return (false, .targetProcessNotFound)
             }
             // Post to specific process
+            print("ClickEngine: Posting event to PID \(pid)")
             event.postToPid(pid)
         } else {
             // Post system-wide
+            print("ClickEngine: Posting event system-wide")
             event.post(tap: .cghidEventTap)
         }
         

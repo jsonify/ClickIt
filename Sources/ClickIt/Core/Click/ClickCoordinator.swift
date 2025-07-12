@@ -73,12 +73,10 @@ class ClickCoordinator: ObservableObject {
         automationTask?.cancel()
         automationTask = nil
         
-        // Hide visual feedback overlay with delay to prevent race conditions
+        // Hide visual feedback overlay immediately
         print("ClickCoordinator: About to hide visual feedback overlay")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            VisualFeedbackOverlay.shared.hideOverlay()
-            print("ClickCoordinator: Visual feedback overlay hidden")
-        }
+        VisualFeedbackOverlay.shared.hideOverlay()
+        print("ClickCoordinator: Visual feedback overlay hidden")
         
         automationConfig = nil
         print("ClickCoordinator: stopAutomation() completed")
