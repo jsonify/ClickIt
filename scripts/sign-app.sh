@@ -17,8 +17,8 @@ if [ ! -d "dist/ClickIt.app" ]; then
     exit 1
 fi
 
-# Sign with development certificate
-codesign --force --sign "Apple Development: Jason Rueckert (5K35266D72)" --timestamp dist/ClickIt.app
+# Sign with development certificate (trying the other cert)
+codesign --force --sign "Apple Development: jrueckert@costco.com (826L9Z2Y4X)" --timestamp dist/ClickIt.app
 
 # Verify signing
 echo "✅ Verifying signature..."
