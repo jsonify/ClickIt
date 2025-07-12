@@ -124,6 +124,67 @@ The project is in early development with basic structure established:
 
 **Preset System**: Store configurations in UserDefaults with custom naming support
 
+## Known Issues & Solutions
+
+### Application Crashes and Debugging (July 2025)
+
+During development of Issue #8 (Visual Feedback System), several critical stability issues were discovered and resolved:
+
+#### 🔐 **Code Signing Issues**
+**Problem**: App crashes after running `./scripts/sign-app.sh`
+- **Root Cause**: Expired Apple Development certificate (expired June 2021)
+- **Secondary Issue**: Original signing script ran `swift build` which overwrote universal release binary with debug binary
+- **Solution**: 
+  - Updated to use valid certificate: `Apple Development: jrueckert@costco.com (826L9Z2Y4X)` (expires May 2026)
+  - Fixed signing script to preserve universal binary (removed `swift build` command)
+  - Check certificate validity: `security find-certificate -c "CERT_NAME" -p | openssl x509 -text -noout | grep "Not After"`
+
+#### ⚡ **Permission System Crashes**
+**Problem**: App crashes when Accessibility permission is toggled ON in System Settings
+- **Root Cause**: Concurrency issues in permission monitoring system
+- **Specific Issues**:
+  - `PermissionManager.updatePermissionStatus()` used `DispatchQueue.main.async` despite being on `@MainActor`
+  - `PermissionStatusChecker` timers used `Task { @MainActor in ... }` creating race conditions
+- **Solution**:
+  - Removed redundant `DispatchQueue.main.async` in `updatePermissionStatus()`
+  - Changed Timer callbacks to use `DispatchQueue.main.async` instead of `Task { @MainActor }`
+  - Fixed in: `PermissionManager.swift` lines 32-40, `PermissionStatusChecker.swift` lines 30-34
+
+#### 📡 **Permission Detection Not Working**
+**Problem**: App doesn't detect when permissions are granted/revoked
+- **Root Cause**: Permission monitoring not started automatically
+- **Solution**: Added `permissionManager.startPermissionMonitoring()` in ContentView.onAppear
+
+#### 🧪 **Debugging Methodology**
+**Approach**: Component isolation testing
+1. Created minimal ContentView with only basic permission status
+2. Added components incrementally: ClickPointSelector → ConfigurationPanel → Development Tools
+3. Tested each addition for crash behavior when toggling permissions
+4. **Result**: All UI components were safe; crashes were from underlying permission system issues
+
+### Build & Deployment Pipeline
+
+**Correct Workflow**:
+```bash
+# 1. Build universal release binary
+./build_app.sh
+
+# 2. Sign with valid certificate (preserves binary)
+./scripts/sign-app.sh
+
+# 3. Launch for testing
+open dist/ClickIt.app
+```
+
+**Critical**: Always verify certificate validity before signing. Use `scripts/skip-signing.sh` if only self-signed certificate is needed.
+
+### Permission System Requirements
+
+**Essential for Stability**:
+1. **Start monitoring**: Call `permissionManager.startPermissionMonitoring()` in app initialization
+2. **Avoid concurrency conflicts**: Use proper `@MainActor` isolation without redundant dispatch
+3. **Test permission changes**: Always test toggling permissions ON/OFF during development
+
 ## Documentation References
 
 - Full product requirements: `docs/clickit_autoclicker_prd.md`
