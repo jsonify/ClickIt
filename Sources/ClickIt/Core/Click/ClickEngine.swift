@@ -109,7 +109,7 @@ class ClickEngine: @unchecked Sendable {
             delay: configuration.delayBetweenDownUp
         )
         
-        let _ = CFAbsoluteTimeGetCurrent()
+        _ = CFAbsoluteTimeGetCurrent()
         
         return ClickResult(
             success: postResult.success,
@@ -170,7 +170,8 @@ class ClickEngine: @unchecked Sendable {
         let endTime = mach_absolute_time()
         
         // Validate timing precision (within 5ms)
-        let timeInfo = mach_timebase_info()
+        var timeInfo = mach_timebase_info()
+        mach_timebase_info(&timeInfo)
         let elapsedNanos = (endTime - startTime) * UInt64(timeInfo.numer) / UInt64(timeInfo.denom)
         let elapsedMillis = Double(elapsedNanos) / 1_000_000.0
         
@@ -187,7 +188,16 @@ class ClickEngine: @unchecked Sendable {
     ///   - targetPID: Target process ID (nil for system-wide)
     /// - Returns: Result of posting operation
     private func postEvent(_ event: CGEvent, targetPID: pid_t?) -> (success: Bool, error: ClickError?) {
+        // Check if we have Accessibility permissions
+        guard AXIsProcessTrusted() else {
+            return (false, .permissionDenied)
+        }
+        
         if let pid = targetPID {
+            // Validate that the process exists
+            guard kill(pid, 0) == 0 else {
+                return (false, .targetProcessNotFound)
+            }
             // Post to specific process
             event.postToPid(pid)
         } else {

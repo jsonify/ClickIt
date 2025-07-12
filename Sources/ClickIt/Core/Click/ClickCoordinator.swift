@@ -62,14 +62,23 @@ class ClickCoordinator: ObservableObject {
     /// Stops the current automation session
     func stopAutomation() {
         print("ClickCoordinator: stopAutomation() called")
+        
+        // Prevent multiple simultaneous stops
+        guard isActive else {
+            print("ClickCoordinator: automation already stopped")
+            return
+        }
+        
         isActive = false
         automationTask?.cancel()
         automationTask = nil
         
-        // Hide visual feedback overlay
+        // Hide visual feedback overlay with delay to prevent race conditions
         print("ClickCoordinator: About to hide visual feedback overlay")
-        VisualFeedbackOverlay.shared.hideOverlay()
-        print("ClickCoordinator: Visual feedback overlay hidden")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            VisualFeedbackOverlay.shared.hideOverlay()
+            print("ClickCoordinator: Visual feedback overlay hidden")
+        }
         
         automationConfig = nil
         print("ClickCoordinator: stopAutomation() completed")

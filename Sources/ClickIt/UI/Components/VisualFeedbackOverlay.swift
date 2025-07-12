@@ -93,11 +93,17 @@ class VisualFeedbackOverlay: ObservableObject {
             }
             
             print("VisualFeedbackOverlay: closing overlay window on main thread")
-            self.overlayWindow?.close()
+            
+            // More careful cleanup to prevent crashes
+            if let window = self.overlayWindow {
+                window.orderOut(nil)  // Remove from screen first
+                window.close()        // Then close
+            }
+            
             self.overlayWindow = nil
             self.overlayViewController = nil
-            
             self.isVisible = false
+            
             print("VisualFeedbackOverlay: overlay hidden successfully")
         }
     }
