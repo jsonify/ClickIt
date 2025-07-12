@@ -7,9 +7,6 @@ set -e
 
 echo "🔐 Signing ClickIt app..."
 
-# Build the app first
-swift build
-
 # Copy to app bundle (if not already done by build script)
 if [ ! -d "dist/ClickIt.app" ]; then
     echo "❌ App bundle not found at dist/ClickIt.app"
@@ -18,7 +15,15 @@ if [ ! -d "dist/ClickIt.app" ]; then
 fi
 
 # Sign with development certificate
-codesign --force --sign "Apple Development: Jason Rueckert (5K35266D72)" --timestamp dist/ClickIt.app
+if [ -z "$CODE_SIGN_IDENTITY" ]; then
+    echo "❌ CODE_SIGN_IDENTITY environment variable not set"
+    echo "   Set it with: export CODE_SIGN_IDENTITY=\"Apple Development: Your Name (TEAM_ID)\""
+    echo "   Or run: CODE_SIGN_IDENTITY=\"Apple Development: Your Name (TEAM_ID)\" ./scripts/sign-app.sh"
+    exit 1
+fi
+
+echo "🔐 Using certificate: $CODE_SIGN_IDENTITY"
+codesign --force --sign "$CODE_SIGN_IDENTITY" --timestamp dist/ClickIt.app
 
 # Verify signing
 echo "✅ Verifying signature..."

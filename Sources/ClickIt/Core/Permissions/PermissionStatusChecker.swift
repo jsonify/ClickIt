@@ -28,7 +28,7 @@ class PermissionStatusChecker: ObservableObject {
         
         // Set up periodic monitoring
         monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.checkPermissionStatus()
             }
         }

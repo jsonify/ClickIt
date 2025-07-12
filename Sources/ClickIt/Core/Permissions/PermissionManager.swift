@@ -33,11 +33,10 @@ class PermissionManager: ObservableObject {
         let accessibility = checkAccessibilityPermission()
         let screenRecording = checkScreenRecordingPermission()
         
-        DispatchQueue.main.async { [weak self] in
-            self?.accessibilityPermissionGranted = accessibility
-            self?.screenRecordingPermissionGranted = screenRecording
-            self?.allPermissionsGranted = accessibility && screenRecording
-        }
+        // We're already on MainActor, no need for DispatchQueue.main.async
+        accessibilityPermissionGranted = accessibility
+        screenRecordingPermissionGranted = screenRecording
+        allPermissionsGranted = accessibility && screenRecording
     }
     
     // MARK: - Permission Requesting
@@ -110,7 +109,8 @@ class PermissionManager: ObservableObject {
     
     func startPermissionMonitoring() {
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            // Safer permission update without extra Task wrapping
+            DispatchQueue.main.async {
                 self?.updatePermissionStatus()
             }
         }
