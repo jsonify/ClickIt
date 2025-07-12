@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var permissionManager: PermissionManager
+    @StateObject private var clickCoordinator = ClickCoordinator.shared
     @State private var showingPermissionSetup = false
     @State private var showingWindowDetectionTest = false
     @State private var selectedClickPoint: CGPoint?
@@ -62,17 +63,19 @@ struct ContentView: View {
                     CompactPermissionStatus()
                 }
                 
-                // Click Point Selection (only show when permissions are granted)
+                // Main Application Interface (only show when permissions are granted)
                 if permissionManager.allPermissionsGranted {
+                    // Click Point Selection
                     ClickPointSelector { point in
                         selectedClickPoint = point
                     }
                     
-                    // Development Tools
-                    VStack(spacing: 10) {
-                        Text("Development Tools")
-                            .font(.headline)
-                        
+                    // Configuration Panel
+                    ConfigurationPanel(selectedClickPoint: selectedClickPoint)
+                        .environmentObject(clickCoordinator)
+                    
+                    // Development Tools (collapsible section)
+                    DisclosureGroup("Development Tools") {
                         VStack(spacing: 8) {
                             Button("Test Window Detection") {
                                 showingWindowDetectionTest = true
@@ -88,6 +91,7 @@ struct ContentView: View {
                                 .controlSize(.regular)
                             }
                         }
+                        .padding(8)
                     }
                     .padding(12)
                     .background(Color.blue.opacity(0.1))
@@ -112,7 +116,7 @@ struct ContentView: View {
             }
             .padding()
         }
-        .frame(width: 450, height: 700)
+        .frame(width: 500, height: 800)
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             permissionManager.updatePermissionStatus()

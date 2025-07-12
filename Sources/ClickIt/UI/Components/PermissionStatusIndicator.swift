@@ -121,6 +121,7 @@ struct PermissionDot: View {
 // MARK: - Permission Health Badge
 
 struct PermissionHealthBadge: View {
+    @EnvironmentObject private var permissionManager: PermissionManager
     @ObservedObject private var statusChecker = PermissionStatusChecker.shared
     @State private var healthReport: PermissionHealthReport?
     
