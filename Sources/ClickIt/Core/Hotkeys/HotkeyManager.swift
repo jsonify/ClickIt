@@ -19,6 +19,8 @@ class HotkeyManager: ObservableObject {
     
     private var globalEventMonitor: Any?
     private var localEventMonitor: Any?
+    private var lastEscKeyTime: TimeInterval = 0
+    private let escKeyDebounceInterval: TimeInterval = 0.5 // 500ms debounce
     
     // MARK: - Initialization
     
@@ -38,22 +40,26 @@ class HotkeyManager: ObservableObject {
         // Unregister existing hotkey first
         unregisterGlobalHotkey()
         
-        // Install global event monitor for ESC key
+        // Only monitor ESC key specifically (keyCode 53) to reduce false triggers
         globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleKeyEvent(event)
+            if event.keyCode == 53 { // Only handle ESC key
+                self?.handleKeyEvent(event)
+            }
         }
         
         // Install local event monitor for ESC key (when app is active)
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleKeyEvent(event)
-            return event // Pass through the event
+            if event.keyCode == 53 { // Only handle ESC key
+                self?.handleKeyEvent(event)
+            }
+            return event // Always pass through the event
         }
         
         if globalEventMonitor != nil || localEventMonitor != nil {
             currentHotkey = config
             isRegistered = true
             lastError = nil
-            print("HotkeyManager: Successfully registered ESC key monitoring")
+            print("HotkeyManager: Successfully registered ESC key monitoring (keyCode 53 only)")
             return true
         } else {
             lastError = "Failed to register key event monitors"
@@ -86,15 +92,28 @@ class HotkeyManager: ObservableObject {
     }
     
     private func handleKeyEvent(_ event: NSEvent) {
-        // Check if this is the ESC key (keyCode 53)
+        let currentTime = CFAbsoluteTimeGetCurrent()
+        
+        // Debounce ESC key presses to prevent rapid fire
+        if currentTime - lastEscKeyTime < escKeyDebounceInterval {
+            print("HotkeyManager: ESC key debounced (too soon after last press)")
+            return
+        }
+        
+        print("HotkeyManager: ESC key event received - keyCode: \(event.keyCode)")
+        
+        // Check if this is the ESC key (keyCode 53) - should always be true now
         if event.keyCode == currentHotkey.keyCode {
             // Check modifiers if any are required
             let requiredModifiers = NSEvent.ModifierFlags(rawValue: UInt(currentHotkey.modifiers))
             let eventModifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
             
             if requiredModifiers.isEmpty || eventModifiers == requiredModifiers {
-                print("HotkeyManager: ESC hotkey pressed - dispatching to ClickCoordinator")
+                print("HotkeyManager: ESC hotkey MATCHED - dispatching to ClickCoordinator")
+                lastEscKeyTime = currentTime
                 handleEscKeyPressed()
+            } else {
+                print("HotkeyManager: ESC key pressed but modifiers don't match (required: \(requiredModifiers.rawValue), got: \(eventModifiers.rawValue))")
             }
         }
     }
