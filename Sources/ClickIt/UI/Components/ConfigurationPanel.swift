@@ -57,6 +57,29 @@ struct ConfigurationPanel: View {
                                         .font(.caption2)
                                 }
                             }
+                            
+                            // CPS (Clicks Per Second) input
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text("Clicks Per Second")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    Text(String(format: "%.1f CPS", clickSettings.clicksPerSecond))
+                                        .font(.system(.caption, design: .monospaced))
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Slider(value: $clickSettings.clicksPerSecond, in: 1...100, step: 0.1) {
+                                    Text("Clicks Per Second")
+                                } minimumValueLabel: {
+                                    Text("1")
+                                        .font(.caption2)
+                                } maximumValueLabel: {
+                                    Text("100")
+                                        .font(.caption2)
+                                }
+                            }
 
                             // Click type selector
                             VStack(alignment: .leading, spacing: 6) {

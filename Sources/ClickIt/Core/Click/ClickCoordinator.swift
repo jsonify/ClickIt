@@ -19,6 +19,12 @@ class ClickCoordinator: ObservableObject {
     @Published var successRate: Double = 1.0
     @Published var averageClickTime: TimeInterval = 0
     
+    /// Elapsed time since automation started
+    var elapsedTime: TimeInterval {
+        guard isActive && sessionStartTime > 0 else { return 0 }
+        return CFAbsoluteTimeGetCurrent() - sessionStartTime
+    }
+    
     /// Current automation configuration
     @Published var automationConfig: AutomationConfiguration?
     
@@ -209,6 +215,17 @@ class ClickCoordinator: ObservableObject {
                 }
                 break
             }
+            
+            // Check for maximum duration limit
+            if let maxDuration = configuration.maxDuration {
+                let elapsedTime = CFAbsoluteTimeGetCurrent() - sessionStartTime
+                if elapsedTime >= maxDuration {
+                    await MainActor.run {
+                        stopAutomation()
+                    }
+                    break
+                }
+            }
         }
     }
     
@@ -315,6 +332,7 @@ struct AutomationConfiguration {
     let clickInterval: TimeInterval
     let targetApplication: String?
     let maxClicks: Int?
+    let maxDuration: TimeInterval?
     let stopOnError: Bool
     let randomizeLocation: Bool
     let locationVariance: CGFloat
@@ -326,6 +344,7 @@ struct AutomationConfiguration {
         clickInterval: TimeInterval = 1.0,
         targetApplication: String? = nil,
         maxClicks: Int? = nil,
+        maxDuration: TimeInterval? = nil,
         stopOnError: Bool = false,
         randomizeLocation: Bool = false,
         locationVariance: CGFloat = 0,
@@ -336,6 +355,7 @@ struct AutomationConfiguration {
         self.clickInterval = clickInterval
         self.targetApplication = targetApplication
         self.maxClicks = maxClicks
+        self.maxDuration = maxDuration
         self.stopOnError = stopOnError
         self.randomizeLocation = randomizeLocation
         self.locationVariance = locationVariance

@@ -15,6 +15,17 @@ class ClickSettings: ObservableObject {
             saveSettings()
         }
     }
+    
+    /// Clicks per second (computed property)
+    var clicksPerSecond: Double {
+        get {
+            return 1000.0 / clickIntervalMs
+        }
+        set {
+            let newValue = max(1.0, min(100.0, newValue)) // Clamp between 1-100 CPS
+            clickIntervalMs = 1000.0 / newValue
+        }
+    }
 
     /// Selected click type
     @Published var clickType: ClickType = .left {
@@ -203,6 +214,7 @@ class ClickSettings: ObservableObject {
     /// Create automation configuration from current settings
     func createAutomationConfiguration() -> AutomationConfiguration {
         let maxClicksValue = durationMode == .clickCount ? maxClicks : nil
+        let maxDurationValue = durationMode == .timeLimit ? durationSeconds : nil
         
         print("ClickSettings: Creating automation config with location \(clickLocation), showVisualFeedback: \(showVisualFeedback)")
 
@@ -212,6 +224,7 @@ class ClickSettings: ObservableObject {
             clickInterval: clickIntervalSeconds,
             targetApplication: targetApplication,
             maxClicks: maxClicksValue,
+            maxDuration: maxDurationValue,
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(locationVariance),

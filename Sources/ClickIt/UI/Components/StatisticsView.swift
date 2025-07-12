@@ -17,8 +17,8 @@ struct StatisticsView: View {
 
             HStack(spacing: 16) {
                 statisticItem("Clicks", value: "\(clickCoordinator.clickCount)")
+                statisticItem("Elapsed", value: formatElapsedTime(clickCoordinator.elapsedTime))
                 statisticItem("Success Rate", value: "\(Int(clickCoordinator.successRate * 100))%")
-                statisticItem("Avg Time", value: "\(Int(clickCoordinator.averageClickTime * 1000))ms")
             }
         }
         .padding(10)
@@ -35,6 +35,18 @@ struct StatisticsView: View {
             Text(label)
                 .font(.caption2)
                 .foregroundColor(.secondary)
+        }
+    }
+    
+    private func formatElapsedTime(_ elapsed: TimeInterval) -> String {
+        let totalSeconds = Int(elapsed)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        
+        if minutes > 0 {
+            return "\(minutes)m \(seconds)s"
+        } else {
+            return "\(seconds)s"
         }
     }
 }
