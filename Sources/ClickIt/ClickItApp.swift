@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct ClickItApp: App {
     @StateObject private var permissionManager = PermissionManager.shared
+    @StateObject private var hotkeyManager = HotkeyManager.shared
     
     init() {
         // Force app to appear in foreground when launched from command line
@@ -10,12 +11,18 @@ struct ClickItApp: App {
             NSApp.setActivationPolicy(.regular)
             NSApp.activate(ignoringOtherApps: true)
         }
+        
+        // Initialize hotkey manager
+        Task { @MainActor in
+            HotkeyManager.shared.initialize()
+        }
     }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(permissionManager)
+                .environmentObject(hotkeyManager)
                 .onAppear {
                     // Additional window activation
                     if let window = NSApp.windows.first {

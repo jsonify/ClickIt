@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var permissionManager: PermissionManager
+    @EnvironmentObject private var hotkeyManager: HotkeyManager
     @StateObject private var clickCoordinator = ClickCoordinator.shared
     @State private var showingPermissionSetup = false
     @State private var showingWindowDetectionTest = false
@@ -63,6 +64,28 @@ struct ContentView: View {
                     CompactPermissionStatus()
                 }
                 
+                // Hotkey Status
+                if permissionManager.allPermissionsGranted {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            Image(systemName: hotkeyManager.isRegistered ? "keyboard.fill" : "keyboard")
+                                .foregroundColor(hotkeyManager.isRegistered ? .blue : .orange)
+                            Text(hotkeyManager.isRegistered ? "ESC Hotkey Active" : "Hotkey Registration Failed")
+                                .font(.caption)
+                                .foregroundColor(hotkeyManager.isRegistered ? .blue : .orange)
+                        }
+                        
+                        if let error = hotkeyManager.lastError {
+                            Text("Error: \(error)")
+                                .font(.caption2)
+                                .foregroundColor(.red)
+                        }
+                    }
+                    .padding(8)
+                    .background(hotkeyManager.isRegistered ? Color.blue.opacity(0.1) : Color.orange.opacity(0.1))
+                    .cornerRadius(6)
+                }
+                
                 // Main Application Interface (only show when permissions are granted)
                 if permissionManager.allPermissionsGranted {
                     // Click Point Selection
@@ -90,6 +113,12 @@ struct ContentView: View {
                                 .buttonStyle(.borderedProminent)
                                 .controlSize(.regular)
                             }
+                            
+                            Button("Test ESC Hotkey") {
+                                testHotkeySystem()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
                         }
                         .padding(8)
                     }
@@ -145,9 +174,32 @@ struct ContentView: View {
             print("Click test result: \(result)")
         }
     }
+    
+    private func testHotkeySystem() {
+        if hotkeyManager.isRegistered {
+            print("ESC hotkey is registered. Press ESC to test.")
+            
+            // Start a test automation to demonstrate ESC key stopping it
+            if let point = selectedClickPoint {
+                let config = AutomationConfiguration(
+                    location: point,
+                    clickInterval: 2.0,
+                    maxClicks: 10,
+                    showVisualFeedback: true
+                )
+                clickCoordinator.startAutomation(with: config)
+                print("Started test automation - press ESC to stop it")
+            } else {
+                print("Please select a click point first to test ESC hotkey")
+            }
+        } else {
+            print("ESC hotkey is not registered")
+        }
+    }
 }
 
 #Preview {
     ContentView()
         .environmentObject(PermissionManager.shared)
+        .environmentObject(HotkeyManager.shared)
 }
