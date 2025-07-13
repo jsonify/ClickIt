@@ -1,199 +1,120 @@
+//
+//  ContentView.swift
+//  ClickIt
+//
+//  Created by ClickIt on 2025-07-13.
+//  Copyright © 2025 ClickIt. All rights reserved.
+//
+
 import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var permissionManager: PermissionManager
     @EnvironmentObject private var hotkeyManager: HotkeyManager
-    @StateObject private var clickCoordinator = ClickCoordinator.shared
+    @StateObject private var viewModel = ClickItViewModel()
     @State private var showingPermissionSetup = false
-    @State private var showingWindowDetectionTest = false
-    @State private var selectedClickPoint: CGPoint?
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // App Icon Placeholder
-                Image(systemName: "cursorarrow.click.2")
-                    .font(.system(size: 40))
-                    .foregroundColor(.accentColor)
-                
-                // App Title
-                Text("ClickIt")
-                    .font(.title)
-                    .fontWeight(.bold)
-                
-                // Subtitle
-                Text("Precision Auto-Clicker for macOS")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                // Permission Status
-                VStack(spacing: 10) {
-                    if permissionManager.allPermissionsGranted {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.shield.fill")
-                                .foregroundColor(.green)
-                            Text("Ready to use")
-                                .font(.headline)
-                                .foregroundColor(.green)
-                        }
-                        .padding(12)
-                        .background(Color.green.opacity(0.1))
-                        .cornerRadius(8)
-                    } else {
-                        VStack(spacing: 8) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.shield")
-                                    .foregroundColor(.orange)
-                                Text("Permissions Required")
-                                    .font(.headline)
-                                    .foregroundColor(.orange)
-                            }
-                            
-                            Button("Setup Permissions") {
-                                showingPermissionSetup = true
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
-                        }
-                        .padding(12)
-                        .background(Color.orange.opacity(0.1))
-                        .cornerRadius(8)
-                    }
-                    
-                    // Compact permission status
-                    CompactPermissionStatus()
-                }
-                
-                // Hotkey Status
-                if permissionManager.allPermissionsGranted {
-                    VStack(spacing: 8) {
-                        HStack(spacing: 8) {
-                            Image(systemName: hotkeyManager.isRegistered ? "keyboard.fill" : "keyboard")
-                                .foregroundColor(hotkeyManager.isRegistered ? .blue : .orange)
-                            Text(hotkeyManager.isRegistered ? "DELETE Hotkey Active" : "Hotkey Registration Failed")
-                                .font(.caption)
-                                .foregroundColor(hotkeyManager.isRegistered ? .blue : .orange)
-                        }
-                        
-                        if let error = hotkeyManager.lastError {
-                            Text("Error: \(error)")
-                                .font(.caption2)
-                                .foregroundColor(.red)
-                        }
-                    }
-                    .padding(8)
-                    .background(hotkeyManager.isRegistered ? Color.blue.opacity(0.1) : Color.orange.opacity(0.1))
-                    .cornerRadius(6)
-                }
-                
-                // Main Application Interface (only show when permissions are granted)
-                if permissionManager.allPermissionsGranted {
-                    // Click Point Selection
-                    ClickPointSelector { point in
-                        selectedClickPoint = point
-                    }
-                    
-                    // Configuration Panel
-                    ConfigurationPanel(selectedClickPoint: selectedClickPoint)
-                        .environmentObject(clickCoordinator)
-                    
-                    // Development Tools (collapsible section)
-                    DisclosureGroup("Development Tools") {
-                        VStack(spacing: 8) {
-                            Button("Test Window Detection") {
-                                showingWindowDetectionTest = true
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.regular)
-                            
-                            if let point = selectedClickPoint {
-                                Button("Test Click at Selected Point") {
-                                    testClickAtPoint(point)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.regular)
-                            }
-                            
-                            Button("Test DELETE Hotkey") {
-                                testHotkeySystem()
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.regular)
-                        }
-                        .padding(8)
-                    }
-                    .padding(12)
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(8)
-                }
-                
-                // Version Info
-                VStack(spacing: 4) {
-                    Text("Version \(AppConstants.appVersion)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Build \(AppConstants.buildNumber)")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Requires \(AppConstants.minimumOSVersion) or later")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.top, 8)
-            }
-            .padding()
+        if permissionManager.allPermissionsGranted {
+            // Modern UI when permissions are granted
+            modernUIView
+        } else {
+            // Permission setup view
+            permissionSetupView
         }
-        .frame(width: 500, height: 800)
-        .background(Color(NSColor.windowBackgroundColor))
+    }
+    
+    @ViewBuilder
+    private var modernUIView: some View {
+        VStack(spacing: 16) {
+            // Status Header Card
+            StatusHeaderCard(viewModel: viewModel)
+            
+            // Target Point Selection Card
+            TargetPointSelectionCard(viewModel: viewModel)
+            
+            // Configuration Panel Card
+            ConfigurationPanelCard(viewModel: viewModel)
+            
+            // Advanced Settings Button
+            AdvancedSettingsButton(viewModel: viewModel)
+            
+            Spacer()
+            
+            // Footer Information
+            FooterInfoCard()
+        }
+        .padding(16)
+        .frame(width: 400, height: 800)
+        .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
-            // Permission monitoring is now started in ClickItApp.swift
-            // Just update the status when this view appears
+            permissionManager.updatePermissionStatus()
+        }
+    }
+    
+    @ViewBuilder
+    private var permissionSetupView: some View {
+        VStack(spacing: 20) {
+            // App Icon
+            Image(systemName: "target")
+                .font(.system(size: 60))
+                .foregroundColor(.blue)
+            
+            // App Title
+            Text("ClickIt")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            
+            // Subtitle
+            Text("Precision Auto-Clicker for macOS")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            // Permission Status
+            VStack(spacing: 16) {
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.shield")
+                            .foregroundColor(.orange)
+                        Text("Permissions Required")
+                            .font(.headline)
+                            .foregroundColor(.orange)
+                    }
+                    
+                    Text("ClickIt requires accessibility and screen recording permissions to function properly.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Button("Setup Permissions") {
+                        showingPermissionSetup = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                }
+                .padding(20)
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(12)
+                
+                // Compact permission status
+                CompactPermissionStatus()
+            }
+            
+            Spacer()
+            
+            // Version Info
+            FooterInfoCard()
+        }
+        .padding(24)
+        .frame(width: 400, height: 800)
+        .background(Color(NSColor.controlBackgroundColor))
+        .onAppear {
             permissionManager.updatePermissionStatus()
         }
         .sheet(isPresented: $showingPermissionSetup) {
             PermissionRequestView()
-        }
-        .sheet(isPresented: $showingWindowDetectionTest) {
-            WindowDetectionTestView()
-        }
-    }
-    
-    private func testClickAtPoint(_ point: CGPoint) {
-        Task {
-            let configuration = ClickConfiguration(
-                type: .left,
-                location: point,
-                targetPID: nil,
-                delayBetweenDownUp: 0.01
-            )
-            
-            let result = await ClickCoordinator.shared.performSingleClick(configuration: configuration)
-            
-            print("Click test result: \(result)")
-        }
-    }
-    
-    private func testHotkeySystem() {
-        if hotkeyManager.isRegistered {
-            print("DELETE hotkey is registered. Press DELETE to test.")
-            
-            // Start a test automation to demonstrate DELETE key stopping it
-            if let point = selectedClickPoint {
-                let config = AutomationConfiguration(
-                    location: point,
-                    clickInterval: 2.0,
-                    maxClicks: 10,
-                    showVisualFeedback: true
-                )
-                clickCoordinator.startAutomation(with: config)
-                print("Started test automation - press DELETE to stop it")
-            } else {
-                print("Please select a click point first to test DELETE hotkey")
-            }
-        } else {
-            print("DELETE hotkey is not registered")
         }
     }
 }

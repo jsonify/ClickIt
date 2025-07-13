@@ -1,3 +1,4 @@
+// swiftlint:disable file_header
 import Foundation
 import CoreGraphics
 
@@ -17,7 +18,8 @@ struct WindowInfo: Identifiable, Hashable, Codable {
     // MARK: - Codable
     
     enum CodingKeys: String, CodingKey {
-        case windowID, processID, applicationName, windowTitle, bounds, windowLayer, isOnScreen, isMinimized, lastUpdated
+        case windowID, processID, applicationName, windowTitle, bounds, windowLayer, isOnScreen, isMinimized,
+             lastUpdated
     }
     
     /// Display name combining app name and window title
@@ -46,22 +48,22 @@ struct WindowInfo: Identifiable, Hashable, Codable {
     
     /// Window dimensions as a readable string
     var dimensionsString: String {
-        return "\(Int(bounds.width)) × \(Int(bounds.height))"
+        "\(Int(bounds.width)) × \(Int(bounds.height))"
     }
     
     /// Window position as a readable string
     var positionString: String {
-        return "(\(Int(bounds.origin.x)), \(Int(bounds.origin.y)))"
+        "(\(Int(bounds.origin.x)), \(Int(bounds.origin.y)))"
     }
     
     /// Full window description
     var description: String {
-        return "\(displayName) - \(dimensionsString) at \(positionString)"
+        "\(displayName) - \(dimensionsString) at \(positionString)"
     }
     
     /// Whether the window is suitable for clicking
     var isClickable: Bool {
-        return bounds.width > 0 && bounds.height > 0 && !isSystemWindow
+        bounds.width > 0 && bounds.height > 0 && !isSystemWindow
     }
     
     /// Whether this appears to be a system window
@@ -78,7 +80,7 @@ struct WindowInfo: Identifiable, Hashable, Codable {
         if isMinimized {
             return "Minimized"
         } else if !isOnScreen {
-            return "Off-screen"
+            return "Off screen"
         } else if windowLayer < 0 {
             return "Background"
         } else {
@@ -88,7 +90,7 @@ struct WindowInfo: Identifiable, Hashable, Codable {
     
     /// Convert point from screen coordinates to window coordinates
     func convertToWindowCoordinates(_ screenPoint: CGPoint) -> CGPoint {
-        return CGPoint(
+        CGPoint(
             x: screenPoint.x - bounds.origin.x,
             y: screenPoint.y - bounds.origin.y
         )
@@ -96,7 +98,7 @@ struct WindowInfo: Identifiable, Hashable, Codable {
     
     /// Convert point from window coordinates to screen coordinates
     func convertToScreenCoordinates(_ windowPoint: CGPoint) -> CGPoint {
-        return CGPoint(
+        CGPoint(
             x: windowPoint.x + bounds.origin.x,
             y: windowPoint.y + bounds.origin.y
         )
@@ -104,12 +106,12 @@ struct WindowInfo: Identifiable, Hashable, Codable {
     
     /// Check if a point is within the window bounds
     func contains(_ point: CGPoint) -> Bool {
-        return bounds.contains(point)
+        bounds.contains(point)
     }
     
     /// Get center point of the window
     var centerPoint: CGPoint {
-        return CGPoint(
+        CGPoint(
             x: bounds.midX,
             y: bounds.midY
         )
@@ -123,7 +125,7 @@ struct WindowInfo: Identifiable, Hashable, Codable {
     }
     
     static func == (lhs: WindowInfo, rhs: WindowInfo) -> Bool {
-        return lhs.windowID == rhs.windowID && lhs.processID == rhs.processID
+        lhs.windowID == rhs.windowID && lhs.processID == rhs.processID
     }
 }
 
@@ -132,37 +134,37 @@ struct WindowInfo: Identifiable, Hashable, Codable {
 extension Array where Element == WindowInfo {
     /// Filter windows by application name
     func forApplication(_ name: String) -> [WindowInfo] {
-        return filter { $0.applicationName.lowercased().contains(name.lowercased()) }
+        filter { $0.applicationName.lowercased().contains(name.lowercased()) }
     }
     
     /// Filter windows by process ID
     func forProcess(_ pid: pid_t) -> [WindowInfo] {
-        return filter { $0.processID == pid }
+        filter { $0.processID == pid }
     }
     
     /// Filter only clickable windows
     var clickableWindows: [WindowInfo] {
-        return filter { $0.isClickable }
+        filter { $0.isClickable }
     }
     
     /// Filter only visible windows
     var visibleWindows: [WindowInfo] {
-        return filter { $0.isOnScreen && !$0.isMinimized }
+        filter { $0.isOnScreen && !$0.isMinimized }
     }
     
     /// Filter only minimized windows
     var minimizedWindows: [WindowInfo] {
-        return filter { $0.isMinimized }
+        filter { $0.isMinimized }
     }
     
     /// Group windows by application
     var groupedByApplication: [String: [WindowInfo]] {
-        return Dictionary(grouping: self) { $0.applicationName }
+        Dictionary(grouping: self) { $0.applicationName }
     }
     
     /// Sort windows by application name and then by window title
     var sortedByApplication: [WindowInfo] {
-        return sorted { first, second in
+        sorted { first, second in
             if first.applicationName == second.applicationName {
                 return first.windowTitle < second.windowTitle
             }
@@ -172,7 +174,7 @@ extension Array where Element == WindowInfo {
     
     /// Sort windows by last updated time (most recent first)
     var sortedByUpdated: [WindowInfo] {
-        return sorted { $0.lastUpdated > $1.lastUpdated }
+        sorted { $0.lastUpdated > $1.lastUpdated }
     }
 }
 
@@ -181,7 +183,7 @@ extension Array where Element == WindowInfo {
 extension WindowInfo {
     /// Create a window targeting configuration
     func createTargetingConfig() -> WindowTargetingConfig {
-        return WindowTargetingConfig(
+        WindowTargetingConfig(
             windowID: windowID,
             processID: processID,
             applicationName: applicationName,

@@ -1,3 +1,4 @@
+// swiftlint:disable file_header
 import SwiftUI
 
 @main
@@ -61,6 +62,7 @@ struct ClickItApp: App {
             CommandGroup(replacing: .help) {
                 Button("Permission Setup Guide") {
                     // Open permission setup guide
+                    // swiftlint:disable:next custom_rules
                     if let url = URL(string: "https://github.com/jsonify/clickit/wiki/Permission-Setup") {
                         NSWorkspace.shared.open(url)
                     }

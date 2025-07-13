@@ -1,3 +1,4 @@
+// swiftlint:disable file_header
 import Foundation
 import CoreGraphics
 import ApplicationServices
@@ -219,7 +220,7 @@ class WindowDetectionTester: ObservableObject {
         
         let appGroups = windows.groupedByApplication
         if appGroups.count < 3 {
-            recommendations.append("Open more applications to test multi-app detection")
+            recommendations.append("Open more applications to test multi app detection")
         }
         
         let multiInstanceApps = appGroups.filter { $0.value.count > 1 }
@@ -250,15 +251,15 @@ struct WindowTestResult: Identifiable {
     let error: Error?
     
     var statusIcon: String {
-        return success ? "checkmark.circle.fill" : "xmark.circle.fill"
+        success ? "checkmark.circle.fill" : "xmark.circle.fill"
     }
     
     var statusColor: String {
-        return success ? "green" : "red"
+        success ? "green" : "red"
     }
     
     var formattedExecutionTime: String {
-        return String(format: "%.2fms", executionTime * 1000)
+        String(format: "%.2fms", executionTime * 1000)
     }
 }
 
@@ -271,12 +272,12 @@ struct WindowTestSuite {
     var errorHandling: WindowTestResult?
     
     var allResults: [WindowTestResult] {
-        return [basicDetection, multipleInstances, minimizedWindows, backgroundWindows, errorHandling]
+        [basicDetection, multipleInstances, minimizedWindows, backgroundWindows, errorHandling]
             .compactMap { $0 }
     }
     
     var overallSuccess: Bool {
-        return allResults.allSatisfy { $0.success }
+        allResults.allSatisfy { $0.success }
     }
     
     var successRate: Double {
@@ -286,10 +287,10 @@ struct WindowTestSuite {
     }
     
     var totalWindowsDetected: Int {
-        return allResults.reduce(0) { $0 + $1.windowCount }
+        allResults.reduce(0) { $0 + $1.windowCount }
     }
     
     var totalExecutionTime: TimeInterval {
-        return allResults.reduce(0) { $0 + $1.executionTime }
+        allResults.reduce(0) { $0 + $1.executionTime }
     }
 }

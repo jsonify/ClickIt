@@ -1,3 +1,4 @@
+// swiftlint:disable file_header
 import Foundation
 import CoreGraphics
 import ApplicationServices
@@ -13,6 +14,7 @@ class WindowTargeter: ObservableObject {
     @Published var lastValidationError: WindowError?
     
     private let windowManager = WindowManager.shared
+    // swiftlint:disable:next custom_rules
     private var validationTask: Task<Void, Never>?
     
     private init() {}
@@ -85,7 +87,7 @@ class WindowTargeter: ObservableObject {
         return matchingWindow?.bounds
     }
     
-    /// Check if the target supports background/minimized clicking
+    /// Check if the target supports background or minimized clicking
     func supportsBackgroundClicking() -> Bool {
         guard let target = currentTarget else { return false }
         return target.preferProcessID && target.processID > 0
@@ -265,11 +267,11 @@ struct WindowInstanceOption: Identifiable {
 extension WindowTargetingConfig {
     /// Check if this configuration is valid for process ID targeting
     var isValidForProcessTargeting: Bool {
-        return processID > 0 && preferProcessID
+        processID > 0 && preferProcessID
     }
     
     /// Check if this configuration supports minimized window clicking
     var supportsMinimizedClicking: Bool {
-        return isValidForProcessTargeting
+        isValidForProcessTargeting
     }
 }

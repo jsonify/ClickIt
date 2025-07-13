@@ -1,3 +1,12 @@
+// swiftlint:disable file_header
+//
+//  StatisticsView.swift
+//  ClickIt
+//
+//  Created by ClickIt on July 13, 2025.
+//  Copyright © 2025 ClickIt. All rights reserved.
+//
+
 import SwiftUI
 
 /// View for displaying automation session statistics

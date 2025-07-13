@@ -1,8 +1,17 @@
+//
+//  PermissionRequestView.swift
+//  ClickIt
+//
+//  Created by ClickIt on 2025-07-13.
+//  Copyright © 2025 ClickIt. All rights reserved.
+//
+
 import SwiftUI
 
 struct PermissionRequestView: View {
     @EnvironmentObject private var permissionManager: PermissionManager
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) 
+    private var dismiss
     @State private var showingDetailedInstructions = false
     @State private var selectedPermission: PermissionType?
     @State private var isRequestingPermissions = false
@@ -250,7 +259,8 @@ struct PermissionRow: View {
 
 struct PermissionInstructionsView: View {
     let permission: PermissionType?
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) 
+    private var dismiss
 
     var body: some View {
         NavigationView {

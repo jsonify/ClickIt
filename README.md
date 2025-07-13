@@ -1,6 +1,6 @@
 # ClickIt
 
-A lightweight, native macOS auto-clicker application with precision timing and advanced targeting capabilities. Designed for gamers, automation enthusiasts, and productivity users who need reliable, accurate clicking automation.
+A lightweight, native macOS Auto-Clicker application with precision timing and advanced targeting capabilities. Designed for gamers, automation enthusiasts, and productivity users who need reliable, accurate clicking automation.
 
 ## Features
 

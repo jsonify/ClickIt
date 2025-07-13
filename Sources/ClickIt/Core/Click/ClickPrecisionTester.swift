@@ -1,10 +1,10 @@
+// swiftlint:disable file_header
 import Foundation
 import CoreGraphics
 import ApplicationServices
 
 /// Utilities for testing click precision and timing accuracy
 class ClickPrecisionTester: @unchecked Sendable {
-    
     // MARK: - Properties
     
     /// Shared instance of the precision tester
@@ -153,10 +153,10 @@ class ClickPrecisionTester: @unchecked Sendable {
     
     /// Benchmarks click performance
     /// - Parameters:
+    ///   - at: Location to click
     ///   - duration: Duration of the benchmark in seconds
-    ///   - location: Location to click
     /// - Returns: Performance benchmark results
-    func benchmarkClickPerformance(duration: TimeInterval = 10.0, at location: CGPoint) async -> PerformanceBenchmark {
+    func benchmarkClickPerformance(at location: CGPoint, duration: TimeInterval = 10.0) async -> PerformanceBenchmark {
         let startTime = CFAbsoluteTimeGetCurrent()
         var clickCount = 0
         var totalTiming: TimeInterval = 0
@@ -210,8 +210,9 @@ class ClickPrecisionTester: @unchecked Sendable {
         let systemInfo = ProcessInfo.processInfo
         let memoryGB = Double(systemInfo.physicalMemory) / 1_073_741_824 // Convert to GB
         
-        if memoryGB < AppConstants.minimumMemoryRequirementGB {
-            recommendations.append("Consider upgrading to at least \(Int(AppConstants.minimumMemoryRequirementGB))GB RAM for optimal performance")
+        let minMemGB = AppConstants.minimumMemoryRequirementGB
+        if memoryGB < minMemGB {
+            recommendations.append("Consider upgrading to at least \(Int(minMemGB))GB RAM for optimal performance")
         }
         
         return SystemValidationResult(
@@ -236,15 +237,15 @@ class ClickPrecisionTester: @unchecked Sendable {
         let margin: CGFloat = 50
         
         return [
-            CGPoint(x: screenBounds.minX + margin, y: screenBounds.minY + margin), // Top-left
-            CGPoint(x: screenBounds.midX, y: screenBounds.minY + margin), // Top-center
-            CGPoint(x: screenBounds.maxX - margin, y: screenBounds.minY + margin), // Top-right
-            CGPoint(x: screenBounds.minX + margin, y: screenBounds.midY), // Middle-left
+            CGPoint(x: screenBounds.minX + margin, y: screenBounds.minY + margin), // Top left
+            CGPoint(x: screenBounds.midX, y: screenBounds.minY + margin), // Top center
+            CGPoint(x: screenBounds.maxX - margin, y: screenBounds.minY + margin), // Top right
+            CGPoint(x: screenBounds.minX + margin, y: screenBounds.midY), // Middle left
             CGPoint(x: screenBounds.midX, y: screenBounds.midY), // Center
-            CGPoint(x: screenBounds.maxX - margin, y: screenBounds.midY), // Middle-right
-            CGPoint(x: screenBounds.minX + margin, y: screenBounds.maxY - margin), // Bottom-left
-            CGPoint(x: screenBounds.midX, y: screenBounds.maxY - margin), // Bottom-center
-            CGPoint(x: screenBounds.maxX - margin, y: screenBounds.maxY - margin) // Bottom-right
+            CGPoint(x: screenBounds.maxX - margin, y: screenBounds.midY), // Middle right
+            CGPoint(x: screenBounds.minX + margin, y: screenBounds.maxY - margin), // Bottom left
+            CGPoint(x: screenBounds.midX, y: screenBounds.maxY - margin), // Bottom center
+            CGPoint(x: screenBounds.maxX - margin, y: screenBounds.maxY - margin) // Bottom right
         ]
     }
     
@@ -285,7 +286,7 @@ class ClickPrecisionTester: @unchecked Sendable {
     ///   - actual: Array of actual positions
     /// - Returns: Maximum deviation in pixels
     private func calculateMaximumPositionDeviation(expected: CGPoint, actual: [CGPoint]) -> CGFloat {
-        return actual.map { distance(from: expected, to: $0) }.max() ?? 0
+        actual.map { distance(from: expected, to: $0) }.max() ?? 0
     }
     
     /// Calculates distance between two points

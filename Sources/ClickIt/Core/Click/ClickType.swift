@@ -5,7 +5,7 @@ import CoreGraphics
 enum ClickType: String, CaseIterable {
     case left = "left"
     case right = "right"
-    
+
     /// CoreGraphics event type for mouse down
     var mouseDownEventType: CGEventType {
         switch self {
@@ -15,7 +15,7 @@ enum ClickType: String, CaseIterable {
             return .rightMouseDown
         }
     }
-    
+
     /// CoreGraphics event type for mouse up
     var mouseUpEventType: CGEventType {
         switch self {
@@ -25,7 +25,7 @@ enum ClickType: String, CaseIterable {
             return .rightMouseUp
         }
     }
-    
+
     /// CoreGraphics mouse button for the click type
     var mouseButton: CGMouseButton {
         switch self {
@@ -33,6 +33,26 @@ enum ClickType: String, CaseIterable {
             return .left
         case .right:
             return .right
+        }
+    }
+
+    /// A system icon name for the click type.
+    var icon: String {
+        switch self {
+        case .left:
+            return "cursorarrow.click"
+        case .right:
+            return "cursorarrow.click.2"
+        }
+    }
+
+    /// A description of the click type.
+    var description: String {
+        switch self {
+        case .left:
+            return "Simulates a standard primary mouse click."
+        case .right:
+            return "Simulates a secondary mouse click, often used to open contextual menus."
         }
     }
 }

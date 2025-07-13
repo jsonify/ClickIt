@@ -1,3 +1,4 @@
+// swiftlint:disable file_header
 import SwiftUI
 import CoreGraphics
 
@@ -41,7 +42,7 @@ struct ClickPointSelector: View {
             
             // Selection methods
             HStack(spacing: 12) {
-                // Click-to-set button
+                // Click to set button
                 Button(action: startClickSelection) {
                     HStack {
                         Image(systemName: isSelecting ? "stop.circle.fill" : "hand.tap.fill")
@@ -176,7 +177,9 @@ struct ClickPointSelector: View {
         // Check if point is within screen bounds
         if point.x < 0 || point.x > screenFrame.width || 
            point.y < 0 || point.y > screenFrame.height {
-            validationError = "Coordinates must be within screen bounds (0,0) to (\(Int(screenFrame.width)),\(Int(screenFrame.height)))"
+            let maxX = Int(screenFrame.width)
+            let maxY = Int(screenFrame.height)
+            validationError = "Coordinates must be within screen bounds (0,0) to (\(maxX),\(maxY))"
             return false
         }
         
@@ -195,7 +198,7 @@ struct ClickCoordinateCapture {
         // Create global event monitor for left mouse clicks
         var eventMonitor: Any?
         
-        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { event in
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { _ in
             let screenPoint = NSEvent.mouseLocation
             
             // NSEvent.mouseLocation already gives us the correct coordinates

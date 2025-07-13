@@ -1,3 +1,11 @@
+//
+//  WindowDetectionTestView.swift
+//  ClickIt
+//
+//  Created by ClickIt on 2025-07-13.
+//  Copyright © 2025 ClickIt. All rights reserved.
+//
+
 import SwiftUI
 
 /// Test view for window detection functionality
@@ -5,7 +13,8 @@ struct WindowDetectionTestView: View {
     @StateObject private var windowManager = WindowManager.shared
     @StateObject private var targeter = WindowTargeter.shared
     @StateObject private var tester = WindowDetectionTester.shared
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) 
+    private var dismiss
     
     @State private var selectedWindow: WindowInfo?
     @State private var showingTestResults = false
@@ -177,7 +186,8 @@ struct WindowRowView: View {
 /// Test results view
 struct TestResultsView: View {
     @StateObject private var tester = WindowDetectionTester.shared
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) 
+    private var dismiss
     
     var body: some View {
         NavigationView {

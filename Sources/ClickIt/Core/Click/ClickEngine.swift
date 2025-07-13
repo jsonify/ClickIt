@@ -1,32 +1,32 @@
+// swiftlint:disable file_header
 import Foundation
 import CoreGraphics
 import ApplicationServices
 
-/// High-performance click engine for mouse event generation
+/// High performance click engine for mouse event generation
 class ClickEngine: @unchecked Sendable {
-    
-    // MARK: - Properties
+    // MARK: Properties
     
     /// Shared instance of the click engine
     static let shared = ClickEngine()
     
     /// Queue for handling click operations
-    private let clickQueue = DispatchQueue(label: "com.clickit.click-engine", qos: .userInteractive)
+    private let clickQueue = DispatchQueue(label: "com.clickit.clickengine", qos: .userInteractive)
     
     /// Timer for precision measurement
     private var precisionTimer: CFAbsoluteTime = 0
     
-    // MARK: - Initialization
+    // MARK: Initialization
     
     private init() {}
     
-    // MARK: - Public Methods
+    // MARK: Public Methods
     
     /// Performs a single click operation
     /// - Parameter configuration: Click configuration specifying type, location, and options
     /// - Returns: Result of the click operation
     func performClick(configuration: ClickConfiguration) async -> ClickResult {
-        return await withCheckedContinuation { continuation in
+        await withCheckedContinuation { continuation in
             clickQueue.async {
                 let result = self.executeClick(configuration: configuration)
                 continuation.resume(returning: result)
@@ -38,7 +38,7 @@ class ClickEngine: @unchecked Sendable {
     /// - Parameter configuration: Click configuration specifying type, location, and options
     /// - Returns: Result of the click operation
     func performClickSync(configuration: ClickConfiguration) -> ClickResult {
-        return executeClick(configuration: configuration)
+        executeClick(configuration: configuration)
     }
     
     /// Performs a sequence of clicks
@@ -55,7 +55,7 @@ class ClickEngine: @unchecked Sendable {
         return results
     }
     
-    // MARK: - Private Methods
+    // MARK: Private Methods
     
     /// Executes a click operation on the current queue
     /// - Parameter configuration: Click configuration
@@ -126,7 +126,7 @@ class ClickEngine: @unchecked Sendable {
     ///   - button: Mouse button
     /// - Returns: Created mouse event or nil if creation failed
     private func createMouseEvent(type: CGEventType, location: CGPoint, button: CGMouseButton) -> CGEvent? {
-        return CGEvent(
+        CGEvent(
             mouseEventSource: nil,
             mouseType: type,
             mouseCursorPosition: location,
@@ -138,7 +138,7 @@ class ClickEngine: @unchecked Sendable {
     /// - Parameters:
     ///   - downEvent: Mouse down event
     ///   - upEvent: Mouse up event
-    ///   - targetPID: Target process ID (nil for system-wide)
+    ///   - targetPID: Target process ID (nil for systemwide)
     ///   - delay: Delay between down and up events
     /// - Returns: Result of posting operation
     private func postMouseEvents(
@@ -147,7 +147,6 @@ class ClickEngine: @unchecked Sendable {
         targetPID: pid_t?,
         delay: TimeInterval
     ) -> (success: Bool, error: ClickError?) {
-        
         let startTime = mach_absolute_time()
         
         print("ClickEngine: About to post mouse down event")
@@ -181,8 +180,9 @@ class ClickEngine: @unchecked Sendable {
         let elapsedNanos = (endTime - startTime) * UInt64(timeInfo.numer) / UInt64(timeInfo.denom)
         let elapsedMillis = Double(elapsedNanos) / 1_000_000.0
         
-        if elapsedMillis > (delay * 1000 + AppConstants.maxClickTimingDeviation * 1000) {
-            print("ClickEngine: Timing constraint violation: \(elapsedMillis)ms > \((delay * 1000 + AppConstants.maxClickTimingDeviation * 1000))ms")
+        let maxTime = delay * 1000 + AppConstants.maxClickTimingDeviation * 1000
+        if elapsedMillis > maxTime {
+            print("ClickEngine: Timing constraint violation: \(elapsedMillis)ms > \(maxTime)ms")
             return (false, .timingConstraintViolation)
         }
         
@@ -193,7 +193,7 @@ class ClickEngine: @unchecked Sendable {
     /// Posts a single event to the system or target process
     /// - Parameters:
     ///   - event: Event to post
-    ///   - targetPID: Target process ID (nil for system-wide)
+    ///   - targetPID: Target process ID (nil for systemwide)
     /// - Returns: Result of posting operation
     private func postEvent(_ event: CGEvent, targetPID: pid_t?) -> (success: Bool, error: ClickError?) {
         // Check if we have Accessibility permissions
@@ -212,8 +212,8 @@ class ClickEngine: @unchecked Sendable {
             print("ClickEngine: Posting event to PID \(pid)")
             event.postToPid(pid)
         } else {
-            // Post system-wide
-            print("ClickEngine: Posting event system-wide")
+            // Post systemwide
+            print("ClickEngine: Posting event systemwide")
             event.post(tap: .cghidEventTap)
         }
         
@@ -229,10 +229,9 @@ class ClickEngine: @unchecked Sendable {
     }
 }
 
-// MARK: - Extensions
+// MARK: Extensions
 
 extension ClickEngine {
-    
     /// Convenience method for performing a left click
     /// - Parameters:
     ///   - location: Location to click

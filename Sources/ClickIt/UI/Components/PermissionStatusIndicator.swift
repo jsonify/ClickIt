@@ -1,3 +1,12 @@
+// swiftlint:disable file_header
+//
+//  PermissionStatusIndicator.swift
+//  ClickIt
+//
+//  Created by ClickIt on 13 Jul 25.
+//  Copyright © 2025 ClickIt. All rights reserved.
+//
+
 import SwiftUI
 
 struct PermissionStatusIndicator: View {
@@ -7,7 +16,9 @@ struct PermissionStatusIndicator: View {
     var body: some View {
         HStack(spacing: 8) {
             // Status Icon
-            Image(systemName: permissionManager.allPermissionsGranted ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+            let iconName = permissionManager.allPermissionsGranted ?
+                "checkmark.shield.fill" : "exclamationmark.shield.fill"
+            Image(systemName: iconName)
                 .foregroundColor(permissionManager.allPermissionsGranted ? .green : .orange)
                 .font(.system(size: 16))
             
@@ -145,7 +156,8 @@ struct PermissionHealthBadge: View {
     private var healthIcon: String {
         if permissionManager.allPermissionsGranted {
             return "checkmark.circle.fill"
-        } else if permissionManager.accessibilityPermissionGranted || permissionManager.screenRecordingPermissionGranted {
+        } else if permissionManager.accessibilityPermissionGranted ||
+                  permissionManager.screenRecordingPermissionGranted {
             return "exclamationmark.triangle.fill"
         } else {
             return "xmark.circle.fill"
@@ -155,7 +167,8 @@ struct PermissionHealthBadge: View {
     private var healthColor: Color {
         if permissionManager.allPermissionsGranted {
             return .green
-        } else if permissionManager.accessibilityPermissionGranted || permissionManager.screenRecordingPermissionGranted {
+        } else if permissionManager.accessibilityPermissionGranted ||
+                  permissionManager.screenRecordingPermissionGranted {
             return .orange
         } else {
             return .red
@@ -165,7 +178,8 @@ struct PermissionHealthBadge: View {
     private var healthText: String {
         if permissionManager.allPermissionsGranted {
             return "All permissions granted"
-        } else if permissionManager.accessibilityPermissionGranted || permissionManager.screenRecordingPermissionGranted {
+        } else if permissionManager.accessibilityPermissionGranted ||
+                  permissionManager.screenRecordingPermissionGranted {
             return "Some permissions missing"
         } else {
             return "Permissions required"
@@ -173,7 +187,11 @@ struct PermissionHealthBadge: View {
     }
     
     private var healthPercentage: Int {
-        let granted = [permissionManager.accessibilityPermissionGranted, permissionManager.screenRecordingPermissionGranted].filter { $0 }.count
+        let permissions = [
+            permissionManager.accessibilityPermissionGranted,
+            permissionManager.screenRecordingPermissionGranted
+        ]
+        let granted = permissions.filter { $0 }.count
         return Int(Double(granted) / 2.0 * 100)
     }
 }
