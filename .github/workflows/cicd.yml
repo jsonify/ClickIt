@@ -1,0 +1,305 @@
+# ClickIt CI/CD Pipeline
+# Inspired by macos-auto-clicker-main with adaptations for Swift Package Manager
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, staging ]
+    tags: [ 'v*', 'beta*' ]
+  pull_request:
+    branches: [ main, staging, dev ]
+    types: [ opened, synchronize, reopened ]
+
+# Prevent overlapping builds
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Consistent environment across jobs
+  APP_NAME: ClickIt
+  BUNDLE_ID: com.jsonify.clickit
+  
+  # macOS deployment target
+  MACOSX_DEPLOYMENT_TARGET: "15.0"
+  
+  # Swift configuration
+  SWIFT_VERSION: "6.1"
+
+jobs:
+  # === Code Quality Checks ===
+  quality_checks:
+    name: 🔍 Code Quality
+    runs-on: macos-15
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper linting
+      
+      - name: 🔧 Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      
+      - name: 📦 Swift Package Cache
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-${{ hashFiles('Package.resolved', 'Package.swift') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-
+      
+      - name: 🏗️ Swift Build (Debug)
+        run: swift build --configuration debug
+      
+      - name: 🧪 Run Tests
+        run: |
+          swift test --enable-code-coverage
+          echo "✅ All tests passed"
+      
+      - name: 📊 Test Coverage
+        run: |
+          xcrun llvm-cov export -format="lcov" \
+            .build/debug/ClickItPackageTests.xctest/Contents/MacOS/ClickItPackageTests \
+            -instr-profile .build/debug/codecov/default.profdata > coverage.lcov
+        continue-on-error: true
+      
+      - name: 📈 Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.lcov
+          fail_ci_if_error: false
+        continue-on-error: true
+      
+      - name: 🔍 SwiftLint
+        run: |
+          if ! command -v swiftlint &> /dev/null; then
+            echo "Installing SwiftLint..."
+            brew install swiftlint
+          fi
+          swiftlint lint --strict --reporter github-actions-logging
+          echo "✅ Linting passed"
+
+  # === Build Tests ===
+  build_tests:
+    name: 🔨 Build Tests
+    runs-on: macos-15
+    needs: quality_checks
+    timeout-minutes: 20
+    
+    strategy:
+      matrix:
+        configuration: [debug, release]
+        architecture: [x86_64, arm64]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      
+      - name: 📦 Swift Package Cache
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: build-${{ runner.os }}-${{ matrix.configuration }}-${{ matrix.architecture }}-${{ hashFiles('Package.resolved', 'Package.swift') }}
+          restore-keys: |
+            build-${{ runner.os }}-${{ matrix.configuration }}-${{ matrix.architecture }}-
+            build-${{ runner.os }}-${{ matrix.configuration }}-
+            build-${{ runner.os }}-
+      
+      - name: 🏗️ Build for ${{ matrix.architecture }}
+        run: |
+          echo "Building for ${{ matrix.architecture }} in ${{ matrix.configuration }} mode..."
+          swift build --configuration ${{ matrix.configuration }} --arch ${{ matrix.architecture }}
+          echo "✅ Build successful"
+      
+      - name: 📋 Verify Binary
+        run: |
+          BINARY_PATH=$(swift build --configuration ${{ matrix.configuration }} --arch ${{ matrix.architecture }} --show-bin-path)/ClickIt
+          if [ -f "$BINARY_PATH" ]; then
+            echo "✅ Binary exists: $BINARY_PATH"
+            file "$BINARY_PATH"
+            lipo -info "$BINARY_PATH" 2>/dev/null || echo "Single architecture binary"
+          else
+            echo "❌ Binary not found at $BINARY_PATH"
+            exit 1
+          fi
+
+  # === Beta Release ===
+  beta_release:
+    name: 🚀 Beta Release
+    runs-on: macos-15
+    needs: [quality_checks, build_tests]
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'beta') && github.ref_name != ''
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      
+      - name: 💎 Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      
+      - name: 🔧 Install Fastlane Dependencies
+        run: |
+          bundle install
+          bundle exec fastlane install_plugins
+      
+      - name: 🏗️ Build App Bundle
+        run: |
+          ./build_app.sh release
+          echo "✅ App bundle created"
+      
+      - name: 📦 Create Release Assets
+        run: |
+          # Extract version from tag (e.g., beta-v1.0.0-20250713 -> 1.0.0)
+          TAG_NAME="${{ github.ref_name }}"
+          VERSION=$(echo "$TAG_NAME" | sed -n 's/beta-v\?\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+          if [ -z "$VERSION" ]; then
+            VERSION="1.0.0"
+          fi
+          
+          BETA_VERSION="${VERSION}-beta-$(git rev-parse --short HEAD)"
+          echo "BETA_VERSION=$BETA_VERSION" >> $GITHUB_ENV
+          
+          # Create ZIP
+          cd dist
+          zip -r "${APP_NAME}-${BETA_VERSION}.zip" "${APP_NAME}.app"
+          echo "✅ Created ZIP: ${APP_NAME}-${BETA_VERSION}.zip"
+      
+      - name: 📝 Generate Changelog
+        id: changelog
+        run: |
+          # Get previous tag for changelog
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ github.ref_name }}^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG="## What's New\n\nInitial release of ${{ env.APP_NAME }}!"
+          else
+            CHANGELOG="## What's New\n\n"
+            git log ${PREVIOUS_TAG}..${{ github.ref_name }} --oneline --no-merges | while read commit; do
+              commit_msg=$(echo "$commit" | cut -d' ' -f2-)
+              CHANGELOG="${CHANGELOG}- ${commit_msg}\n"
+            done
+          fi
+          
+          CHANGELOG="⚠️ **This is a beta release for testing purposes.**\n\n${CHANGELOG}"
+          CHANGELOG="${CHANGELOG}\n\n---\n🤖 Generated with [Claude Code](https://claude.ai/code)\n📱 Compatible with macOS 15.0 or later"
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: 🐙 Create GitHub Release
+        uses: ncipollo/create-release@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: "${{ env.APP_NAME }} ${{ env.BETA_VERSION }}"
+          body: ${{ steps.changelog.outputs.changelog }}
+          prerelease: true
+          artifacts: "dist/${{ env.APP_NAME }}-${{ env.BETA_VERSION }}.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # === Production Release ===
+  production_release:
+    name: 🚀 Production Release
+    runs-on: macos-15
+    needs: [quality_checks, build_tests]
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v') && github.ref_name != ''
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      
+      - name: 💎 Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      
+      - name: 🔧 Install Fastlane Dependencies
+        run: |
+          bundle install
+          bundle exec fastlane install_plugins
+      
+      - name: 🏗️ Build App Bundle
+        run: |
+          ./build_app.sh release
+          echo "✅ App bundle created"
+      
+      - name: 📦 Create Release Assets
+        run: |
+          # Extract version from tag (e.g., v1.0.0 -> 1.0.0)
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          
+          cd dist
+          
+          # Create ZIP
+          zip -r "${APP_NAME}-${VERSION}.zip" "${APP_NAME}.app"
+          echo "✅ Created ZIP: ${APP_NAME}-${VERSION}.zip"
+          
+          # Create DMG
+          hdiutil create -volname "${{ env.APP_NAME }}" -srcfolder "${APP_NAME}.app" -ov -format UDZO "${APP_NAME}-${VERSION}.dmg"
+          echo "✅ Created DMG: ${APP_NAME}-${VERSION}.dmg"
+      
+      - name: 📝 Generate Changelog
+        id: changelog
+        run: |
+          # Get previous tag for changelog
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ github.ref_name }}^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG="## What's New\n\nInitial release of ${{ env.APP_NAME }}!"
+          else
+            CHANGELOG="## What's New\n\n"
+            git log ${PREVIOUS_TAG}..${{ github.ref_name }} --oneline --no-merges | while read commit; do
+              commit_msg=$(echo "$commit" | cut -d' ' -f2-)
+              CHANGELOG="${CHANGELOG}- ${commit_msg}\n"
+            done
+          fi
+          
+          CHANGELOG="${CHANGELOG}\n\n---\n🤖 Generated with [Claude Code](https://claude.ai/code)\n📱 Compatible with macOS 15.0 or later"
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: 🐙 Create GitHub Release
+        uses: ncipollo/create-release@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: "${{ env.APP_NAME }} v${{ env.VERSION }}"
+          body: ${{ steps.changelog.outputs.changelog }}
+          prerelease: false
+          artifacts: |
+            dist/${{ env.APP_NAME }}-${{ env.VERSION }}.zip
+            dist/${{ env.APP_NAME }}-${{ env.VERSION }}.dmg
+          token: ${{ secrets.GITHUB_TOKEN }}
