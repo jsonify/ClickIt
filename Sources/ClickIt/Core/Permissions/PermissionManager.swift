@@ -18,7 +18,7 @@ class PermissionManager: ObservableObject {
     // MARK: - Permission Status Checking
     
     nonisolated func checkAccessibilityPermission() -> Bool {
-        return AXIsProcessTrustedWithOptions(nil)
+        AXIsProcessTrustedWithOptions(nil)
     }
     
     nonisolated func checkScreenRecordingPermission() -> Bool {

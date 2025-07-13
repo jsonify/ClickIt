@@ -4,7 +4,6 @@ import SwiftUI
 
 @MainActor
 class HotkeyManager: ObservableObject {
-    
     // MARK: - Singleton
     
     static let shared = HotkeyManager()
@@ -145,18 +144,11 @@ struct HotkeyConfiguration {
         modifiers: 0, // No modifiers for DELETE key
         description: "DELETE Key"
     )
-    
-    init(keyCode: UInt16, modifiers: UInt32, description: String) {
-        self.keyCode = keyCode
-        self.modifiers = modifiers
-        self.description = description
-    }
 }
 
 // MARK: - Common Hotkey Configurations
 
 extension HotkeyConfiguration {
-    
     static let deleteKey = HotkeyConfiguration(
         keyCode: 51, // DELETE key
         modifiers: 0,

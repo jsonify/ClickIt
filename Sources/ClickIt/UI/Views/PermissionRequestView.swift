@@ -195,7 +195,6 @@ struct PermissionRequestView: View {
         selectedPermission = permission
         showingDetailedInstructions = true
     }
-
 }
 
 // MARK: - Permission Row Component

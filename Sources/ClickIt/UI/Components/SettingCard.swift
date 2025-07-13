@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct SettingCard<Content: View>: View {

@@ -12,6 +12,7 @@ struct TargetPointSelectionCard: View {
     @ObservedObject var viewModel: ClickItViewModel
     @State private var isSelecting = false
     @State private var showingManualInput = false
+    @State private var showingTimerMode = false
     @State private var manualX: String = ""
     @State private var manualY: String = ""
     @State private var validationError: String?
@@ -77,40 +78,71 @@ struct TargetPointSelectionCard: View {
                     .cornerRadius(8)
                 }
                 
-                // Action Buttons
-                HStack(spacing: 12) {
-                    // Primary action button
-                    Button(action: startClickSelection) {
-                        HStack(spacing: 6) {
-                            Image(systemName: isSelecting ? "stop.circle" : "hand.tap")
-                                .font(.system(size: 14))
-                            Text(isSelecting ? "Cancel" : "Click to Set Point")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                // Show timer UI if countdown is active
+                if viewModel.isCountingDown {
+                    ActiveTimerView(viewModel: viewModel)
+                        .transition(.opacity)
+                } else if showingTimerMode {
+                    TimerConfigurationView(viewModel: viewModel)
+                        .transition(.opacity)
+                } else {
+                    // Action Buttons
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            // Primary action button
+                            Button(action: startClickSelection) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: isSelecting ? "stop.circle" : "hand.tap")
+                                        .font(.system(size: 14))
+                                    Text(isSelecting ? "Cancel" : "Click to Set Point")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 36)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(isSelecting)
+                            .tint(isSelecting ? .red : .blue)
+                            
+                            // Manual input button
+                            Button(action: { showingManualInput.toggle() }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "keyboard")
+                                        .font(.system(size: 14))
+                                    Text("Manual Input")
+                                        .font(.subheadline)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 36)
+                            }
+                            .buttonStyle(.bordered)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 36)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isSelecting)
-                    .tint(isSelecting ? .red : .blue)
-                    
-                    // Secondary action button
-                    Button(action: { showingManualInput.toggle() }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "keyboard")
-                                .font(.system(size: 14))
-                            Text("Manual Input")
-                                .font(.subheadline)
+                        
+                        // Timer mode button
+                        Button(action: { 
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showingTimerMode.toggle()
+                                showingManualInput = false // Close manual input if open
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 14))
+                                Text("Auto Click Timer")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 36)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 36)
+                        .buttonStyle(.bordered)
+                        .disabled(viewModel.timerIsActive)
                     }
-                    .buttonStyle(.bordered)
                 }
                 
                 // Manual input section
-                if showingManualInput {
+                if showingManualInput && !viewModel.isCountingDown && !showingTimerMode {
                     VStack(spacing: 12) {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -140,6 +172,7 @@ struct TargetPointSelectionCard: View {
                     .padding(12)
                     .background(Color.blue.opacity(0.1))
                     .cornerRadius(8)
+                    .transition(.opacity)
                 }
                 
                 // Validation error
@@ -162,6 +195,19 @@ struct TargetPointSelectionCard: View {
         .padding(16)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(12)
+        .onChange(of: viewModel.isCountingDown) { _, isCountingDown in
+            if isCountingDown {
+                // Hide other UI elements when timer starts
+                showingManualInput = false
+                showingTimerMode = false
+            }
+        }
+        .onChange(of: viewModel.timerMode) { _, mode in
+            if mode == .off {
+                // Reset timer UI state when timer mode is turned off
+                showingTimerMode = false
+            }
+        }
     }
     
     // MARK: - Private Methods

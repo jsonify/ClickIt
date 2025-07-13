@@ -1,9 +1,8 @@
-
 //
 //  TargetingSettings.swift
 //  ClickIt
 //
-//  Created by Jefry on 12/07/25.
+//  Created by Jefry on 12 / 07 / 25.
 //
 
 import SwiftUI

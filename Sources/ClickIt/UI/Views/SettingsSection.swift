@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 enum SettingsSection: String, CaseIterable {

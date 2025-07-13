@@ -5,7 +5,6 @@ import AppKit
 
 /// Specialized click engine for background clicking to specific applications
 class BackgroundClicker: @unchecked Sendable {
-    
     // MARK: - Properties
     
     /// Shared instance of the background clicker
@@ -36,7 +35,6 @@ class BackgroundClicker: @unchecked Sendable {
         location: CGPoint,
         clickType: ClickType = .left
     ) async -> ClickResult {
-        
         guard let pid = await getProcessID(for: bundleIdentifier) else {
             return ClickResult(
                 success: false,
@@ -66,7 +64,6 @@ class BackgroundClicker: @unchecked Sendable {
         location: CGPoint,
         clickType: ClickType = .left
     ) async -> ClickResult {
-        
         guard let pid = await getProcessID(for: processName) else {
             return ClickResult(
                 success: false,
@@ -96,7 +93,6 @@ class BackgroundClicker: @unchecked Sendable {
         relativeLocation: CGPoint,
         clickType: ClickType = .left
     ) async -> ClickResult {
-        
         // Convert relative location to absolute screen coordinates
         let absoluteLocation = CGPoint(
             x: windowInfo.bounds.origin.x + relativeLocation.x,
@@ -129,7 +125,7 @@ class BackgroundClicker: @unchecked Sendable {
     /// Gets all running applications that can be targeted
     /// - Returns: Dictionary of application names to process IDs
     func getRunningApplications() async -> [String: pid_t] {
-        return await withCheckedContinuation { continuation in
+        await withCheckedContinuation { continuation in
             backgroundQueue.async {
                 let runningApps = self.getAllRunningApplications()
                 continuation.resume(returning: runningApps)
@@ -176,7 +172,7 @@ class BackgroundClicker: @unchecked Sendable {
     /// - Parameter identifier: Bundle identifier or process name
     /// - Returns: Process ID if found, nil otherwise
     private func getProcessID(for identifier: String) async -> pid_t? {
-        return await withCheckedContinuation { continuation in
+        await withCheckedContinuation { continuation in
             backgroundQueue.async {
                 // Check cache first
                 if let cachedPID = self.getCachedProcessID(for: identifier) {
@@ -272,14 +268,13 @@ struct BackgroundClickOperation {
 // MARK: - Extensions
 
 extension BackgroundClicker {
-    
     /// Convenience method for left-clicking on an application
     /// - Parameters:
     ///   - bundleIdentifier: Bundle identifier of the target application
     ///   - location: Location to click
     /// - Returns: Result of the click operation
     func leftClickOnApp(bundleIdentifier: String, at location: CGPoint) async -> ClickResult {
-        return await clickOnApplication(bundleIdentifier: bundleIdentifier, location: location, clickType: .left)
+        await clickOnApplication(bundleIdentifier: bundleIdentifier, location: location, clickType: .left)
     }
     
     /// Convenience method for right-clicking on an application
@@ -288,6 +283,6 @@ extension BackgroundClicker {
     ///   - location: Location to click
     /// - Returns: Result of the click operation
     func rightClickOnApp(bundleIdentifier: String, at location: CGPoint) async -> ClickResult {
-        return await clickOnApplication(bundleIdentifier: bundleIdentifier, location: location, clickType: .right)
+        await clickOnApplication(bundleIdentifier: bundleIdentifier, location: location, clickType: .right)
     }
 }

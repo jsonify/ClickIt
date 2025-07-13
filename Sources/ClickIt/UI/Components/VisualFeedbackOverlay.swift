@@ -6,7 +6,6 @@ import SwiftUI
 /// Visual feedback overlay system for showing click points and automation status
 @MainActor
 class VisualFeedbackOverlay: ObservableObject {
-    
     // MARK: - Properties
     
     /// Shared instance of the visual feedback overlay
@@ -261,7 +260,6 @@ class VisualFeedbackOverlay: ObservableObject {
 
 /// View controller for managing the overlay visual content
 private class OverlayViewController: NSViewController {
-    
     /// Custom view for drawing the overlay graphics
     private var overlayView: OverlayDrawingView!
     
@@ -282,7 +280,6 @@ private class OverlayViewController: NSViewController {
 
 /// Custom NSView for drawing the visual feedback graphics
 private class OverlayDrawingView: NSView {
-    
     /// Whether automation is currently active (affects visual style)
     var isAutomationActive: Bool = false {
         didSet {

@@ -1,11 +1,11 @@
 import Foundation
 import CoreGraphics
 import Combine
+import AppKit
 
 /// High-level coordinator for click operations and automation
 @MainActor
 class ClickCoordinator: ObservableObject {
-    
     // MARK: - Properties
     
     /// Shared instance of the click coordinator
@@ -54,8 +54,15 @@ class ClickCoordinator: ObservableObject {
         
         // Show visual feedback overlay if enabled
         if configuration.showVisualFeedback {
-            print("ClickCoordinator: Starting automation with visual feedback at \(configuration.location)")
-            VisualFeedbackOverlay.shared.showOverlay(at: configuration.location, isActive: true)
+            if configuration.useDynamicMouseTracking {
+                print("ClickCoordinator: Starting dynamic automation with visual feedback")
+                // For dynamic mode, show overlay at current mouse position (in AppKit coordinates)
+                let currentAppKitPosition = NSEvent.mouseLocation
+                VisualFeedbackOverlay.shared.showOverlay(at: currentAppKitPosition, isActive: true)
+            } else {
+                print("ClickCoordinator: Starting fixed automation with visual feedback at \(configuration.location)")
+                VisualFeedbackOverlay.shared.showOverlay(at: configuration.location, isActive: true)
+            }
         } else {
             print("ClickCoordinator: Starting automation without visual feedback")
         }
@@ -158,13 +165,13 @@ class ClickCoordinator: ObservableObject {
     ///   - iterations: Number of test iterations
     /// - Returns: Precision test results
     func testClickPrecision(at location: CGPoint, iterations: Int = 50) async -> PrecisionTestResult {
-        return await ClickPrecisionTester.shared.testClickPrecision(at: location, iterations: iterations)
+        await ClickPrecisionTester.shared.testClickPrecision(at: location, iterations: iterations)
     }
     
     /// Runs a comprehensive system validation
     /// - Returns: System validation results
     func validateSystem() -> SystemValidationResult {
-        return ClickPrecisionTester.shared.validateSystemRequirements()
+        ClickPrecisionTester.shared.validateSystemRequirements()
     }
     
     /// Gets current session statistics
@@ -233,16 +240,41 @@ class ClickCoordinator: ObservableObject {
     /// - Parameter configuration: Automation configuration
     /// - Returns: Result of the automation step
     private func executeAutomationStep(configuration: AutomationConfiguration) async -> ClickResult {
+        let baseLocation: CGPoint
+        
+        if configuration.useDynamicMouseTracking {
+            // Get current mouse position dynamically and convert coordinate systems
+            baseLocation = await MainActor.run {
+                let appKitPosition = NSEvent.mouseLocation
+                print("[Dynamic Debug] Current mouse position (AppKit): \(appKitPosition)")
+                
+                // Convert from AppKit coordinates to CoreGraphics coordinates with multi-monitor support
+                let cgPosition = convertAppKitToCoreGraphicsMultiMonitor(appKitPosition)
+                print("[Dynamic Debug] Converted to CoreGraphics coordinates: \(cgPosition)")
+                return cgPosition
+            }
+        } else {
+            // Use the fixed configured location
+            baseLocation = configuration.location
+        }
+        
         let location = configuration.randomizeLocation ? 
-            randomizeLocation(base: configuration.location, variance: configuration.locationVariance) :
-            configuration.location
+            randomizeLocation(base: baseLocation, variance: configuration.locationVariance) :
+            baseLocation
         
-        print("ClickCoordinator: Executing automation step at \(location)")
+        print("ClickCoordinator: Executing automation step at \(location) (dynamic: \(configuration.useDynamicMouseTracking))")
         
-        // Update visual feedback overlay if enabled and location changed
-        if configuration.showVisualFeedback && location != configuration.location {
+        // Update visual feedback overlay if enabled
+        if configuration.showVisualFeedback {
             await MainActor.run {
-                VisualFeedbackOverlay.shared.updateOverlay(at: location, isActive: true)
+                if configuration.useDynamicMouseTracking {
+                    // Convert back to AppKit coordinates for overlay positioning
+                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
+                    print("[Dynamic Debug] Overlay position (AppKit): \(appKitLocation)")
+                    VisualFeedbackOverlay.shared.updateOverlay(at: appKitLocation, isActive: true)
+                } else {
+                    VisualFeedbackOverlay.shared.updateOverlay(at: location, isActive: true)
+                }
             }
         }
         
@@ -270,7 +302,13 @@ class ClickCoordinator: ObservableObject {
         // Show click pulse for successful clicks
         if configuration.showVisualFeedback && result.success {
             await MainActor.run {
-                VisualFeedbackOverlay.shared.showClickPulse(at: location)
+                if configuration.useDynamicMouseTracking {
+                    // Convert back to AppKit coordinates for pulse positioning
+                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
+                    VisualFeedbackOverlay.shared.showClickPulse(at: appKitLocation)
+                } else {
+                    VisualFeedbackOverlay.shared.showClickPulse(at: location)
+                }
             }
         }
         
@@ -321,6 +359,48 @@ class ClickCoordinator: ObservableObject {
         successRate = 1.0
         averageClickTime = 0
     }
+    
+    /// Converts AppKit coordinates to CoreGraphics coordinates for multi-monitor setups
+    private func convertAppKitToCoreGraphicsMultiMonitor(_ appKitPosition: CGPoint) -> CGPoint {
+        // Find which screen contains this point
+        for screen in NSScreen.screens {
+            if screen.frame.contains(appKitPosition) {
+                // Convert using the specific screen's coordinate system
+                let cgY = screen.frame.maxY - appKitPosition.y
+                let cgPosition = CGPoint(x: appKitPosition.x, y: cgY)
+                print("[Multi-Monitor Debug] AppKit \(appKitPosition) → CoreGraphics \(cgPosition) on screen \(screen.frame)")
+                return cgPosition
+            }
+        }
+        
+        // Fallback to main screen if no screen contains the point
+        let mainScreenHeight = NSScreen.main?.frame.height ?? 0
+        let fallbackPosition = CGPoint(x: appKitPosition.x, y: mainScreenHeight - appKitPosition.y)
+        print("[Multi-Monitor Debug] Fallback conversion: AppKit \(appKitPosition) → CoreGraphics \(fallbackPosition)")
+        return fallbackPosition
+    }
+    
+    /// Converts CoreGraphics coordinates back to AppKit coordinates for multi-monitor setups
+    private func convertCoreGraphicsToAppKitMultiMonitor(_ cgPosition: CGPoint) -> CGPoint {
+        // Find which screen this CoreGraphics position would map to
+        // This is a reverse lookup - we need to find the screen that would contain the original AppKit position
+        for screen in NSScreen.screens {
+            // Check if this position could have come from this screen
+            let potentialAppKitY = screen.frame.maxY - cgPosition.y
+            let potentialAppKitPosition = CGPoint(x: cgPosition.x, y: potentialAppKitY)
+            
+            if screen.frame.contains(potentialAppKitPosition) {
+                print("[Multi-Monitor Debug] CoreGraphics \(cgPosition) → AppKit \(potentialAppKitPosition) on screen \(screen.frame)")
+                return potentialAppKitPosition
+            }
+        }
+        
+        // Fallback to main screen conversion
+        let mainScreenHeight = NSScreen.main?.frame.height ?? 0
+        let fallbackPosition = CGPoint(x: cgPosition.x, y: mainScreenHeight - cgPosition.y)
+        print("[Multi-Monitor Debug] Fallback reverse conversion: CoreGraphics \(cgPosition) → AppKit \(fallbackPosition)")
+        return fallbackPosition
+    }
 }
 
 // MARK: - Supporting Types
@@ -337,6 +417,7 @@ struct AutomationConfiguration {
     let randomizeLocation: Bool
     let locationVariance: CGFloat
     let showVisualFeedback: Bool
+    let useDynamicMouseTracking: Bool
     
     init(
         location: CGPoint,
@@ -348,7 +429,8 @@ struct AutomationConfiguration {
         stopOnError: Bool = false,
         randomizeLocation: Bool = false,
         locationVariance: CGFloat = 0,
-        showVisualFeedback: Bool = true
+        showVisualFeedback: Bool = true,
+        useDynamicMouseTracking: Bool = false
     ) {
         self.location = location
         self.clickType = clickType
@@ -360,6 +442,7 @@ struct AutomationConfiguration {
         self.randomizeLocation = randomizeLocation
         self.locationVariance = locationVariance
         self.showVisualFeedback = showVisualFeedback
+        self.useDynamicMouseTracking = useDynamicMouseTracking
     }
 }
 
@@ -378,7 +461,6 @@ struct SessionStatistics {
 // MARK: - Extensions
 
 extension ClickCoordinator {
-    
     /// Convenience method for starting simple click automation
     /// - Parameters:
     ///   - location: Location to click
@@ -390,7 +472,8 @@ extension ClickCoordinator {
             location: location,
             clickInterval: interval,
             maxClicks: maxClicks,
-            showVisualFeedback: showVisualFeedback
+            showVisualFeedback: showVisualFeedback,
+            useDynamicMouseTracking: false
         )
         startAutomation(with: config)
     }
@@ -415,7 +498,8 @@ extension ClickCoordinator {
             maxClicks: maxClicks,
             randomizeLocation: true,
             locationVariance: variance,
-            showVisualFeedback: showVisualFeedback
+            showVisualFeedback: showVisualFeedback,
+            useDynamicMouseTracking: false
         )
         startAutomation(with: config)
     }

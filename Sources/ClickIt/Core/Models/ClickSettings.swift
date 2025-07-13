@@ -5,7 +5,6 @@ import Combine
 /// Configuration settings for click automation
 @MainActor
 class ClickSettings: ObservableObject {
-
     // MARK: - Published Properties
 
     /// Click interval in milliseconds
@@ -19,7 +18,7 @@ class ClickSettings: ObservableObject {
     /// Clicks per second (computed property)
     var clicksPerSecond: Double {
         get {
-            return 1000.0 / clickIntervalMs
+            1000.0 / clickIntervalMs
         }
         set {
             let newValue = max(1.0, min(100.0, newValue)) // Clamp between 1-100 CPS
