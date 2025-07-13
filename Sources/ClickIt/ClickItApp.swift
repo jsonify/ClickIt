@@ -33,16 +33,26 @@ struct ClickItApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(permissionManager)
-                .environmentObject(hotkeyManager)
-                .onAppear {
-                    // Additional window activation
-                    if let window = NSApp.windows.first {
-                        window.makeKeyAndOrderFront(nil)
-                        window.orderFrontRegardless()
-                    }
+            Group {
+                if permissionManager.allPermissionsGranted {
+                    ContentView()
+                        .environmentObject(permissionManager)
+                        .environmentObject(hotkeyManager)
+                } else {
+                    PermissionsGateView()
+                        .environmentObject(permissionManager)
                 }
+            }
+            .onAppear {
+                // Additional window activation
+                if let window = NSApp.windows.first {
+                    window.makeKeyAndOrderFront(nil)
+                    window.orderFrontRegardless()
+                }
+                
+                // Start permission monitoring
+                permissionManager.startPermissionMonitoring()
+            }
         }
         .windowResizability(.contentSize)
         .defaultSize(width: 500, height: 800)
