@@ -148,9 +148,9 @@ struct ContentView: View {
         .frame(width: 500, height: 800)
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
+            // Permission monitoring is now started in ClickItApp.swift
+            // Just update the status when this view appears
             permissionManager.updatePermissionStatus()
-            // Start monitoring for permission changes
-            permissionManager.startPermissionMonitoring()
         }
         .sheet(isPresented: $showingPermissionSetup) {
             PermissionRequestView()
