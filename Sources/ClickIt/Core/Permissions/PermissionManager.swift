@@ -107,13 +107,23 @@ class PermissionManager: ObservableObject {
         NSWorkspace.shared.open(url)
     }
     
+    private var monitoringTimer: Timer?
+    
     func startPermissionMonitoring() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            // Safer permission update without extra Task wrapping
-            DispatchQueue.main.async {
+        // Avoid multiple timers
+        stopPermissionMonitoring()
+        
+        // Since we're already on @MainActor, no need for DispatchQueue.main.async
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
                 self?.updatePermissionStatus()
             }
         }
+    }
+    
+    func stopPermissionMonitoring() {
+        monitoringTimer?.invalidate()
+        monitoringTimer = nil
     }
     
     func getPermissionDescription(for permission: PermissionType) -> String {

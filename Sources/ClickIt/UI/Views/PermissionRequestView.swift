@@ -2,7 +2,6 @@ import SwiftUI
 
 struct PermissionRequestView: View {
     @EnvironmentObject private var permissionManager: PermissionManager
-    @ObservedObject private var statusChecker = PermissionStatusChecker.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showingDetailedInstructions = false
     @State private var selectedPermission: PermissionType?
@@ -97,7 +96,7 @@ struct PermissionRequestView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
 
-                    Text("Last checked: \(statusChecker.lastStatusUpdate.formatted(.dateTime.hour().minute().second()))")
+                    Text("Last checked: \(Date().formatted(.dateTime.hour().minute().second()))")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -107,11 +106,11 @@ struct PermissionRequestView: View {
         .padding()
         .frame(maxWidth: 500)
         .onAppear {
-            statusChecker.startMonitoring()
+            permissionManager.startPermissionMonitoring()
             permissionManager.updatePermissionStatus()
         }
         .onDisappear {
-            statusChecker.stopMonitoring()
+            permissionManager.stopPermissionMonitoring()
         }
         .sheet(isPresented: $showingDetailedInstructions) {
             PermissionInstructionsView(permission: selectedPermission)
