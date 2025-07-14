@@ -118,3 +118,8 @@ Then you can use any of the configured lanes:
 - `fastlane info` - Display app bundle information
 
 The Fastlane setup integrates with existing build scripts and adds automation conveniences.
+
+For detailed usage instructions, workflows, and troubleshooting, see: **[docs/fastlane-guide.md](docs/fastlane-guide.md)**
+
+## Documentation
+- `docs/fastlane-guide.md` - Comprehensive Fastlane user guide with workflows and troubleshooting
