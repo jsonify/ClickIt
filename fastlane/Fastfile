@@ -1,0 +1,142 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#     https://docs.fastlane.tools/actions
+#
+
+default_platform(:mac)
+
+platform :mac do
+  desc "Build ClickIt app (Debug)"
+  lane :build_debug do
+    sh("../build_app_unified.sh debug")
+    UI.success("Debug build completed! 🎉")
+    UI.message("App location: dist/ClickIt.app")
+  end
+
+  desc "Build ClickIt app (Release)"
+  lane :build_release do
+    sh("../build_app_unified.sh release")
+    UI.success("Release build completed! 🚀")
+    UI.message("App location: dist/ClickIt.app")
+  end
+
+  desc "Build and run ClickIt app"
+  lane :run do
+    build_debug
+    sh("../run_clickit_unified.sh app")
+    UI.success("ClickIt launched! 🖱️")
+  end
+
+  desc "Clean build artifacts"
+  lane :clean do
+    UI.message("Cleaning build artifacts...")
+    sh("rm -rf ../dist/*")
+    sh("rm -rf ~/Library/Developer/Xcode/DerivedData/ClickIt-*") rescue nil
+    UI.success("Clean completed! 🧹")
+  end
+
+  desc "Verify code signing status"
+  lane :verify_signing do
+    app_path = "../dist/ClickIt.app"
+    
+    if File.exist?(app_path)
+      UI.message("Checking code signing status...")
+      
+      begin
+        sh("codesign --verify --verbose '#{app_path}'")
+        UI.success("✅ App is properly code signed")
+      rescue
+        UI.important("⚠️  App is not code signed or signature is invalid")
+      end
+      
+      # Show certificate info
+      begin
+        result = sh("codesign -dv '#{app_path}' 2>&1", log: false)
+        UI.message("Code signing details:")
+        UI.message(result)
+      rescue
+        UI.error("Could not retrieve signing details")
+      end
+    else
+      UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
+    end
+  end
+
+  desc "Show app bundle information"
+  lane :info do
+    app_path = "../dist/ClickIt.app"
+    
+    if File.exist?(app_path)
+      UI.header("ClickIt App Bundle Information")
+      
+      # App size
+      size = sh("du -sh '#{app_path}' | cut -f1", log: false).strip
+      UI.message("📦 Bundle size: #{size}")
+      
+      # Version info from Info.plist
+      begin
+        version = sh("plutil -extract CFBundleShortVersionString xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
+        build = sh("plutil -extract CFBundleVersion xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
+        UI.message("🏷️  Version: #{version} (#{build})")
+      rescue
+        UI.message("Could not read version information")
+      end
+      
+      # Architectures
+      begin
+        archs = sh("lipo -info '#{app_path}/Contents/MacOS/ClickIt' 2>/dev/null || file '#{app_path}/Contents/MacOS/ClickIt'", log: false)
+        UI.message("🏗️  Architecture: #{archs.strip}")
+      rescue
+        UI.message("Could not determine architecture")
+      end
+      
+      # Permissions check
+      UI.message("🔒 Required permissions:")
+      UI.message("   • Accessibility (for mouse events)")
+      UI.message("   • Screen Recording (for window detection)")
+    else
+      UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
+    end
+  end
+
+  desc "Full release workflow"
+  lane :release do
+    UI.header("Starting ClickIt Release Workflow")
+    
+    # Clean first
+    clean
+    
+    # Build release version
+    build_release
+    
+    # Verify signing
+    verify_signing
+    
+    # Show final info
+    info
+    
+    UI.success("🎉 Release workflow completed!")
+    UI.message("Your app is ready at: dist/ClickIt.app")
+    UI.message("Next steps:")
+    UI.message("  • Test the app thoroughly")
+    UI.message("  • Consider notarization for distribution")
+    UI.message("  • Package into DMG if needed")
+  end
+
+  desc "Development workflow"
+  lane :dev do
+    UI.header("Starting ClickIt Development Workflow")
+    
+    # Build debug and run
+    run
+    
+    UI.success("Development session started! 🛠️")
+    UI.message("The app should now be running")
+  end
+
+  error do |lane, exception|
+    UI.error("❌ Lane '#{lane}' failed with error: #{exception.message}")
+  end
+end
