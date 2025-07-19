@@ -10,6 +10,7 @@ import SwiftUI
 
 struct StatusHeaderCard: View {
     @ObservedObject var viewModel: ClickItViewModel
+    @ObservedObject var timeManager: ElapsedTimeManager = ElapsedTimeManager.shared
     
     var body: some View {
         VStack(spacing: 16) {
@@ -53,10 +54,9 @@ struct StatusHeaderCard: View {
                     icon: "cursorarrow.click"
                 )
                 
-                StatisticView(
-                    title: "Elapsed",
-                    value: viewModel.statistics?.formattedDuration ?? "00:00",
-                    icon: "clock"
+                ElapsedTimeStatisticView(
+                    timeManager: timeManager,
+                    fallbackStatistics: viewModel.statistics
                 )
                 
                 StatisticView(

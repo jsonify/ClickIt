@@ -19,10 +19,12 @@ class ClickCoordinator: ObservableObject {
     @Published var successRate: Double = 1.0
     @Published var averageClickTime: TimeInterval = 0
     
-    /// Elapsed time since automation started
+    /// Elapsed time manager for real-time tracking
+    private let timeManager = ElapsedTimeManager.shared
+    
+    /// Elapsed time since automation started (legacy compatibility)
     var elapsedTime: TimeInterval {
-        guard isActive && sessionStartTime > 0 else { return 0 }
-        return CFAbsoluteTimeGetCurrent() - sessionStartTime
+        return timeManager.currentSessionTime
     }
     
     /// Current automation configuration
@@ -51,6 +53,9 @@ class ClickCoordinator: ObservableObject {
         automationConfig = configuration
         isActive = true
         resetStatistics()
+        
+        // Start real-time elapsed time tracking
+        timeManager.startTracking()
         
         // Show visual feedback overlay if enabled
         if configuration.showVisualFeedback {
@@ -85,6 +90,9 @@ class ClickCoordinator: ObservableObject {
         isActive = false
         automationTask?.cancel()
         automationTask = nil
+        
+        // Stop real-time elapsed time tracking
+        timeManager.stopTracking()
         
         // Hide visual feedback overlay immediately
         print("ClickCoordinator: About to hide visual feedback overlay")
