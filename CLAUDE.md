@@ -15,9 +15,21 @@ ClickIt is a native macOS auto-clicker application built with Swift Package Mana
 - Preset configuration system
 - Visual feedback with overlay indicators
 
-## Development Commands
+## Build and Development Commands
 
-### Building & Testing
+### Primary Development Workflow
+- **Build app**: `./build_app_unified.sh` (auto-detects Xcode project, builds release version)
+- **Build debug**: `./build_app_unified.sh debug`
+- **Run app**: `./run_clickit_unified.sh` (auto-detects best run method)
+- **Open in Xcode**: `open ClickIt.xcodeproj`
+
+### Alternative Build Methods
+- **Force Xcode build**: `./build_app_unified.sh release xcode`
+- **Force SPM build**: `./build_app_unified.sh release spm`
+- **Run from app bundle**: `./run_clickit_unified.sh app`
+- **Run with Xcode**: `./run_clickit_unified.sh xcode`
+
+### Traditional Swift Package Manager Commands
 ```bash
 # Build the project
 swift build
@@ -43,6 +55,23 @@ swift package resolve
 # Clean build artifacts
 swift package clean
 ```
+
+### Fastlane Automation
+- **Build debug**: `fastlane build_debug`
+- **Build release**: `fastlane build_release`
+- **Build and run**: `fastlane run`
+- **Clean builds**: `fastlane clean`
+- **Verify code signing**: `fastlane verify_signing`
+- **App info**: `fastlane info`
+- **Full release workflow**: `fastlane release`
+- **Development workflow**: `fastlane dev`
+
+### Development Notes
+- Project supports both Xcode and Swift Package Manager workflows
+- Xcode project is primary development environment
+- Built apps are placed in `dist/` directory
+- No traditional test suite - testing is done through the UI and manual validation
+- Fastlane provides automation lanes that wrap existing build scripts
 
 ## Architecture Overview
 
@@ -202,3 +231,26 @@ echo 'export CODE_SIGN_IDENTITY="Apple Development: Your Name (TEAM_ID)"' >> ~/.
 - Implementation plan: `docs/issue1_implementation_plan.md`
 - Task tracking: `docs/autoclicker_tasks.md`
 - GitHub issues: `docs/github_issues_list.md`
+
+## Fastlane Setup
+To use Fastlane automation, first install it:
+```bash
+# Install via Homebrew (recommended)
+brew install fastlane
+
+# Or install via gem
+gem install fastlane
+```
+
+Then you can use any of the configured lanes:
+- `fastlane dev` - Quick development workflow (build debug + run)
+- `fastlane release` - Full release workflow (clean + build + verify + info)
+- `fastlane build_debug` - Build debug version
+- `fastlane build_release` - Build release version
+- `fastlane clean` - Clean build artifacts
+- `fastlane verify_signing` - Check code signing status
+- `fastlane info` - Display app bundle information
+
+The Fastlane setup integrates with existing build scripts and adds automation conveniences.
+
+For detailed usage instructions, workflows, and troubleshooting, see: **[docs/fastlane-guide.md](docs/fastlane-guide.md)**

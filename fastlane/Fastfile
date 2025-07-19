@@ -1,8 +1,6 @@
 # ClickIt Fastlane Configuration
-# Adapted from macos-auto-clicker-main for Swift Package Manager architecture
-
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
 
 default_platform(:mac)
 
@@ -10,254 +8,150 @@ default_platform(:mac)
 APP_NAME = "ClickIt"
 BUNDLE_ID = "com.jsonify.clickit"
 DIST_DIR = "dist"
-BUILD_MODE = "release"
 
-# Platform: macOS
 platform :mac do
-  # === Local Development Build ===
+  desc "Build ClickIt app (Debug)"
+  lane :build_debug do
+    sh("../build_app_unified.sh debug")
+    UI.success("Debug build completed! 🎉")
+    UI.message("App location: dist/ClickIt.app")
+  end
+
+  desc "Build ClickIt app (Release)"
+  lane :build_release do
+    sh("../build_app_unified.sh release")
+    UI.success("Release build completed! 🚀")
+    UI.message("App location: dist/ClickIt.app")
+  end
+
+  desc "Build and run ClickIt app"
+  lane :run do
+    build_debug
+    sh("../run_clickit_unified.sh app")
+    UI.success("ClickIt launched! 🖱️")
+  end
+
+  desc "Clean build artifacts"
+  lane :clean do
+    UI.message("Cleaning build artifacts...")
+    sh("rm -rf ../dist/*")
+    sh("rm -rf ~/Library/Developer/Xcode/DerivedData/ClickIt-*") rescue nil
+    UI.success("Clean completed! 🧹")
+  end
+
+  desc "Verify code signing status"
+  lane :verify_signing do
+    app_path = "../dist/ClickIt.app"
+    
+    if File.exist?(app_path)
+      UI.message("Checking code signing status...")
+      
+      begin
+        sh("codesign --verify --verbose '#{app_path}'")
+        UI.success("✅ App is properly code signed")
+      rescue
+        UI.important("⚠️  App is not code signed or signature is invalid")
+      end
+      
+      # Show certificate info
+      begin
+        result = sh("codesign -dv '#{app_path}' 2>&1", log: false)
+        UI.message("Code signing details:")
+        UI.message(result)
+      rescue
+        UI.error("Could not retrieve signing details")
+      end
+    else
+      UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
+    end
+  end
+
+  desc "Show app bundle information"
+  lane :info do
+    app_path = "../dist/ClickIt.app"
+    
+    if File.exist?(app_path)
+      UI.header("ClickIt App Bundle Information")
+      
+      # App size
+      size = sh("du -sh '#{app_path}' | cut -f1", log: false).strip
+      UI.message("📦 Bundle size: #{size}")
+      
+      # Version info from Info.plist
+      begin
+        version = sh("plutil -extract CFBundleShortVersionString xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
+        build = sh("plutil -extract CFBundleVersion xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
+        UI.message("🏷️  Version: #{version} (#{build})")
+      rescue
+        UI.message("Could not read version information")
+      end
+      
+      # Architectures
+      begin
+        archs = sh("lipo -info '#{app_path}/Contents/MacOS/ClickIt' 2>/dev/null || file '#{app_path}/Contents/MacOS/ClickIt'", log: false)
+        UI.message("🏗️  Architecture: #{archs.strip}")
+      rescue
+        UI.message("Could not determine architecture")
+      end
+      
+      # Permissions check
+      UI.message("🔒 Required permissions:")
+      UI.message("   • Accessibility (for mouse events)")
+      UI.message("   • Screen Recording (for window detection)")
+    else
+      UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
+    end
+  end
+
+  desc "Full release workflow"
+  lane :release do
+    UI.header("Starting ClickIt Release Workflow")
+    
+    # Clean first
+    clean
+    
+    # Build release version
+    build_release
+    
+    # Verify signing
+    verify_signing
+    
+    # Show final info
+    info
+    
+    UI.success("🎉 Release workflow completed!")
+    UI.message("Your app is ready at: dist/ClickIt.app")
+    UI.message("Next steps:")
+    UI.message("  • Test the app thoroughly")
+    UI.message("  • Consider notarization for distribution")
+    UI.message("  • Package into DMG if needed")
+  end
+
+  desc "Development workflow"
+  lane :dev do
+    UI.header("Starting ClickIt Development Workflow")
+    
+    # Build debug and run
+    run
+    
+    UI.success("Development session started! 🛠️")
+    UI.message("The app should now be running")
+  end
+
+  # Advanced release lanes for future use
   desc "Build ClickIt for local development and testing"
   lane :local do
     UI.header "🔨 Building ClickIt for Local Development"
     
-    # Ensure we have a clean environment
-    ensure_git_status_clean unless ENV['SKIP_GIT_STATUS_CHECK']
-    
-    # Run tests first
-    run_tests
-    
-    # Run linting
-    run_swiftlint
-    
     # Build the app bundle
-    build_app_bundle(mode: BUILD_MODE)
+    build_release
     
     UI.success "✅ Local build complete!"
     UI.message "📂 Location: #{DIST_DIR}/#{APP_NAME}.app"
     UI.message "🚀 Launch with: open \"#{DIST_DIR}/#{APP_NAME}.app\""
   end
 
-  # === Beta Release ===
-  desc "Create a beta release for testing"
-  lane :beta do
-    UI.header "🚀 Creating Beta Release"
-    
-    # Ensure we're on the correct branch
-    ensure_git_branch(branch: 'staging')
-    
-    # Get current git information
-    current_tag = sh("git describe --exact-match --tags HEAD 2>/dev/null || echo ''").strip
-    current_hash = sh("git rev-parse --short HEAD").strip
-    
-    # Verify beta tag pattern
-    unless current_tag.start_with?('beta')
-      UI.user_error! "❌ Beta release requires a git tag matching 'beta*' pattern. Current tag: #{current_tag}"
-    end
-    
-    # Extract version from tag (e.g., beta-v1.0.0-20250713 -> 1.0.0)
-    version = current_tag.match(/beta-v?(\d+\.\d+\.\d+)/)[1] rescue "1.0.0"
-    beta_version = "#{version}-beta-#{current_hash}"
-    
-    UI.message "📦 Beta Version: #{beta_version}"
-    
-    # Run comprehensive checks
-    run_tests
-    run_swiftlint
-    
-    # Build the release
-    build_app_bundle(mode: BUILD_MODE, version: beta_version)
-    
-    # Create release assets
-    create_release_assets(version: beta_version, is_beta: true)
-    
-    # Create GitHub release
-    create_github_release(
-      tag_name: current_tag,
-      name: "#{APP_NAME} #{beta_version}",
-      body: generate_changelog(is_beta: true),
-      is_prerelease: true,
-      upload_assets: ["#{DIST_DIR}/#{APP_NAME}-#{beta_version}.zip"]
-    )
-    
-    UI.success "🎉 Beta release #{beta_version} created successfully!"
+  error do |lane, exception|
+    UI.error("❌ Lane '#{lane}' failed with error: #{exception.message}")
   end
-
-  # === Production Release ===
-  desc "Create a production release"
-  lane :production do
-    UI.header "🚀 Creating Production Release"
-    
-    # Ensure we're on the correct branch
-    ensure_git_branch(branch: 'main')
-    
-    # Get current git information
-    current_tag = sh("git describe --exact-match --tags HEAD 2>/dev/null || echo ''").strip
-    current_hash = sh("git rev-parse --short HEAD").strip
-    
-    # Verify production tag pattern
-    unless current_tag.match(/^v\d+\.\d+\.\d+/)
-      UI.user_error! "❌ Production release requires a git tag matching 'v*' pattern. Current tag: #{current_tag}"
-    end
-    
-    # Extract version from tag (e.g., v1.0.0 -> 1.0.0)
-    version = current_tag.sub(/^v/, '')
-    
-    UI.message "📦 Production Version: #{version}"
-    
-    # Run comprehensive checks
-    run_tests
-    run_swiftlint
-    
-    # Verify no uncommitted changes
-    ensure_git_status_clean
-    
-    # Build the release
-    build_app_bundle(mode: BUILD_MODE, version: version)
-    
-    # Create release assets
-    create_release_assets(version: version, is_beta: false)
-    
-    # Create GitHub release
-    create_github_release(
-      tag_name: current_tag,
-      name: "#{APP_NAME} v#{version}",
-      body: generate_changelog(is_beta: false),
-      is_prerelease: false,
-      upload_assets: [
-        "#{DIST_DIR}/#{APP_NAME}-#{version}.zip",
-        "#{DIST_DIR}/#{APP_NAME}-#{version}.dmg"
-      ]
-    )
-    
-    UI.success "🎉 Production release v#{version} created successfully!"
-  end
-
-  # === Helper Actions ===
-
-  private_lane :run_tests do
-    UI.message "🧪 Running Swift tests..."
-    sh("cd .. && swift test")
-    UI.success "✅ All tests passed"
-  rescue => ex
-    UI.error "❌ Tests failed: #{ex.message}"
-    raise ex
-  end
-
-  private_lane :run_swiftlint do
-    UI.message "🔍 Running SwiftLint..."
-    begin
-      sh("cd .. && swiftlint lint --strict")
-      UI.success "✅ Linting passed"
-    rescue => ex
-      UI.error "❌ SwiftLint failed: #{ex.message}"
-      raise ex
-    end
-  end
-
-  private_lane :build_app_bundle do |options|
-    mode = options[:mode] || BUILD_MODE
-    version = options[:version] || "1.0.0"
-    
-    UI.message "🔨 Building app bundle (#{mode} mode, version #{version})..."
-    
-    # Use our existing build script but pass version info
-    ENV['BUILD_VERSION'] = version
-    sh("cd .. && ./build_app.sh #{mode}")
-    
-    UI.success "✅ App bundle created successfully"
-  end
-
-  private_lane :create_release_assets do |options|
-    version = options[:version]
-    is_beta = options[:is_beta] || false
-    
-    UI.message "📦 Creating release assets..."
-    
-    app_bundle = "#{DIST_DIR}/#{APP_NAME}.app"
-    zip_name = "#{APP_NAME}-#{version}.zip"
-    zip_path = "#{DIST_DIR}/#{zip_name}"
-    
-    # Create ZIP archive
-    sh("cd .. && cd #{DIST_DIR} && zip -r \"#{zip_name}\" \"#{APP_NAME}.app\"")
-    UI.message "✅ Created ZIP: #{zip_path}"
-    
-    # Create DMG for production releases
-    unless is_beta
-      dmg_name = "#{APP_NAME}-#{version}.dmg"
-      dmg_path = "#{DIST_DIR}/#{dmg_name}"
-      
-      # Create a simple DMG (can be enhanced later with custom styling)
-      sh("cd .. && hdiutil create -volname \"#{APP_NAME}\" -srcfolder \"#{app_bundle}\" -ov -format UDZO \"#{dmg_path}\"")
-      UI.message "✅ Created DMG: #{dmg_path}"
-    end
-  end
-
-  private_lane :generate_changelog do |options|
-    is_beta = options[:is_beta] || false
-    
-    # For now, generate a simple changelog
-    # TODO: Implement semantic release plugin for automatic changelog generation
-    current_tag = sh("git describe --exact-match --tags HEAD 2>/dev/null || echo ''").strip
-    previous_tag = sh("git describe --tags --abbrev=0 #{current_tag}^ 2>/dev/null || echo ''").strip
-    
-    if previous_tag.empty?
-      changelog = "## What's New\n\nInitial release of #{APP_NAME}!"
-    else
-      # Get commits between tags
-      commits = sh("git log #{previous_tag}..#{current_tag} --oneline --no-merges").strip
-      
-      if commits.empty?
-        changelog = "## What's New\n\nMinor updates and improvements."
-      else
-        changelog = "## What's New\n\n"
-        commits.split("\n").each do |commit|
-          # Simple commit formatting (can be enhanced with conventional commits)
-          commit_msg = commit.split(" ", 2)[1] || ""
-          changelog += "- #{commit_msg}\n"
-        end
-      end
-    end
-    
-    # Add beta warning if applicable
-    if is_beta
-      changelog = "⚠️ **This is a beta release for testing purposes.**\n\n#{changelog}"
-    end
-    
-    changelog += "\n\n---\n"
-    changelog += "🤖 Generated with [Claude Code](https://claude.ai/code)\n"
-    changelog += "📱 Compatible with macOS 15.0 or later\n"
-    
-    changelog
-  end
-
-  private_lane :create_github_release do |options|
-    UI.message "🐙 Creating GitHub release..."
-    
-    # For now, this is a placeholder - requires GitHub token and release creation
-    # TODO: Implement proper GitHub release creation with octokit or gh CLI
-    UI.message "📋 Release Details:"
-    UI.message "   Tag: #{options[:tag_name]}"
-    UI.message "   Name: #{options[:name]}"
-    UI.message "   Prerelease: #{options[:is_prerelease]}"
-    UI.message "   Assets: #{options[:upload_assets]}"
-    
-    UI.important "⚠️ GitHub release creation not yet implemented."
-    UI.message "💡 Manually create release at: https://github.com/YOUR_USERNAME/clickit/releases/new"
-    UI.message "📝 Use the following changelog:"
-    puts options[:body]
-  end
-end
-
-# === Error Handling ===
-error do |lane, exception|
-  UI.error "❌ Lane #{lane} failed with: #{exception.message}"
-  
-  # Add notification or cleanup logic here
-  # e.g., Slack notifications, cleanup temporary files, etc.
-end
-
-# === Post-actions ===
-after_all do |lane|
-  UI.success "🎉 Lane #{lane} completed successfully!"
-  
-  # Add success notifications here if needed
 end

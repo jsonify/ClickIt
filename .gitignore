@@ -6,35 +6,96 @@
 *.xcworkspace/*
 !*.xcworkspace/contents.xcworkspacedata
 *.swiftpm/xcode/
-.DS_Store
-build/
+
+# User-specific files
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# Xcode build files
 DerivedData/
-*.hmap
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.hmap
+
+# Xcode workspaces
+*.xcworkspace/xcuserdata/
+
+# Build directories
+build/
+Build/
 
 # CocoaPods
 Pods/
-*.xcworkspace
 
 # Swift Package Manager
 .build/
 Packages/
 Package.resolved
-*.xcodeproj
+
+# App bundles and distribution
+dist/
+*.app
+*.pkg
+*.dmg
+
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*~
+*.tmp
+*.swp
+*.swo
+*.bak
+
+# Archives
+*.zip
+*.tar.gz
+*.tar
+*.rar
+
+# Code signing and certificates
+*.p12
+*.mobileprovision
+*.certSigningRequest
 
 # Fastlane
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots
+fastlane/screenshots/**/*.png
 fastlane/test_output
 
-# Code coverage
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+id_rsa*
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+logs/
+
+# Development artifacts
+xcov_output/
+slather_output/
 *.gcov
 *.gcda
 *.gcno
-.vscode/launch.json
-ClickIt.app/Contents/MacOS/ClickIt
-dist/
-.env

@@ -33,69 +33,93 @@ A lightweight, native macOS Auto-Clicker application with precision timing and a
 
 ## Development
 
-This project is organized into milestones tracking the development progress. Check the Issues tab for current development tasks and project roadmap.
+This project supports both Xcode and Swift Package Manager workflows for flexible development.
 
-### Building from Source
+### Quick Start
 
-#### Prerequisites
+#### 🎯 **For Development**
+```bash
+# Open in Xcode for development
+open ClickIt.xcodeproj
+```
+
+#### 🏗️ **For Building and Running**
+```bash
+# Build (auto-detects best method)
+./build_app_unified.sh
+
+# Run the built app
+./run_clickit_unified.sh
+
+# Or run directly with Xcode
+./run_clickit_unified.sh xcode
+```
+
+### Prerequisites
 - Xcode 15.0 or later
 - Swift 5.9 or later
 - macOS 15.0 or later
 
-#### Quick Start
+### Build Commands
+
+#### Unified Build System
 ```bash
-# Clone the repository
-git clone https://github.com/jsonify/clickit.git
-cd clickit
-
-# Build and run for development
-swift run
-
-# Or build the app bundle
-./build_app.sh
+./build_app_unified.sh              # Build release version
+./build_app_unified.sh debug        # Build debug version  
+./build_app_unified.sh release xcode # Force Xcode build system
 ```
 
-#### Build Commands
-
-**Development Build:**
+#### Traditional Swift Package Manager
 ```bash
 # Build for current architecture (debug)
 swift build
 
 # Run directly
 swift run
+
+# Build for release
+swift build -c release
 ```
 
-**Distribution Build:**
+#### Legacy Build System
 ```bash
 # Create universal app bundle (Intel + Apple Silicon)
 ./build_app.sh
 
 # Create debug app bundle
 ./build_app.sh debug
-
-# Launch the built app
-open dist/ClickIt.app
 ```
 
-#### Build Output Structure
+### Run Commands  
+```bash
+./run_clickit_unified.sh            # Auto-detect best run method
+./run_clickit_unified.sh app        # Run from dist/ClickIt.app
+./run_clickit_unified.sh xcode      # Build and run with Xcode
+```
+
+### Development Workflow
+1. **Daily Development**: Use Xcode for coding, debugging, and testing
+2. **Release Builds**: Use `./build_app_unified.sh release` for distribution
+3. **Quick Testing**: Use `./run_clickit_unified.sh` for fast app launches
+
+### Build Output Structure
 - `dist/ClickIt.app` - Final app bundle
 - `dist/binaries/` - Individual architecture binaries
 - `dist/build-info.txt` - Build metadata
 - `.build/` - Swift Package Manager build cache
 
-#### Universal Binary Support
+### Universal Binary Support
 The build system automatically detects available architectures and creates universal binaries when possible:
 - **Intel x64**: `x86_64-apple-macosx`
 - **Apple Silicon**: `arm64-apple-macosx`
 - **Universal**: Combined binary supporting both architectures
 
-#### Code Signing for Permission Persistence
+### Code Signing for Permission Persistence
 
 The build script automatically attempts to code sign the app to improve permission persistence. This helps avoid having to re-grant Accessibility and Screen Recording permissions after each rebuild.
 
 **Automatic Signing:**
-The build script (`build_app.sh`) will automatically:
+The build script will automatically:
 1. Look for ClickIt-specific certificates first
 2. Fall back to any available Apple Developer certificates
 3. Display the signing status in the build output
@@ -116,7 +140,7 @@ codesign --display --verbose dist/ClickIt.app
 codesign --verify --verbose dist/ClickIt.app
 ```
 
-#### Testing
+### Testing
 ```bash
 # Run unit tests
 swift test
