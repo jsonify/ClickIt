@@ -1,6 +1,6 @@
 # ClickIt Build & Deploy Guide
 
-This document describes the professional build and deployment system for ClickIt, inspired by enterprise-grade practices and adapted for Swift Package Manager.
+This document describes the professional build and deployment system for ClickIt, with full GitHub integration and automated release workflows.
 
 ## 🎯 Quick Start
 
@@ -11,9 +11,16 @@ make setup
 # Local development
 make local
 
-# Create releases (with proper git tags)
-git tag v1.0.0 && git push origin --tags  # Production
-git tag beta-v1.0.0-20250713 && git push origin --tags  # Beta
+# Beta release workflow
+git checkout staging
+git tag beta-v1.0.0-$(date +%Y%m%d) && git push origin --tags
+make beta  # Creates GitHub release with app bundle
+
+# Production release workflow  
+git checkout main
+git merge staging  # Bring in tested features
+git tag v1.0.0 && git push origin --tags
+make prod  # Creates GitHub release with app bundle
 ```
 
 ## 📋 Available Commands
@@ -31,13 +38,22 @@ git tag beta-v1.0.0-20250713 && git push origin --tags  # Beta
 
 ### Release Commands
 
-| Command | Description | Requirements |
-|---------|-------------|--------------|
-| `make local` | Build + test + sign for local use | Development certificate |
-| `make install` | Install to /Applications | Local testing |
-| `make beta` | Create beta release | `staging` branch + `beta*` tag |
-| `make prod` | Create production release | `main` branch + `v*` tag |
-| `make release` | Interactive release helper | Guide through options |
+| Command | Description | Requirements | Output |
+|---------|-------------|--------------|--------|
+| `make local` | Build + test + sign for local use | Development certificate | `dist/ClickIt.app` |
+| `make install` | Install to /Applications | Local testing | App in Applications |
+| `make beta` | Create GitHub beta release | `staging` branch + `beta*` tag | GitHub pre-release + app bundle |
+| `make prod` | Create GitHub production release | `main` branch + `v*` tag | GitHub latest release + app bundle |
+| `make release` | Interactive release helper | Guide through options | Status and next steps |
+
+### Fastlane Commands
+
+| Command | Description | Equivalent |
+|---------|-------------|------------|
+| `fastlane local` | Build for local development | `make local` |
+| `fastlane beta` | Create beta release | `make beta` |
+| `fastlane prod` | Create production release | `make prod` |
+| `fastlane build_release` | Build release version only | Build step of `make local` |
 
 ## 🏗️ Build Architecture
 
@@ -73,17 +89,21 @@ git tag beta-v1.0.0-20250713 && git push origin --tags  # Beta
 - ✅ Code coverage reporting
 
 #### Beta Releases (`staging` + `beta*` tag)
-- 🚀 Automated app bundle creation
-- 📦 ZIP asset generation
-- 🐙 GitHub release with prerelease flag
-- 📝 Automatic changelog from commits
+- ✅ **Validation**: Branch and tag pattern verification
+- 🏗️ **Build**: Universal app bundle creation (Intel + Apple Silicon)
+- 🧪 **Test**: Full test suite and SwiftLint validation
+- 📦 **Package**: Automatic ClickIt.app.zip generation
+- 🐙 **GitHub Release**: Pre-release with proper formatting
+- 📝 **Release Notes**: Installation instructions and testing notes
 
 #### Production Releases (`main` + `v*` tag)
-- 🚀 Automated app bundle creation
-- 📦 ZIP + DMG asset generation
-- 🐙 GitHub release (stable)
-- 📝 Professional changelog
-- 🔐 Full code signing pipeline
+- ✅ **Validation**: Branch and tag pattern verification  
+- 🏗️ **Build**: Universal app bundle creation (Intel + Apple Silicon)
+- 🧪 **Test**: Full test suite and SwiftLint validation
+- 📦 **Package**: Automatic ClickIt.app.zip generation
+- 🐙 **GitHub Release**: Latest release with professional presentation
+- 📝 **Release Notes**: Feature highlights and installation guide
+- 🔐 **Code Signing**: Automatic certificate validation
 
 ## 🏷️ Release Management
 
@@ -106,23 +126,52 @@ dev-*, feature-*, fix-*
 
 ### Creating Releases
 
-#### Manual Process
+#### Complete Beta Release Workflow
 ```bash
-# Beta release
+# 1. Switch to staging and ensure it's current
 git checkout staging
+git pull origin staging
+
+# 2. Create and push beta tag
 git tag beta-v1.0.0-$(date +%Y%m%d)
 git push origin --tags
 
-# Production release
-git checkout main
-git tag v1.0.0
-git push origin --tags
+# 3. Create GitHub release with app bundle
+make beta
+# ✅ Validates staging branch + beta tag
+# 🏗️ Builds universal app bundle  
+# 🐙 Creates GitHub pre-release
+# 📦 Uploads ClickIt.app.zip automatically
 ```
 
-#### With Git Aliases (after `make setup`)
+#### Complete Production Release Workflow
 ```bash
-git release-beta 1.0.0   # Creates beta-v1.0.0-YYYYMMDD
-git release-prod 1.0.0   # Creates v1.0.0
+# 1. Merge tested features from staging to main
+git checkout main
+git pull origin main
+git merge staging
+git push origin main
+
+# 2. Create and push production tag
+git tag v1.0.0
+git push origin --tags
+
+# 3. Create GitHub release with app bundle
+make prod
+# ✅ Validates main branch + v* tag
+# 🏗️ Builds universal app bundle
+# 🐙 Creates GitHub latest release
+# 📦 Uploads ClickIt.app.zip automatically
+# 📝 Professional release notes with features
+```
+
+#### Alternative: Fastlane Workflow
+```bash
+# Beta release (same validation)
+fastlane beta
+
+# Production release (same validation)  
+fastlane prod
 ```
 
 ## 🔐 Code Signing
@@ -160,14 +209,28 @@ dist/
 └── build-info.txt           # Build metadata
 ```
 
-### Release Assets
-```
-# Beta releases
-ClickIt-1.0.0-beta-abc123.zip
+### GitHub Release Assets
 
-# Production releases  
-ClickIt-1.0.0.zip
-ClickIt-1.0.0.dmg
+#### Beta Releases
+```
+📦 Assets (2):
+├── ClickIt.app.zip          # Universal app bundle (972KB)
+└── Source code (zip)        # Automatic GitHub archive
+└── Source code (tar.gz)     # Automatic GitHub archive
+
+🏷️ Release Type: Pre-release
+📝 Release Notes: Testing instructions + installation guide
+```
+
+#### Production Releases  
+```
+📦 Assets (3):
+├── ClickIt.app.zip          # Universal app bundle (972KB)
+└── Source code (zip)        # Automatic GitHub archive  
+└── Source code (tar.gz)     # Automatic GitHub archive
+
+🏷️ Release Type: Latest release
+📝 Release Notes: Full feature descriptions + professional presentation
 ```
 
 ## 🔍 Code Quality
@@ -196,25 +259,38 @@ docs: update installation instructions
 
 ### Available Lanes
 ```bash
-# Via Fastlane directly
-bundle exec fastlane mac local       # Local build
-bundle exec fastlane mac beta        # Beta release
-bundle exec fastlane mac production  # Production release
+# Build and development
+fastlane build_debug        # Debug build
+fastlane build_release      # Release build  
+fastlane run                # Build debug + launch app
+fastlane local              # Same as 'make local'
 
-# Via Makefile (recommended)
-make local  # Runs fastlane mac local
-make beta   # Runs fastlane mac beta  
-make prod   # Runs fastlane mac production
+# Release workflows
+fastlane beta               # Same as 'make beta' - GitHub release
+fastlane prod               # Same as 'make prod' - GitHub release
+
+# Utility lanes
+fastlane clean              # Clean build artifacts
+fastlane verify_signing     # Check code signing status
+fastlane info               # Show app bundle information
+fastlane release            # Full release workflow
+fastlane dev                # Development workflow (build + run)
 ```
 
-### Ruby Dependencies
+### Installation
 ```bash
-# Install
-bundle install
+# Install Fastlane
+brew install fastlane
 
-# Update
-bundle update
+# Verify installation
+fastlane --version
 ```
+
+### Integration with Make
+- **`make beta`** internally calls **`fastlane beta`**
+- **`make prod`** internally calls **`fastlane prod`**  
+- Both approaches provide identical functionality
+- Choose based on your preference: Make (simple) or Fastlane (detailed)
 
 ## 🔧 Troubleshooting
 
@@ -229,54 +305,117 @@ make build
 # Check dependencies
 swift package resolve
 swift package update
+
+# Verify architectures
+./build_app_unified.sh debug
+```
+
+#### Release Issues
+```bash
+# Missing ClickIt.app.zip in GitHub release
+# This indicates upload failure - re-run the command
+make beta   # or make prod
+
+# GitHub CLI not authenticated
+gh auth login
+gh auth status
+
+# Tag/branch validation failures
+git status              # Check current branch
+git describe --tags     # Check current tag
+make release           # Interactive guide
 ```
 
 #### Code Signing Issues
 ```bash
-# Check certificates
+# Check available certificates
 security find-identity -v -p codesigning
 
-# Reset signing
-./scripts/skip-signing.sh  # Skip signing temporarily
-./scripts/sign-app.sh      # Manual signing
+# Set certificate environment variable
+export CODE_SIGN_IDENTITY="Apple Development: Your Name (TEAM_ID)"
+
+# Skip signing for testing
+./scripts/skip-signing.sh
+
+# Manual signing with validation
+./scripts/sign-app.sh
 ```
 
 #### SwiftLint Failures
 ```bash
-# Check rules
-swiftlint lint
+# Check specific violations
+swiftlint lint --strict
 
-# Auto-fix (when possible)
+# Auto-fix where possible
 swiftlint --fix
 
-# Temporarily disable
-# Add "# swiftlint:disable rule_name" to file
+# Temporarily disable specific rules
+# Add "# swiftlint:disable rule_name" to problematic lines
 ```
 
 ### Getting Help
 ```bash
-make help           # Available commands
-make release        # Interactive guide
+make help           # Available commands with descriptions
+make release        # Interactive release guide with status
+fastlane --help     # Fastlane command reference
+gh release --help   # GitHub CLI release help
 git log --oneline   # Recent changes
 ```
+
+### Verification Commands
+```bash
+# Verify release workflow is working
+make release        # Shows current status and next steps
+
+# Test local build pipeline
+make local && open dist/ClickIt.app
+
+# Check GitHub CLI authentication and permissions
+gh auth status
+gh release list --limit 5
+
+# Validate current release setup
+git status && git describe --tags 2>/dev/null || echo "No tag on current commit"
+```
+
+## ✅ Recently Implemented (July 2025)
+
+### GitHub Integration Fixes
+- **✅ App Bundle Upload**: Fixed missing ClickIt.app.zip in releases
+- **✅ Release Notes Formatting**: Fixed broken line breaks in GitHub releases  
+- **✅ Automated Workflows**: Complete beta and production release automation
+- **✅ Professional Presentation**: Proper formatting and installation instructions
+
+### Validated Workflows
+- **✅ Beta Release**: `staging` branch → `beta-*` tag → `make beta` → GitHub pre-release
+- **✅ Production Release**: `main` branch → `v*` tag → `make prod` → GitHub latest release
+- **✅ Fastlane Integration**: All lanes working with proper GitHub integration
+
+### Current Release Status
+- **🔗 Latest Beta**: [beta-v1.0.0-20250718](https://github.com/jsonify/ClickIt/releases/tag/beta-v1.0.0-20250718)
+- **🔗 Latest Production**: [v1.0.0](https://github.com/jsonify/ClickIt/releases/tag/v1.0.0)
+- **📦 App Bundle Size**: ~972KB (Universal binary)
+- **🔐 Code Signing**: Working with development certificates
 
 ## 🚀 Advanced Features
 
 ### Performance Optimizations
-- **Parallel builds** for multiple architectures
-- **Cached dependencies** in CI
-- **Incremental builds** for faster iteration
+- **Parallel builds** for multiple architectures (Intel + Apple Silicon)
+- **Universal binaries** automatically created
+- **Build validation** with quality gates (build → test → lint → sign)
+- **Incremental builds** for faster development iteration
 
-### Security Features
-- **Automatic keychain management** in CI
-- **Certificate validation** before signing
-- **Secure environment variable** handling
+### GitHub Integration
+- **Automatic release creation** with proper formatting
+- **Asset management** with automatic app bundle uploads
+- **Pre-release vs Latest** release type handling
+- **Rich release notes** with installation instructions and feature highlights
 
 ### Developer Experience
-- **Pre-commit hooks** prevent bad commits
-- **Commit templates** guide proper formatting
-- **Rich terminal output** with colors and emojis
-- **Interactive guides** for complex operations
+- **Interactive release guide** via `make release`
+- **Comprehensive validation** prevents common mistakes
+- **Rich terminal output** with colors and progress indicators
+- **Dual workflow support** (Make + Fastlane) for different preferences
 
 ## 📈 Metrics & Monitoring
 

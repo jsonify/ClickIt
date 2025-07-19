@@ -140,7 +140,24 @@ beta: local ## Create beta release (requires staging branch and git tag matching
 		if ! gh release view "$$CURRENT_TAG" > /dev/null 2>&1; then \
 			gh release create "$$CURRENT_TAG" \
 				--title "Beta Release $$CURRENT_TAG" \
-				--notes "Beta release for testing and feedback\n\n**Installation:**\n1. Download ClickIt.app.zip\n2. Unzip and move ClickIt.app to Applications\n3. Grant required permissions in System Settings" \
+				--notes-file <(cat << 'EOF'
+Beta release for testing and feedback
+
+**📦 What's Included:**
+- Universal macOS app (Intel + Apple Silicon)
+- Latest features and improvements
+
+**📱 Installation:**
+1. Download ClickIt.app.zip from Assets below
+2. Unzip and move ClickIt.app to Applications
+3. Grant required permissions in System Settings > Privacy & Security:
+   - Accessibility (for mouse events)
+   - Screen Recording (for window detection)
+
+**🧪 Testing Notes:**
+This is a beta release. Please report any issues or feedback!
+EOF
+) \
 				--prerelease \
 				--target staging; \
 		fi; \
@@ -176,7 +193,28 @@ prod: local ## Create production release (requires main branch and git tag match
 		if ! gh release view "$$CURRENT_TAG" > /dev/null 2>&1; then \
 			gh release create "$$CURRENT_TAG" \
 				--title "ClickIt $$CURRENT_TAG" \
-				--notes "Production release of ClickIt - Native macOS Auto-Clicker\n\n**🎯 Features:**\n- Precision clicking automation\n- Window targeting\n- Global hotkey controls (ESC)\n- Visual feedback overlay\n- Universal binary (Intel + Apple Silicon)\n\n**📱 Installation:**\n1. Download ClickIt.app.zip\n2. Unzip and move ClickIt.app to Applications\n3. Grant required permissions in System Settings > Privacy & Security:\n   - Accessibility (for mouse events)\n   - Screen Recording (for window detection)\n\n**📋 System Requirements:**\n- macOS 15.0 or later\n- Intel Mac or Apple Silicon Mac" \
+				--notes-file <(cat << 'EOF'
+Production release of ClickIt - Native macOS Auto-Clicker
+
+**🎯 Features:**
+- Precision clicking automation
+- Window targeting
+- Global hotkey controls (ESC)  
+- Visual feedback overlay
+- Universal binary (Intel + Apple Silicon)
+
+**📱 Installation:**
+1. Download ClickIt.app.zip
+2. Unzip and move ClickIt.app to Applications
+3. Grant required permissions in System Settings > Privacy & Security:
+   - Accessibility (for mouse events)
+   - Screen Recording (for window detection)
+
+**📋 System Requirements:**
+- macOS 15.0 or later
+- Intel Mac or Apple Silicon Mac
+EOF
+) \
 				--latest \
 				--target main; \
 		fi; \
