@@ -151,6 +151,28 @@ platform :mac do
     UI.message "🚀 Launch with: open \"#{DIST_DIR}/#{APP_NAME}.app\""
   end
 
+  desc "Create beta release on staging branch with beta-* tag"
+  lane :beta do
+    UI.header "🚀 Creating Beta Release"
+    
+    # Use Makefile beta workflow (includes validation, build, and GitHub release)
+    sh("../make beta")
+    
+    UI.success "✅ Beta release created!"
+    UI.message "Check your GitHub releases for the beta"
+  end
+
+  desc "Create production release on main branch with v* tag"
+  lane :prod do
+    UI.header "🎉 Creating Production Release"
+    
+    # Use Makefile prod workflow (includes validation, build, and GitHub release)
+    sh("../make prod")
+    
+    UI.success "✅ Production release created!"
+    UI.message "Your production release is now live on GitHub"
+  end
+
   error do |lane, exception|
     UI.error("❌ Lane '#{lane}' failed with error: #{exception.message}")
   end

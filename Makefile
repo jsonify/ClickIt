@@ -118,7 +118,7 @@ install: local ## Build and install to /Applications (for easy testing)
 	@echo "$(GREEN)✅ $(APP_NAME) installed to /Applications$(NC)"
 	@echo "$(BLUE)Launch from Launchpad or: open \"/Applications/$(APP_NAME).app\"$(NC)"
 
-beta: ## Create beta release (requires staging branch and git tag matching beta*)
+beta: local ## Create beta release (requires staging branch and git tag matching beta*)
 	@echo "$(BLUE)🚀 Creating beta release...$(NC)"
 	@# Check if we're on staging branch
 	@CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
@@ -133,10 +133,29 @@ beta: ## Create beta release (requires staging branch and git tag matching beta*
 		echo "$(BLUE)Create one with: git tag beta-v1.0.0-$(shell date +%Y%m%d) && git push origin --tags$(NC)"; \
 		exit 1; \
 	fi
-	@# TODO: Implement Fastlane beta workflow when ready
-	@echo "$(YELLOW)⚠️  Beta workflow not yet implemented. Use 'make local' for now.$(NC)"
+	@# Create GitHub release with app bundle
+	@CURRENT_TAG=$$(git describe --exact-match --tags HEAD 2>/dev/null || echo ""); \
+	echo "$(BLUE)📤 Creating GitHub beta release for tag: $$CURRENT_TAG$(NC)"; \
+	if command -v gh > /dev/null 2>&1; then \
+		if ! gh release view "$$CURRENT_TAG" > /dev/null 2>&1; then \
+			gh release create "$$CURRENT_TAG" \
+				--title "Beta Release $$CURRENT_TAG" \
+				--notes "Beta release for testing and feedback\n\n**Installation:**\n1. Download ClickIt.app.zip\n2. Unzip and move ClickIt.app to Applications\n3. Grant required permissions in System Settings" \
+				--prerelease \
+				--target staging; \
+		fi; \
+		echo "$(BLUE)📦 Creating app bundle archive...$(NC)"; \
+		cd $(DIST_DIR) && zip -r ClickIt.app.zip ClickIt.app && cd ..; \
+		echo "$(BLUE)⬆️  Uploading ClickIt.app to release...$(NC)"; \
+		gh release upload "$$CURRENT_TAG" "$(DIST_DIR)/ClickIt.app.zip" --clobber; \
+		echo "$(GREEN)✅ Beta release created with app bundle on GitHub$(NC)"; \
+	else \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Install with: brew install gh$(NC)"; \
+		echo "$(BLUE)Or create release manually: https://github.com/$$(git config --get remote.origin.url | sed 's/.*github.com[:/]\(.*\)\.git/\1/')/releases/new?tag=$$CURRENT_TAG$(NC)"; \
+		exit 1; \
+	fi
 
-prod: ## Create production release (requires main branch and git tag matching v*)
+prod: local ## Create production release (requires main branch and git tag matching v*)
 	@echo "$(BLUE)🚀 Creating production release...$(NC)"
 	@# Check if we're on main branch
 	@CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
@@ -151,8 +170,27 @@ prod: ## Create production release (requires main branch and git tag matching v*
 		echo "$(BLUE)Create one with: git tag v1.0.0 && git push origin --tags$(NC)"; \
 		exit 1; \
 	fi
-	@# TODO: Implement Fastlane production workflow when ready
-	@echo "$(YELLOW)⚠️  Production workflow not yet implemented. Use 'make local' for now.$(NC)"
+	@# Create GitHub production release with app bundle
+	@echo "$(BLUE)📤 Creating GitHub production release for tag: $$CURRENT_TAG$(NC)"
+	@if command -v gh > /dev/null 2>&1; then \
+		if ! gh release view "$$CURRENT_TAG" > /dev/null 2>&1; then \
+			gh release create "$$CURRENT_TAG" \
+				--title "ClickIt $$CURRENT_TAG" \
+				--notes "Production release of ClickIt - Native macOS Auto-Clicker\n\n**🎯 Features:**\n- Precision clicking automation\n- Window targeting\n- Global hotkey controls (ESC)\n- Visual feedback overlay\n- Universal binary (Intel + Apple Silicon)\n\n**📱 Installation:**\n1. Download ClickIt.app.zip\n2. Unzip and move ClickIt.app to Applications\n3. Grant required permissions in System Settings > Privacy & Security:\n   - Accessibility (for mouse events)\n   - Screen Recording (for window detection)\n\n**📋 System Requirements:**\n- macOS 15.0 or later\n- Intel Mac or Apple Silicon Mac" \
+				--latest \
+				--target main; \
+		fi; \
+		echo "$(BLUE)📦 Creating app bundle archive...$(NC)"; \
+		cd $(DIST_DIR) && zip -r ClickIt.app.zip ClickIt.app && cd ..; \
+		echo "$(BLUE)⬆️  Uploading ClickIt.app to production release...$(NC)"; \
+		gh release upload "$$CURRENT_TAG" "$(DIST_DIR)/ClickIt.app.zip" --clobber; \
+		echo "$(GREEN)✅ Production release created with app bundle on GitHub$(NC)"; \
+		echo "$(GREEN)🎉 Production release complete: https://github.com/$$(git config --get remote.origin.url | sed 's/.*github.com[:/]\(.*\)\.git/\1/')/releases/tag/$$CURRENT_TAG$(NC)"; \
+	else \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Install with: brew install gh$(NC)"; \
+		echo "$(BLUE)Or create release manually: https://github.com/$$(git config --get remote.origin.url | sed 's/.*github.com[:/]\(.*\)\.git/\1/')/releases/new?tag=$$CURRENT_TAG$(NC)"; \
+		exit 1; \
+	fi
 
 release: ## Interactive release helper - guides through proper release process
 	@echo "$(BLUE)🎯 ClickIt Release Helper$(NC)"
