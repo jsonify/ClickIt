@@ -21,6 +21,8 @@ struct SettingCard<Content: View>: View {
                 Text(description)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             content

@@ -11,7 +11,7 @@ struct FooterInfoCard: View {
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                 
-                Text("ESC to start or stop")
+                Text("DELETE to stop")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 

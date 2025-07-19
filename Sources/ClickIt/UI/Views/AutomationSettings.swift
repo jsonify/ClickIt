@@ -39,7 +39,7 @@ struct AutomationSettings: View {
                     HStack {
                         Image(systemName: "keyboard")
                             .foregroundColor(.blue)
-                        Text("ESC Key")
+                        Text("DELETE Key")
                             .font(.subheadline)
                             .fontWeight(.medium)
                         Spacer()
@@ -48,9 +48,11 @@ struct AutomationSettings: View {
                             .foregroundColor(.secondary)
                     }
 
-                    Text("Press ESC at any time to start or stop automation, even when ClickIt is not the active application")
+                    Text("Press DELETE at any time to start or stop automation, even when ClickIt is not the active application")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }

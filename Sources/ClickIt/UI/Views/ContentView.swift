@@ -11,7 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var permissionManager: PermissionManager
     @EnvironmentObject private var hotkeyManager: HotkeyManager
-    @StateObject private var viewModel = ClickItViewModel()
+    @EnvironmentObject private var viewModel: ClickItViewModel
     @State private var showingPermissionSetup = false
     
     var body: some View {
@@ -26,25 +26,23 @@ struct ContentView: View {
     
     @ViewBuilder
     private var modernUIView: some View {
-        VStack(spacing: 16) {
-            // Status Header Card
-            StatusHeaderCard(viewModel: viewModel)
-            
-            // Target Point Selection Card
-            TargetPointSelectionCard(viewModel: viewModel)
-            
-            // Configuration Panel Card
-            ConfigurationPanelCard(viewModel: viewModel)
-            
-            // Advanced Settings Button
-            AdvancedSettingsButton(viewModel: viewModel)
-            
-            Spacer()
-            
-            // Footer Information
-            FooterInfoCard()
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 16) {
+                // Status Header Card
+                StatusHeaderCard(viewModel: viewModel)
+                
+                // Target Point Selection Card
+                TargetPointSelectionCard(viewModel: viewModel)
+                
+                // Configuration Panel Card
+                ConfigurationPanelCard(viewModel: viewModel)
+                
+                // Footer Information
+                FooterInfoCard()
+                    .padding(.top, 20)
+            }
+            .padding(16)
         }
-        .padding(16)
         .frame(width: 400, height: 800)
         .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
@@ -123,4 +121,5 @@ struct ContentView: View {
     ContentView()
         .environmentObject(PermissionManager.shared)
         .environmentObject(HotkeyManager.shared)
+        .environmentObject(ClickItViewModel())
 }

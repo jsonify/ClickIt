@@ -10,20 +10,28 @@ import SwiftUI
 
 struct TimerConfigurationView: View {
     @ObservedObject var viewModel: ClickItViewModel
+    var onCancel: () -> Void = {}
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Header
+        VStack(spacing: 12) {
+            // Header with close button
             HStack {
                 Image(systemName: "clock")
                     .foregroundColor(.blue)
                 Text("Auto Click Timer Mode")
                     .font(.headline)
                     .foregroundColor(.primary)
+                Spacer()
+                Button(action: onCancel) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 20))
+                }
+                .buttonStyle(.plain)
             }
             
             // Timer Duration Configuration
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Timer Duration:")
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -80,6 +88,8 @@ struct TimerConfigurationView: View {
                     Text("Timer duration must be between 1 second and 60 minutes")
                         .font(.caption)
                         .foregroundColor(.orange)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)

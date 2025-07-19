@@ -83,8 +83,13 @@ struct TargetPointSelectionCard: View {
                     ActiveTimerView(viewModel: viewModel)
                         .transition(.opacity)
                 } else if showingTimerMode {
-                    TimerConfigurationView(viewModel: viewModel)
-                        .transition(.opacity)
+                    TimerConfigurationView(viewModel: viewModel) {
+                        // Close timer mode
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showingTimerMode = false
+                        }
+                    }
+                    .transition(.opacity)
                 } else {
                     // Action Buttons
                     VStack(spacing: 12) {
@@ -184,6 +189,8 @@ struct TargetPointSelectionCard: View {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(.red)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                         Spacer()
                     }
                     .padding(8)
