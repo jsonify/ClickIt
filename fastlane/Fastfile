@@ -262,22 +262,23 @@ platform :mac do
       prod_tag = "v#{version}"
       
       # Check if tag already exists
+      tag_exists = false
       begin
-        existing_tag = sh("git rev-list -n 1 #{prod_tag} 2>/dev/null", log: false).strip
-        if !existing_tag.empty?
-          UI.user_error!("❌ Tag #{prod_tag} already exists. Use a different version or delete the existing tag.")
-        end
+        sh("git rev-parse --verify #{prod_tag} >/dev/null 2>&1", log: false)
+        tag_exists = true
       rescue
         # Tag doesn't exist, which is what we want
       end
       
-      UI.message "🏷️  Creating tag: #{prod_tag}"
-      
-      # Create and push tag
-      sh("git tag #{prod_tag}")
-      sh("git push origin #{prod_tag}")
-      
-      UI.success "✅ Tag created and pushed: #{prod_tag}"
+      if tag_exists
+        UI.message "🏷️  Tag #{prod_tag} already exists, skipping tag creation"
+      else
+        UI.message "🏷️  Creating tag: #{prod_tag}"
+        # Create and push tag
+        sh("git tag #{prod_tag}")
+        sh("git push origin #{prod_tag}")
+        UI.success "✅ Tag created and pushed: #{prod_tag}"
+      end
       
       # Now run the production release
       sh("make prod")
