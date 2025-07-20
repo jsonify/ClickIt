@@ -11,6 +11,13 @@ This guide explains how to use Fastlane for automating ClickIt development and r
 - [Troubleshooting](#troubleshooting)
 - [Advanced Usage](#advanced-usage)
 
+## 📋 Prerequisites
+
+**Git Workflow Knowledge Required**: This guide assumes you understand the ClickIt git workflow. If you're unsure about branch management, merging features to staging, or the complete development process, please read **[git-workflow-guide.md](git-workflow-guide.md)** first.
+
+**Quick Summary**: 
+- Features → `staging` branch → beta release → `main` branch → production release
+
 ## Installation
 
 ### Prerequisites
@@ -281,11 +288,12 @@ fastlane bump_and_release bump:minor force:true
 
 #### Zero-Friction Beta Release
 ```bash
-# Switch to staging branch
+# After merging your feature to staging:
 git checkout staging
+git pull origin staging
 
-# Make sure everything is committed
-git add . && git commit -m "Ready for beta"
+# Ensure clean working directory
+git status  # Should show "working tree clean"
 
 # One command beta release with auto-tagging
 fastlane auto_beta
@@ -294,11 +302,14 @@ fastlane auto_beta
 
 #### Zero-Friction Production Release  
 ```bash
-# Switch to main branch
+# After merging staging to main:
 git checkout main
+git pull origin main
+git merge staging
+git push origin main
 
-# Make sure everything is committed  
-git add . && git commit -m "Ready for production"
+# Ensure clean working directory
+git status  # Should show "working tree clean"
 
 # One command production release with auto-tagging
 fastlane auto_prod version:1.2.0

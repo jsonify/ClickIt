@@ -150,9 +150,48 @@ swift build -c release
 swift test -c release
 ```
 
+## Documentation
+
+### 📋 **Complete Development Workflow**
+- **[Git Workflow Guide](docs/git-workflow-guide.md)** - Complete step-by-step git workflow from feature development to production release
+- **[Fastlane Guide](docs/fastlane-guide.md)** - Automated build and release system documentation
+
+### 🚀 **Quick Reference**
+
+#### **Daily Development**
+```bash
+# 1. Start new feature
+git checkout main && git pull && git checkout -b feature/my-feature
+
+# 2. Develop and test
+fastlane dev  # Build and launch for testing
+
+# 3. Merge to staging for beta testing
+git checkout staging && git merge feature/my-feature
+
+# 4. Create beta release
+fastlane auto_beta
+```
+
+#### **Production Release**
+```bash
+# 1. Promote staging to main
+git checkout main && git merge staging
+
+# 2. Automated release with version bumping
+fastlane bump_and_release bump:minor  # 1.0.0 → 1.1.0
+```
+
+### 📚 **Additional Documentation**
+- **[CLAUDE.md](CLAUDE.md)** - Development guidance and project overview
+- **[BUILD_AND_DEPLOY.md](BUILD_AND_DEPLOY.md)** - Manual build and deployment instructions
+- **[CERTIFICATE_SETUP.md](CERTIFICATE_SETUP.md)** - Code signing certificate setup
+
 ## Contributing
 
 Contributions are welcome! Please read our contributing guidelines and check the Issues tab for open tasks.
+
+**Before contributing**: Read the [Git Workflow Guide](docs/git-workflow-guide.md) to understand our branch strategy and release process.
 
 ## License
 
