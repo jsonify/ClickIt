@@ -185,6 +185,18 @@ jobs:
           zip -r "${APP_NAME}-${BETA_VERSION}.zip" "${APP_NAME}.app"
           echo "✅ Created ZIP: ${APP_NAME}-${BETA_VERSION}.zip"
       
+      - name: 🔐 Generate Asset Signatures
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "🔐 Generating signatures for release assets..."
+            python3 scripts/generate_signatures.py dist
+            echo "✅ Signatures generated"
+          else
+            echo "⚠️  SPARKLE_PRIVATE_KEY not set, skipping signature generation"
+          fi
+      
       - name: 📝 Generate Changelog
         id: changelog
         run: |
@@ -217,6 +229,156 @@ jobs:
           prerelease: true
           artifacts: "dist/${{ env.APP_NAME }}-${{ env.BETA_VERSION }}.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 📡 Generate Beta Appcast
+        run: |
+          # Create appcast directory
+          mkdir -p docs
+          
+          # Generate beta appcast using GitHub API
+          cat > generate_appcast.swift << 'EOF'
+          import Foundation
+          
+          struct GitHubRelease: Codable {
+              let tagName: String
+              let name: String?
+              let body: String?
+              let prerelease: Bool
+              let publishedAt: String?
+              let assets: [GitHubAsset]
+              let htmlUrl: String
+              
+              private enum CodingKeys: String, CodingKey {
+                  case name, body, prerelease, assets
+                  case tagName = "tag_name"
+                  case publishedAt = "published_at"
+                  case htmlUrl = "html_url"
+              }
+          }
+          
+          struct GitHubAsset: Codable {
+              let name: String
+              let size: Int
+              let browserDownloadUrl: String
+              
+              private enum CodingKeys: String, CodingKey {
+                  case name, size
+                  case browserDownloadUrl = "browser_download_url"
+              }
+          }
+          
+          func loadSignatures() -> [String: String] {
+              guard let data = try? Data(contentsOf: URL(fileURLWithPath: "dist/signatures.json")),
+                    let signatures = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
+                  print("⚠️  No signatures found")
+                  return [:]
+              }
+              return signatures
+          }
+          
+          // Fetch releases from GitHub API
+          let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
+          let task = URLSession.shared.dataTask(with: url) { data, response, error in
+              guard let data = data else { 
+                  print("Failed to fetch releases")
+                  exit(1)
+              }
+              
+              do {
+                  let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
+                  let betaReleases = releases.filter { $0.prerelease && !$0.assets.isEmpty }
+                      .sorted { lhs, rhs in
+                          (lhs.publishedAt ?? "") > (rhs.publishedAt ?? "")
+                      }
+                  
+                  let appcastXML = generateAppcast(releases: betaReleases, isBeta: true)
+                  try appcastXML.write(to: URL(fileURLWithPath: "docs/appcast-beta.xml"), atomically: true, encoding: .utf8)
+                  
+                  print("✅ Beta appcast generated successfully")
+                  exit(0)
+              } catch {
+                  print("Error: \(error)")
+                  exit(1)
+              }
+          }
+          task.resume()
+          
+          // Keep the script running
+          RunLoop.main.run()
+          
+          func generateAppcast(releases: [GitHubRelease], isBeta: Bool) -> String {
+              let items = releases.compactMap { release -> String? in
+                  guard let zipAsset = release.assets.first(where: { $0.name.hasSuffix(".zip") }) else {
+                      return nil
+                  }
+                  
+                  let version = release.tagName.replacingOccurrences(of: "^(beta-)?v?", with: "", options: .regularExpression)
+                  let title = release.name ?? "ClickIt \(version)"
+                  let description = release.body ?? "No release notes available."
+                  let pubDate = formatDate(release.publishedAt)
+                  
+                  // Get signature for this asset
+                  let signatures = loadSignatures()
+                  let signatureAttr = signatures[zipAsset.name].map { " sparkle:edSignature=\"\($0)\"" } ?? ""
+                  
+                  return """
+                  <item>
+                      <title><![CDATA[\(title)]]></title>
+                      <description><![CDATA[\(description)]]></description>
+                      <link>\(release.htmlUrl)</link>
+                      <sparkle:version>\(version)</sparkle:version>
+                      <sparkle:shortVersionString>\(version)</sparkle:shortVersionString>
+                      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+                      <pubDate>\(pubDate)</pubDate>
+                      <enclosure url="\(zipAsset.browserDownloadUrl)" 
+                                 length="\(zipAsset.size)" 
+                                 type="application/octet-stream" 
+                                 sparkle:version="\(version)" 
+                                 sparkle:shortVersionString="\(version)"\(signatureAttr) />
+                  </item>
+                  """
+              }
+              
+              let itemsXML = items.joined(separator: "\n        ")
+              let channelType = isBeta ? "Beta " : ""
+              let lastBuildDate = formatDate(nil)
+              
+              return """
+              <?xml version="1.0" encoding="UTF-8"?>
+              <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+                  <channel>
+                      <title>ClickIt \(channelType)Updates</title>
+                      <link>https://github.com/${{ github.repository }}</link>
+                      <description>Software updates for ClickIt</description>
+                      <language>en</language>
+                      <lastBuildDate>\(lastBuildDate)</lastBuildDate>
+                      
+              \(itemsXML)
+                      
+                  </channel>
+              </rss>
+              """
+          }
+          
+          func formatDate(_ dateString: String?) -> String {
+              let formatter = DateFormatter()
+              formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
+              formatter.locale = Locale(identifier: "en_US_POSIX")
+              formatter.timeZone = TimeZone(abbreviation: "GMT")
+              
+              if let dateString = dateString {
+                  let isoFormatter = ISO8601DateFormatter()
+                  if let date = isoFormatter.date(from: dateString) {
+                      return formatter.string(from: date)
+                  }
+              }
+              
+              return formatter.string(from: Date())
+          }
+          EOF
+          
+          # Run the Swift script
+          swift generate_appcast.swift
 
   # === Production Release ===
   production_release:
@@ -270,6 +432,18 @@ jobs:
           hdiutil create -volname "${{ env.APP_NAME }}" -srcfolder "${APP_NAME}.app" -ov -format UDZO "${APP_NAME}-${VERSION}.dmg"
           echo "✅ Created DMG: ${APP_NAME}-${VERSION}.dmg"
       
+      - name: 🔐 Generate Asset Signatures
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "🔐 Generating signatures for release assets..."
+            python3 scripts/generate_signatures.py dist
+            echo "✅ Signatures generated"
+          else
+            echo "⚠️  SPARKLE_PRIVATE_KEY not set, skipping signature generation"
+          fi
+      
       - name: 📝 Generate Changelog
         id: changelog
         run: |
@@ -303,3 +477,359 @@ jobs:
             dist/${{ env.APP_NAME }}-${{ env.VERSION }}.zip
             dist/${{ env.APP_NAME }}-${{ env.VERSION }}.dmg
           token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 📡 Generate Production Appcast
+        run: |
+          # Create appcast directory
+          mkdir -p docs
+          
+          # Generate production appcast using GitHub API
+          cat > generate_appcast.swift << 'EOF'
+          import Foundation
+          
+          struct GitHubRelease: Codable {
+              let tagName: String
+              let name: String?
+              let body: String?
+              let prerelease: Bool
+              let publishedAt: String?
+              let assets: [GitHubAsset]
+              let htmlUrl: String
+              
+              private enum CodingKeys: String, CodingKey {
+                  case name, body, prerelease, assets
+                  case tagName = "tag_name"
+                  case publishedAt = "published_at"
+                  case htmlUrl = "html_url"
+              }
+          }
+          
+          struct GitHubAsset: Codable {
+              let name: String
+              let size: Int
+              let browserDownloadUrl: String
+              
+              private enum CodingKeys: String, CodingKey {
+                  case name, size
+                  case browserDownloadUrl = "browser_download_url"
+              }
+          }
+          
+          // Fetch releases from GitHub API
+          let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
+          let task = URLSession.shared.dataTask(with: url) { data, response, error in
+              guard let data = data else { 
+                  print("Failed to fetch releases")
+                  exit(1)
+              }
+              
+              do {
+                  let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
+                  let prodReleases = releases.filter { !$0.prerelease && !$0.assets.isEmpty }
+                      .sorted { lhs, rhs in
+                          (lhs.publishedAt ?? "") > (rhs.publishedAt ?? "")
+                      }
+                  
+                  let appcastXML = generateAppcast(releases: prodReleases, isBeta: false)
+                  try appcastXML.write(to: URL(fileURLWithPath: "docs/appcast.xml"), atomically: true, encoding: .utf8)
+                  
+                  print("✅ Production appcast generated successfully")
+                  exit(0)
+              } catch {
+                  print("Error: \(error)")
+                  exit(1)
+              }
+          }
+          task.resume()
+          
+          // Keep the script running
+          RunLoop.main.run()
+          
+          func generateAppcast(releases: [GitHubRelease], isBeta: Bool) -> String {
+              let items = releases.compactMap { release -> String? in
+                  guard let zipAsset = release.assets.first(where: { $0.name.hasSuffix(".zip") }) else {
+                      return nil
+                  }
+                  
+                  let version = release.tagName.replacingOccurrences(of: "^(beta-)?v?", with: "", options: .regularExpression)
+                  let title = release.name ?? "ClickIt \(version)"
+                  let description = release.body ?? "No release notes available."
+                  let pubDate = formatDate(release.publishedAt)
+                  
+                  // Get signature for this asset
+                  let signatures = loadSignatures()
+                  let signatureAttr = signatures[zipAsset.name].map { " sparkle:edSignature=\"\($0)\"" } ?? ""
+                  
+                  return """
+                  <item>
+                      <title><![CDATA[\(title)]]></title>
+                      <description><![CDATA[\(description)]]></description>
+                      <link>\(release.htmlUrl)</link>
+                      <sparkle:version>\(version)</sparkle:version>
+                      <sparkle:shortVersionString>\(version)</sparkle:shortVersionString>
+                      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+                      <pubDate>\(pubDate)</pubDate>
+                      <enclosure url="\(zipAsset.browserDownloadUrl)" 
+                                 length="\(zipAsset.size)" 
+                                 type="application/octet-stream" 
+                                 sparkle:version="\(version)" 
+                                 sparkle:shortVersionString="\(version)"\(signatureAttr) />
+                  </item>
+                  """
+              }
+              
+              let itemsXML = items.joined(separator: "\n        ")
+              let channelType = isBeta ? "Beta " : ""
+              let lastBuildDate = formatDate(nil)
+              
+              return """
+              <?xml version="1.0" encoding="UTF-8"?>
+              <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+                  <channel>
+                      <title>ClickIt \(channelType)Updates</title>
+                      <link>https://github.com/${{ github.repository }}</link>
+                      <description>Software updates for ClickIt</description>
+                      <language>en</language>
+                      <lastBuildDate>\(lastBuildDate)</lastBuildDate>
+                      
+              \(itemsXML)
+                      
+                  </channel>
+              </rss>
+              """
+          }
+          
+          func formatDate(_ dateString: String?) -> String {
+              let formatter = DateFormatter()
+              formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
+              formatter.locale = Locale(identifier: "en_US_POSIX")
+              formatter.timeZone = TimeZone(abbreviation: "GMT")
+              
+              if let dateString = dateString {
+                  let isoFormatter = ISO8601DateFormatter()
+                  if let date = isoFormatter.date(from: dateString) {
+                      return formatter.string(from: date)
+                  }
+              }
+              
+              return formatter.string(from: Date())
+          }
+          EOF
+          
+          # Run the Swift script
+          swift generate_appcast.swift
+
+  # === GitHub Pages Deployment ===
+  deploy_appcast:
+    name: 📡 Deploy Appcast
+    runs-on: ubuntu-latest
+    needs: [beta_release, production_release]
+    if: always() && (needs.beta_release.result == 'success' || needs.production_release.result == 'success')
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📥 Download Appcast Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: appcast-files
+          path: docs/
+        continue-on-error: true
+      
+      - name: 📡 Generate Updated Appcasts
+        run: |
+          # Create docs directory if it doesn't exist
+          mkdir -p docs
+          
+          # Generate both production and beta appcasts
+          cat > generate_all_appcasts.swift << 'EOF'
+          import Foundation
+          
+          struct GitHubRelease: Codable {
+              let tagName: String
+              let name: String?
+              let body: String?
+              let prerelease: Bool
+              let publishedAt: String?
+              let assets: [GitHubAsset]
+              let htmlUrl: String
+              
+              private enum CodingKeys: String, CodingKey {
+                  case name, body, prerelease, assets
+                  case tagName = "tag_name"
+                  case publishedAt = "published_at"
+                  case htmlUrl = "html_url"
+              }
+          }
+          
+          struct GitHubAsset: Codable {
+              let name: String
+              let size: Int
+              let browserDownloadUrl: String
+              
+              private enum CodingKeys: String, CodingKey {
+                  case name, size
+                  case browserDownloadUrl = "browser_download_url"
+              }
+          }
+          
+          // Fetch releases from GitHub API
+          let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
+          let task = URLSession.shared.dataTask(with: url) { data, response, error in
+              guard let data = data else { 
+                  print("Failed to fetch releases")
+                  exit(1)
+              }
+              
+              do {
+                  let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
+                  
+                  // Generate production appcast
+                  let prodReleases = releases.filter { !$0.prerelease && !$0.assets.isEmpty }
+                      .sorted { ($0.publishedAt ?? "") > ($1.publishedAt ?? "") }
+                  let prodAppcast = generateAppcast(releases: prodReleases, isBeta: false)
+                  try prodAppcast.write(to: URL(fileURLWithPath: "docs/appcast.xml"), atomically: true, encoding: .utf8)
+                  
+                  // Generate beta appcast
+                  let betaReleases = releases.filter { $0.prerelease && !$0.assets.isEmpty }
+                      .sorted { ($0.publishedAt ?? "") > ($1.publishedAt ?? "") }
+                  let betaAppcast = generateAppcast(releases: betaReleases, isBeta: true)
+                  try betaAppcast.write(to: URL(fileURLWithPath: "docs/appcast-beta.xml"), atomically: true, encoding: .utf8)
+                  
+                  print("✅ All appcasts generated successfully")
+                  exit(0)
+              } catch {
+                  print("Error: \(error)")
+                  exit(1)
+              }
+          }
+          task.resume()
+          RunLoop.main.run()
+          
+          func generateAppcast(releases: [GitHubRelease], isBeta: Bool) -> String {
+              let items = releases.compactMap { release -> String? in
+                  guard let zipAsset = release.assets.first(where: { $0.name.hasSuffix(".zip") }) else {
+                      return nil
+                  }
+                  
+                  let version = release.tagName.replacingOccurrences(of: "^(beta-)?v?", with: "", options: .regularExpression)
+                  let title = release.name ?? "ClickIt \(version)"
+                  let description = release.body ?? "No release notes available."
+                  let pubDate = formatDate(release.publishedAt)
+                  
+                  // Get signature for this asset
+                  let signatures = loadSignatures()
+                  let signatureAttr = signatures[zipAsset.name].map { " sparkle:edSignature=\"\($0)\"" } ?? ""
+                  
+                  return """
+                  <item>
+                      <title><![CDATA[\(title)]]></title>
+                      <description><![CDATA[\(description)]]></description>
+                      <link>\(release.htmlUrl)</link>
+                      <sparkle:version>\(version)</sparkle:version>
+                      <sparkle:shortVersionString>\(version)</sparkle:shortVersionString>
+                      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+                      <pubDate>\(pubDate)</pubDate>
+                      <enclosure url="\(zipAsset.browserDownloadUrl)" 
+                                 length="\(zipAsset.size)" 
+                                 type="application/octet-stream" 
+                                 sparkle:version="\(version)" 
+                                 sparkle:shortVersionString="\(version)"\(signatureAttr) />
+                  </item>
+                  """
+              }
+              
+              let itemsXML = items.joined(separator: "\n        ")
+              let channelType = isBeta ? "Beta " : ""
+              let lastBuildDate = formatDate(nil)
+              
+              return """
+              <?xml version="1.0" encoding="UTF-8"?>
+              <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+                  <channel>
+                      <title>ClickIt \(channelType)Updates</title>
+                      <link>https://github.com/${{ github.repository }}</link>
+                      <description>Software updates for ClickIt</description>
+                      <language>en</language>
+                      <lastBuildDate>\(lastBuildDate)</lastBuildDate>
+                      
+              \(itemsXML)
+                      
+                  </channel>
+              </rss>
+              """
+          }
+          
+          func formatDate(_ dateString: String?) -> String {
+              let formatter = DateFormatter()
+              formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
+              formatter.locale = Locale(identifier: "en_US_POSIX")
+              formatter.timeZone = TimeZone(abbreviation: "GMT")
+              
+              if let dateString = dateString {
+                  let isoFormatter = ISO8601DateFormatter()
+                  if let date = isoFormatter.date(from: dateString) {
+                      return formatter.string(from: date)
+                  }
+              }
+              
+              return formatter.string(from: Date())
+          }
+          EOF
+          
+          # Run the Swift script
+          swift generate_all_appcasts.swift
+          
+          # Create index.html for GitHub Pages
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>ClickIt Update Service</title>
+              <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 40px; }
+                  .container { max-width: 600px; margin: 0 auto; }
+                  .feed { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                  a { color: #007AFF; text-decoration: none; }
+                  a:hover { text-decoration: underline; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>ClickIt Update Service</h1>
+                  <p>Sparkle update feeds for ClickIt auto-clicker application.</p>
+                  
+                  <div class="feed">
+                      <h3>Production Updates</h3>
+                      <p>Stable releases for general use.</p>
+                      <a href="appcast.xml">appcast.xml</a>
+                  </div>
+                  
+                  <div class="feed">
+                      <h3>Beta Updates</h3>
+                      <p>Pre-release versions for testing.</p>
+                      <a href="appcast-beta.xml">appcast-beta.xml</a>
+                  </div>
+                  
+                  <hr>
+                  <p><small>Generated automatically by GitHub Actions</small></p>
+              </div>
+          </body>
+          </html>
+          EOF
+          
+          echo "✅ Appcast files generated"
+          ls -la docs/
+      
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages
+          commit_message: "Update appcast feeds [ci skip]"
