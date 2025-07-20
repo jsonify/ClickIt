@@ -113,6 +113,22 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << EOF
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    
+    <!-- Sparkle Auto-Update Configuration -->
+    <key>SUFeedURL</key>
+    <string>https://jsonify.github.io/clickit/appcast.xml</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
+    <key>SUAllowsAutomaticUpdates</key>
+    <true/>
+    <key>SUEnableSystemProfiling</key>
+    <false/>
+    
+    <!-- Sparkle Public Key - Replace with your actual public key -->
+    <!-- <key>SUPublicEDKey</key> -->
+    <!-- <string>YOUR_PUBLIC_KEY_HERE</string> -->
 </dict>
 </plist>
 EOF
