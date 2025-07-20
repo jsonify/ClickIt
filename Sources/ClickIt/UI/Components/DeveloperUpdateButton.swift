@@ -31,20 +31,17 @@ struct DeveloperUpdateButton: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+            } else if let result = updaterManager.lastCheckResult {
+                Text(result)
+                    .font(.caption)
+                    .foregroundColor(updaterManager.isUpdateAvailable ? .green : 
+                                   updaterManager.updateError != nil ? .red : .secondary)
+                    .multilineTextAlignment(.center)
             } else if let error = updaterManager.updateError {
                 Text("Error: \(error)")
                     .font(.caption)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
-            } else if updaterManager.isUpdateAvailable {
-                Text("Update available: \(updaterManager.formatVersionInfo())")
-                    .font(.caption)
-                    .foregroundColor(.green)
-                    .multilineTextAlignment(.center)
-            } else if updaterManager.lastUpdateCheck != nil {
-                Text("No updates available")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
         }
         .padding(12)

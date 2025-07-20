@@ -13,11 +13,12 @@ class UpdaterManager: NSObject, ObservableObject {
     @Published var isCheckingForUpdates: Bool = false
     @Published var lastUpdateCheck: Date?
     @Published var updateError: String?
+    @Published var lastCheckResult: String?
     
     // Note: Direct SUAppcastItem storage omitted due to sendability constraints
     
     // MARK: - Private Properties
-    private let updaterController: SPUStandardUpdaterController
+    private var updaterController: SPUStandardUpdaterController
     private let userDefaults = UserDefaults.standard
     
     // MARK: - Settings
@@ -39,14 +40,29 @@ class UpdaterManager: NSObject, ObservableObject {
     
     // MARK: - Initialization
     override init() {
-        // Initialize Sparkle updater controller
+        // Initialize without starting
         self.updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: false,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
         
         super.init()
+        
+        // Only start updater if not in manual-only mode
+        let shouldStartUpdater: Bool
+        #if DEBUG
+        shouldStartUpdater = !AppConstants.DeveloperUpdateConfig.manualCheckOnly
+        #else
+        shouldStartUpdater = true
+        #endif
+        
+        // Recreate with self as delegate after super.init()
+        self.updaterController = SPUStandardUpdaterController(
+            startingUpdater: shouldStartUpdater,
+            updaterDelegate: self,
+            userDriverDelegate: nil
+        )
         
         setupUpdater()
         configureAutomaticChecks()
@@ -58,16 +74,23 @@ class UpdaterManager: NSObject, ObservableObject {
     func checkForUpdates() {
         guard !isCheckingForUpdates else { return }
         
+        print("🔄 Starting manual update check...")
         isCheckingForUpdates = true
         updateError = nil
+        lastCheckResult = nil
         
         updaterController.updater.checkForUpdates()
         userDefaults.set(Date(), forKey: AppConstants.lastUpdateCheckKey)
         lastUpdateCheck = Date()
         
         // Reset checking state after a timeout to handle cases where delegate isn't called
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
-            self.isCheckingForUpdates = false
+        // This handles scenarios like empty appcast feeds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            if self.isCheckingForUpdates {
+                self.isCheckingForUpdates = false
+                self.lastCheckResult = "Current version \(self.currentVersionDetailed) is up to date"
+                print("⏰ Update check timed out - assuming up to date")
+            }
         }
     }
     
@@ -97,6 +120,13 @@ class UpdaterManager: NSObject, ObservableObject {
         return AppConstants.appVersion
     }
     
+    /// Get the current app version with build number
+    var currentVersionDetailed: String {
+        let version = AppConstants.appVersion
+        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return version != buildNumber ? "\(version) (\(buildNumber))" : version
+    }
+    
     /// Get time since last update check
     var timeSinceLastCheck: TimeInterval? {
         guard let lastCheck = userDefaults.object(forKey: AppConstants.lastUpdateCheckKey) as? Date else {
@@ -108,18 +138,22 @@ class UpdaterManager: NSObject, ObservableObject {
     // MARK: - Private Methods
     
     private func setupUpdater() {
-        // Configure updater settings
-        updaterController.updater.automaticallyChecksForUpdates = autoUpdateEnabled
+        // Configure updater settings (will be set by configureAutomaticChecks)
         updaterController.updater.updateCheckInterval = AppConstants.updateCheckInterval
         
-        // Set appcast URL if not configured in Info.plist
-        if updaterController.updater.feedURL == nil {
-            updaterController.updater.feedURL = URL(string: AppConstants.appcastURL)
-        }
+        // Log feed URL configuration (will be provided by delegate)
+        print("✅ Sparkle configured with delegate feed URL: \(AppConstants.appcastURL)")
         
         // Set initial defaults if not set
         if !userDefaults.bool(forKey: "hasSetDefaultUpdateSettings") {
-            userDefaults.set(true, forKey: AppConstants.autoUpdateEnabledKey)
+            // In manual-only mode, disable auto-updates by default
+            #if DEBUG
+            let defaultAutoUpdate = !AppConstants.DeveloperUpdateConfig.manualCheckOnly
+            #else
+            let defaultAutoUpdate = true
+            #endif
+            
+            userDefaults.set(defaultAutoUpdate, forKey: AppConstants.autoUpdateEnabledKey)
             userDefaults.set(false, forKey: AppConstants.checkForBetaUpdatesKey)
             userDefaults.set(true, forKey: "hasSetDefaultUpdateSettings")
         }
@@ -131,7 +165,15 @@ class UpdaterManager: NSObject, ObservableObject {
     }
     
     private func configureAutomaticChecks() {
-        updaterController.updater.automaticallyChecksForUpdates = autoUpdateEnabled
+        // Disable automatic checks in manual-only mode (debug builds)
+        let enableAutomaticChecks: Bool
+        #if DEBUG
+        enableAutomaticChecks = !AppConstants.DeveloperUpdateConfig.manualCheckOnly && autoUpdateEnabled
+        #else
+        enableAutomaticChecks = autoUpdateEnabled
+        #endif
+        
+        updaterController.updater.automaticallyChecksForUpdates = enableAutomaticChecks
         updaterController.updater.updateCheckInterval = AppConstants.updateCheckInterval
     }
     
@@ -143,13 +185,39 @@ class UpdaterManager: NSObject, ObservableObject {
 
 extension UpdaterManager: SPUUpdaterDelegate {
     
+    /// Provide the feed URL if not configured in Info.plist
+    nonisolated func feedURLString(for updater: SPUUpdater) -> String? {
+        print("🔍 Sparkle requesting feed URL: \(AppConstants.appcastURL)")
+        return AppConstants.appcastURL
+    }
+    
+    /// Called when update check begins
+    nonisolated func updater(_ updater: SPUUpdater, willInstallUpdate item: SUAppcastItem) {
+        print("📦 Sparkle will install update: \(item.displayVersionString)")
+    }
+    
+    /// Called when update check starts
+    nonisolated func updater(_ updater: SPUUpdater, userDidSkipThisVersion item: SUAppcastItem) {
+        print("⏭️ User skipped version: \(item.displayVersionString)")
+    }
+    
+    /// Called when appcast download finishes
+    nonisolated func updater(_ updater: SPUUpdater, didFinishLoading appcast: SUAppcast) {
+        print("📥 Appcast loaded with \(appcast.items.count) items")
+        if appcast.items.isEmpty {
+            print("⚠️ Empty appcast - no releases available")
+        }
+    }
+    
     nonisolated func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+        print("✅ Sparkle: No updates found")
         DispatchQueue.main.async {
             self.isCheckingForUpdates = false
             self.isUpdateAvailable = false
             self.updateVersion = nil
             self.updateBuildNumber = nil
             self.updateReleaseNotes = nil
+            self.lastCheckResult = "Current version \(self.currentVersionDetailed) is up to date"
         }
     }
     
@@ -158,21 +226,26 @@ extension UpdaterManager: SPUUpdaterDelegate {
         let version = item.displayVersionString
         let buildNumber = item.versionString
         let releaseNotesURL = item.releaseNotesURL?.absoluteString
+        let currentVersion = AppConstants.appVersion
         
+        print("🆕 Sparkle: Found update \(version)")
         DispatchQueue.main.async {
             self.isCheckingForUpdates = false
             self.isUpdateAvailable = true
             self.updateVersion = version
             self.updateBuildNumber = buildNumber
             self.updateReleaseNotes = releaseNotesURL
+            self.lastCheckResult = "Update available: \(self.currentVersionDetailed) → \(version)"
             // Note: currentUpdateItem is omitted due to sendability constraints
         }
     }
     
     nonisolated func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
+        print("❌ Sparkle error: \(error.localizedDescription)")
         DispatchQueue.main.async {
             self.isCheckingForUpdates = false
             self.updateError = error.localizedDescription
+            self.lastCheckResult = "Failed to check for updates: \(error.localizedDescription)"
         }
     }
 }
