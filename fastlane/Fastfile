@@ -198,7 +198,11 @@ platform :mac do
   lane :auto_beta do |options|
     UI.header "🤖 Automated Beta Release"
     
-    Dir.chdir("..") do
+    # Ensure we're in the project root (handle both cases: called from fastlane/ or project root)
+    project_root = File.expand_path("..", Dir.pwd) if File.basename(Dir.pwd) == "fastlane"
+    project_root ||= Dir.pwd
+    
+    Dir.chdir(project_root) do
       # Validate we're on staging branch
       current_branch = sh("git rev-parse --abbrev-ref HEAD", log: false).strip
       unless current_branch == "staging"
@@ -236,7 +240,11 @@ platform :mac do
   lane :auto_prod do |options|
     UI.header "🤖 Automated Production Release"
     
-    Dir.chdir("..") do
+    # Ensure we're in the project root (handle both cases: called from fastlane/ or project root)
+    project_root = File.expand_path("..", Dir.pwd) if File.basename(Dir.pwd) == "fastlane"
+    project_root ||= Dir.pwd
+    
+    Dir.chdir(project_root) do
       # Validate we're on main branch
       current_branch = sh("git rev-parse --abbrev-ref HEAD", log: false).strip
       unless current_branch == "main"
@@ -283,7 +291,13 @@ platform :mac do
   lane :bump_and_release do |options|
     UI.header "📈 Version Bump and Release"
     
-    Dir.chdir("..") do
+    # Ensure we're in the project root
+    project_root = File.expand_path("..", Dir.pwd) if File.basename(Dir.pwd) == "fastlane"
+    project_root ||= Dir.pwd
+    
+    new_version = nil
+    
+    Dir.chdir(project_root) do
       # Validate we're on main branch
       current_branch = sh("git rev-parse --abbrev-ref HEAD", log: false).strip
       unless current_branch == "main"
@@ -331,10 +345,10 @@ platform :mac do
           next
         end
       end
-      
-      # Run auto production release with new version
-      auto_prod(version: new_version)
     end
+    
+    # Run auto production release with new version (this will handle its own directory context)
+    auto_prod(version: new_version)
   end
 
   error do |lane, exception|
