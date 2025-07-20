@@ -57,6 +57,28 @@ fastlane release
 fastlane lanes
 ```
 
+### Most Common Commands (Post-July 2025 Fixes)
+```bash
+# Daily development
+fastlane dev              # Build debug + launch app
+fastlane launch           # Quick build + launch for testing
+fastlane clean            # Clean when build issues occur
+
+# Release preparation  
+fastlane build_release    # Production build
+fastlane info            # Check app details
+fastlane release         # Complete release workflow
+
+# 🤖 AUTOMATED RELEASES (NEW)
+fastlane auto_beta        # Zero-friction beta release with auto-tagging
+fastlane auto_prod        # Zero-friction production release with auto-tagging  
+fastlane bump_and_release # Smart version bump + automated release
+
+# Troubleshooting
+fastlane verify_signing  # Check code signing status
+fastlane clean           # Fresh start when needed
+```
+
 ## Available Lanes
 
 ### Development Lanes
@@ -85,12 +107,12 @@ fastlane build_debug
 fastlane build_release
 ```
 
-#### `fastlane run`
+#### `fastlane launch`
 **Purpose**: Build debug version and launch the app
 **Use when**: Quick testing during development
 
 ```bash
-fastlane run
+fastlane launch
 ```
 
 ### Utility Lanes
@@ -164,7 +186,134 @@ fastlane dev
 fastlane release
 ```
 
+#### `fastlane beta`
+**Purpose**: Create beta release using Makefile workflow
+**Steps**:
+1. Validates staging branch
+2. Creates beta-* tag
+3. Builds release version
+4. Creates GitHub release
+**Use when**: Creating beta releases for testing
+
+```bash
+fastlane beta
+```
+
+#### `fastlane prod`
+**Purpose**: Create production release using Makefile workflow  
+**Steps**:
+1. Validates main branch
+2. Creates v* tag
+3. Builds release version
+4. Creates GitHub release
+**Use when**: Creating official production releases
+
+```bash
+fastlane prod
+```
+
+### 🤖 Automated Release Lanes (NEW)
+
+#### `fastlane auto_beta`
+**Purpose**: Fully automated beta release with auto-generated tags
+**What it does**:
+1. Validates you're on `staging` branch
+2. Checks for uncommitted changes
+3. **Automatically creates** `beta-v{version}-{timestamp}` tag
+4. Pushes tag to remote
+5. Builds and creates GitHub release
+**Use when**: You want zero-friction beta releases
+
+```bash
+# Use default version (1.0.0)
+fastlane auto_beta
+
+# Specify custom version
+fastlane auto_beta version:2.1.0
+```
+
+#### `fastlane auto_prod`
+**Purpose**: Fully automated production release with auto-generated tags
+**What it does**:
+1. Validates you're on `main` branch  
+2. Checks for uncommitted changes
+3. **Automatically creates** `v{version}` tag
+4. Validates tag doesn't already exist
+5. Pushes tag to remote
+6. Builds and creates GitHub release
+**Use when**: You want zero-friction production releases
+
+```bash
+# Use default version (1.0.0)
+fastlane auto_prod
+
+# Specify custom version  
+fastlane auto_prod version:2.1.0
+```
+
+#### `fastlane bump_and_release`
+**Purpose**: Intelligent version bumping with automated release
+**What it does**:
+1. Validates you're on `main` branch
+2. **Automatically detects** current version from git tags
+3. **Automatically bumps** version (patch/minor/major)
+4. Shows preview and asks for confirmation
+5. Creates production release with new version
+**Use when**: You want semantic versioning automation
+
+```bash
+# Bump patch version (1.0.0 → 1.0.1)
+fastlane bump_and_release
+
+# Bump minor version (1.0.1 → 1.1.0)
+fastlane bump_and_release bump:minor
+
+# Bump major version (1.1.0 → 2.0.0)
+fastlane bump_and_release bump:major
+
+# Skip confirmation prompt
+fastlane bump_and_release bump:minor force:true
+```
+
 ## Development Workflows
+
+### 🤖 Automated Release Workflows (RECOMMENDED)
+
+#### Zero-Friction Beta Release
+```bash
+# Switch to staging branch
+git checkout staging
+
+# Make sure everything is committed
+git add . && git commit -m "Ready for beta"
+
+# One command beta release with auto-tagging
+fastlane auto_beta
+# Creates: beta-v1.0.0-202507201145
+```
+
+#### Zero-Friction Production Release  
+```bash
+# Switch to main branch
+git checkout main
+
+# Make sure everything is committed  
+git add . && git commit -m "Ready for production"
+
+# One command production release with auto-tagging
+fastlane auto_prod version:1.2.0
+# Creates: v1.2.0
+```
+
+#### Smart Version Bumping
+```bash
+# Switch to main branch
+git checkout main
+
+# Automatic version detection and bumping
+fastlane bump_and_release bump:minor
+# Detects current v1.1.0 → creates v1.2.0
+```
 
 ### Daily Development
 ```bash
@@ -174,7 +323,7 @@ fastlane dev
 # Make code changes in Xcode...
 
 # Quick rebuild and test
-fastlane run
+fastlane launch
 
 # Clean and rebuild if issues
 fastlane clean
@@ -200,7 +349,7 @@ fastlane info
 fastlane build_debug
 
 # Launch for testing
-fastlane run
+fastlane launch
 
 # Verify fixes work
 fastlane build_release
@@ -241,9 +390,62 @@ fastlane release
 # (not automated by Fastlane currently)
 ```
 
+## Recent Improvements (July 2025)
+
+### Fixed Issues
+✅ **Build Output Location**: Fixed issue where builds were created in `fastlane/dist/` instead of project root `dist/`
+✅ **Warning Suppression**: Eliminated verbose Gemfile and plugin warnings for cleaner output
+✅ **Lane Naming**: Renamed `run` lane to `launch` to avoid Fastlane reserved keyword conflicts
+✅ **Directory Context**: All commands now execute from correct project root directory
+
+### Clean Output
+Fastlane now provides clean, focused output without unnecessary warnings:
+- No more "bundle exec" suggestions
+- No more plugin loading messages
+- No more Gemfile detection warnings
+- Analytics and usage tracking disabled for faster execution
+
+### Verified Working Features
+- ✅ Universal binary builds (Intel x64 + Apple Silicon)
+- ✅ Automatic code signing with self-signed certificates  
+- ✅ App icon processing and bundle creation
+- ✅ Build metadata generation
+- ✅ All lanes create outputs in correct `dist/` directory
+
 ## Troubleshooting
 
 ### Common Issues
+
+#### "App builds but not found in dist/"
+**Problem**: Build completes successfully but `dist/ClickIt.app` doesn't exist
+**Solution**: This was a known issue (fixed July 2025). If you encounter this:
+```bash
+# Verify the fix is in place - check Fastfile contains Dir.chdir("..") 
+grep -n "Dir.chdir" fastlane/Fastfile
+
+# If missing, update your Fastfile or re-clone the repository
+# The build should now create files in the correct location
+```
+
+#### "Too many warnings from Fastlane"
+**Problem**: Verbose Gemfile and plugin warnings clutter output
+**Solution**: Already fixed (July 2025) by:
+- Adding `opt_out_usage` and `skip_docs` to Fastfile
+- Renaming `Gemfile` to `Gemfile.unused`
+- Disabling unused plugins
+```bash
+# Verify clean output
+fastlane info
+# Should show minimal warning messages
+```
+
+#### "Lane name 'run' is invalid"
+**Problem**: Reserved keyword conflict with Fastlane
+**Solution**: Lane renamed to `launch` (fixed July 2025)
+```bash
+# Use the new command
+fastlane launch  # Instead of fastlane run
+```
 
 #### "fastlane command not found"
 **Problem**: Fastlane not installed or not in PATH
@@ -373,7 +575,7 @@ You can create different app configurations:
 Fastlane wraps your existing build scripts:
 - `fastlane build_debug` → `./build_app_unified.sh debug`
 - `fastlane build_release` → `./build_app_unified.sh release`
-- `fastlane run` → build + `./run_clickit_unified.sh app`
+- `fastlane launch` → build + `./run_clickit_unified.sh app`
 
 You can still use the original scripts directly when needed.
 
@@ -394,6 +596,85 @@ For ClickIt-specific issues, check:
 - `README.md` - Project overview
 - `CLAUDE.md` - Development guidance
 - `scripts/README.md` - Build script details
+
+---
+
+## Verification & Testing
+
+### Verify Your Setup Works
+After installation, test these core commands:
+
+```bash
+# 1. Check Fastlane is working
+fastlane lanes
+# Should list all available lanes without errors
+
+# 2. Test info command (works without building)
+fastlane info
+# Should show app information or "App not found" message
+
+# 3. Test a quick build
+fastlane build_debug
+# Should create dist/ClickIt.app
+
+# 4. Verify output location
+ls -la dist/
+# Should show ClickIt.app, binaries/, and build-info.txt
+
+# 5. Test complete workflow
+fastlane dev
+# Should build and launch the app
+```
+
+### Expected Output Locations
+After successful builds, you should see:
+```
+dist/
+├── ClickIt.app/           # Main app bundle
+├── binaries/              # Architecture-specific binaries
+└── build-info.txt         # Build metadata
+```
+
+### Manual vs Automated Workflow Comparison
+
+#### ❌ Manual Workflow (Old Way)
+```bash
+# Beta release - multiple manual steps
+git checkout staging
+git tag beta-v1.0.0-20250720
+git push origin --tags
+fastlane beta
+
+# Production release - multiple manual steps  
+git checkout main
+git tag v1.0.0
+git push origin --tags
+fastlane prod
+```
+
+#### ✅ Automated Workflow (New Way)
+```bash
+# Beta release - one command
+git checkout staging
+fastlane auto_beta
+
+# Production release - one command
+git checkout main  
+fastlane auto_prod version:1.0.0
+
+# Smart version bumping - one command
+fastlane bump_and_release bump:patch
+```
+
+**Benefits of Automation**:
+- ✅ **Zero tag management** - No manual tag creation or pushing
+- ✅ **Version validation** - Prevents duplicate tags automatically
+- ✅ **Git state validation** - Ensures clean working directory
+- ✅ **Branch validation** - Enforces correct branch for release type
+- ✅ **Intelligent versioning** - Auto-detects current version and bumps appropriately
+- ✅ **One-command releases** - Complete automation from commit to GitHub release
+
+**Important**: If builds appear successful but `dist/ClickIt.app` is missing, you may have an older version of the Fastfile. Update to the latest version with the July 2025 fixes.
 
 ---
 

@@ -117,6 +117,70 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << EOF
 </plist>
 EOF
 
+# Process app icons if Assets.xcassets exists
+if [ -d "ClickIt/Assets.xcassets/AppIcon.appiconset" ]; then
+    echo "🎨 Processing app icons..."
+    
+    ICON_DIR="ClickIt/Assets.xcassets/AppIcon.appiconset"
+    ICONSET_DIR="$DIST_DIR/ClickIt.iconset"
+    
+    # Create iconset directory
+    mkdir -p "$ICONSET_DIR"
+    
+    # Copy and rename icons for iconutil
+    # iconutil expects specific naming conventions
+    if [ -f "$ICON_DIR/icon_16x16.png" ]; then
+        cp "$ICON_DIR/icon_16x16.png" "$ICONSET_DIR/icon_16x16.png"
+    fi
+    if [ -f "$ICON_DIR/icon_16x16@2x.png" ]; then
+        cp "$ICON_DIR/icon_16x16@2x.png" "$ICONSET_DIR/icon_16x16@2x.png"
+    fi
+    if [ -f "$ICON_DIR/icon_32x32.png" ]; then
+        cp "$ICON_DIR/icon_32x32.png" "$ICONSET_DIR/icon_32x32.png"
+    fi
+    if [ -f "$ICON_DIR/icon_32x32@2x.png" ]; then
+        cp "$ICON_DIR/icon_32x32@2x.png" "$ICONSET_DIR/icon_32x32@2x.png"
+    fi
+    if [ -f "$ICON_DIR/icon_128x128.png" ]; then
+        cp "$ICON_DIR/icon_128x128.png" "$ICONSET_DIR/icon_128x128.png"
+    fi
+    if [ -f "$ICON_DIR/icon_128x128@2x.png" ]; then
+        cp "$ICON_DIR/icon_128x128@2x.png" "$ICONSET_DIR/icon_128x128@2x.png"
+    fi
+    if [ -f "$ICON_DIR/icon_256x256.png" ]; then
+        cp "$ICON_DIR/icon_256x256.png" "$ICONSET_DIR/icon_256x256.png"
+    fi
+    if [ -f "$ICON_DIR/icon_256x256@2x.png" ]; then
+        cp "$ICON_DIR/icon_256x256@2x.png" "$ICONSET_DIR/icon_256x256@2x.png"
+    fi
+    if [ -f "$ICON_DIR/icon_512x512.png" ]; then
+        cp "$ICON_DIR/icon_512x512.png" "$ICONSET_DIR/icon_512x512.png"
+    fi
+    if [ -f "$ICON_DIR/icon_512x512@2x.png" ]; then
+        cp "$ICON_DIR/icon_512x512@2x.png" "$ICONSET_DIR/icon_512x512@2x.png"
+    fi
+    
+    # Create .icns file using iconutil
+    if iconutil -c icns "$ICONSET_DIR" -o "$APP_BUNDLE/Contents/Resources/$APP_NAME.icns" 2>/dev/null; then
+        echo "✅ App icon created successfully"
+        
+        # Update Info.plist to include icon reference
+        # Insert CFBundleIconFile key before the closing </dict>
+        sed -i '' 's|</dict>|    <key>CFBundleIconFile</key>\
+    <string>'$APP_NAME'</string>\
+</dict>|' "$APP_BUNDLE/Contents/Info.plist"
+        
+        echo "✅ Info.plist updated with icon reference"
+    else
+        echo "⚠️  Failed to create .icns file, app will use default icon"
+    fi
+    
+    # Clean up iconset directory
+    rm -rf "$ICONSET_DIR"
+else
+    echo "ℹ️  No app icons found (Assets.xcassets/AppIcon.appiconset not found)"
+fi
+
 # Make executable
 chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 

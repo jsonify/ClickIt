@@ -2,104 +2,120 @@
 # This file contains the fastlane.tools configuration
 # You can find the documentation at https://docs.fastlane.tools
 
+# Suppress warnings and analytics
+opt_out_usage
+skip_docs
+
 default_platform(:mac)
 
 # Global configuration
 APP_NAME = "ClickIt"
-BUNDLE_ID = "com.jsonify.clickit"
+BUNDLE_ID = "com.jsonify.ClickIt"
 DIST_DIR = "dist"
 
 platform :mac do
   desc "Build ClickIt app (Debug)"
   lane :build_debug do
-    sh("../build_app_unified.sh debug")
+    Dir.chdir("..") do
+      sh("./build_app.sh debug")
+    end
     UI.success("Debug build completed! 🎉")
     UI.message("App location: dist/ClickIt.app")
   end
 
   desc "Build ClickIt app (Release)"
   lane :build_release do
-    sh("../build_app_unified.sh release")
+    Dir.chdir("..") do
+      sh("./build_app.sh release")
+    end
     UI.success("Release build completed! 🚀")
     UI.message("App location: dist/ClickIt.app")
   end
 
   desc "Build and run ClickIt app"
-  lane :run do
+  lane :launch do
     build_debug
-    sh("../run_clickit_unified.sh app")
+    Dir.chdir("..") do
+      sh("./run_clickit_unified.sh app")
+    end
     UI.success("ClickIt launched! 🖱️")
   end
 
   desc "Clean build artifacts"
   lane :clean do
     UI.message("Cleaning build artifacts...")
-    sh("rm -rf ../dist/*")
+    Dir.chdir("..") do
+      sh("rm -rf dist/*")
+    end
     sh("rm -rf ~/Library/Developer/Xcode/DerivedData/ClickIt-*") rescue nil
     UI.success("Clean completed! 🧹")
   end
 
   desc "Verify code signing status"
   lane :verify_signing do
-    app_path = "../dist/ClickIt.app"
-    
-    if File.exist?(app_path)
-      UI.message("Checking code signing status...")
+    Dir.chdir("..") do
+      app_path = "dist/ClickIt.app"
       
-      begin
-        sh("codesign --verify --verbose '#{app_path}'")
-        UI.success("✅ App is properly code signed")
-      rescue
-        UI.important("⚠️  App is not code signed or signature is invalid")
+      if File.exist?(app_path)
+        UI.message("Checking code signing status...")
+        
+        begin
+          sh("codesign --verify --verbose '#{app_path}'")
+          UI.success("✅ App is properly code signed")
+        rescue
+          UI.important("⚠️  App is not code signed or signature is invalid")
+        end
+        
+        # Show certificate info
+        begin
+          result = sh("codesign -dv '#{app_path}' 2>&1", log: false)
+          UI.message("Code signing details:")
+          UI.message(result)
+        rescue
+          UI.error("Could not retrieve signing details")
+        end
+      else
+        UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
       end
-      
-      # Show certificate info
-      begin
-        result = sh("codesign -dv '#{app_path}' 2>&1", log: false)
-        UI.message("Code signing details:")
-        UI.message(result)
-      rescue
-        UI.error("Could not retrieve signing details")
-      end
-    else
-      UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
     end
   end
 
   desc "Show app bundle information"
   lane :info do
-    app_path = "../dist/ClickIt.app"
-    
-    if File.exist?(app_path)
-      UI.header("ClickIt App Bundle Information")
+    Dir.chdir("..") do
+      app_path = "dist/ClickIt.app"
       
-      # App size
-      size = sh("du -sh '#{app_path}' | cut -f1", log: false).strip
-      UI.message("📦 Bundle size: #{size}")
-      
-      # Version info from Info.plist
-      begin
-        version = sh("plutil -extract CFBundleShortVersionString xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
-        build = sh("plutil -extract CFBundleVersion xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
-        UI.message("🏷️  Version: #{version} (#{build})")
-      rescue
-        UI.message("Could not read version information")
+      if File.exist?(app_path)
+        UI.header("ClickIt App Bundle Information")
+        
+        # App size
+        size = sh("du -sh '#{app_path}' | cut -f1", log: false).strip
+        UI.message("📦 Bundle size: #{size}")
+        
+        # Version info from Info.plist
+        begin
+          version = sh("plutil -extract CFBundleShortVersionString xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
+          build = sh("plutil -extract CFBundleVersion xml1 -o - '#{app_path}/Contents/Info.plist' | sed -n 's/.*<string>\\(.*\\)<\\/string>.*/\\1/p'", log: false).strip
+          UI.message("🏷️  Version: #{version} (#{build})")
+        rescue
+          UI.message("Could not read version information")
+        end
+        
+        # Architectures
+        begin
+          archs = sh("lipo -info '#{app_path}/Contents/MacOS/ClickIt' 2>/dev/null || file '#{app_path}/Contents/MacOS/ClickIt'", log: false)
+          UI.message("🏗️  Architecture: #{archs.strip}")
+        rescue
+          UI.message("Could not determine architecture")
+        end
+        
+        # Permissions check
+        UI.message("🔒 Required permissions:")
+        UI.message("   • Accessibility (for mouse events)")
+        UI.message("   • Screen Recording (for window detection)")
+      else
+        UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
       end
-      
-      # Architectures
-      begin
-        archs = sh("lipo -info '#{app_path}/Contents/MacOS/ClickIt' 2>/dev/null || file '#{app_path}/Contents/MacOS/ClickIt'", log: false)
-        UI.message("🏗️  Architecture: #{archs.strip}")
-      rescue
-        UI.message("Could not determine architecture")
-      end
-      
-      # Permissions check
-      UI.message("🔒 Required permissions:")
-      UI.message("   • Accessibility (for mouse events)")
-      UI.message("   • Screen Recording (for window detection)")
-    else
-      UI.error("App not found at #{app_path}. Build first with 'fastlane build_debug' or 'fastlane build_release'")
     end
   end
 
@@ -132,7 +148,7 @@ platform :mac do
     UI.header("Starting ClickIt Development Workflow")
     
     # Build debug and run
-    run
+    launch
     
     UI.success("Development session started! 🛠️")
     UI.message("The app should now be running")
@@ -156,7 +172,9 @@ platform :mac do
     UI.header "🚀 Creating Beta Release"
     
     # Use Makefile beta workflow (includes validation, build, and GitHub release)
-    sh("../make beta")
+    Dir.chdir("..") do
+      sh("make beta")
+    end
     
     UI.success "✅ Beta release created!"
     UI.message "Check your GitHub releases for the beta"
@@ -167,10 +185,156 @@ platform :mac do
     UI.header "🎉 Creating Production Release"
     
     # Use Makefile prod workflow (includes validation, build, and GitHub release)
-    sh("../make prod")
+    Dir.chdir("..") do
+      sh("make prod")
+    end
     
     UI.success "✅ Production release created!"
     UI.message "Your production release is now live on GitHub"
+  end
+
+  # Automated tagging lanes
+  desc "Create and publish automated beta release with auto-generated tag"
+  lane :auto_beta do |options|
+    UI.header "🤖 Automated Beta Release"
+    
+    Dir.chdir("..") do
+      # Validate we're on staging branch
+      current_branch = sh("git rev-parse --abbrev-ref HEAD", log: false).strip
+      unless current_branch == "staging"
+        UI.user_error!("❌ Auto beta releases must be created from 'staging' branch. Current: #{current_branch}")
+      end
+      
+      # Check for uncommitted changes
+      git_status = sh("git status --porcelain", log: false).strip
+      unless git_status.empty?
+        UI.user_error!("❌ You have uncommitted changes. Please commit or stash them first.")
+      end
+      
+      # Generate beta tag
+      timestamp = Time.now.strftime("%Y%m%d%H%M")
+      version = options[:version] || "1.0.0"
+      beta_tag = "beta-v#{version}-#{timestamp}"
+      
+      UI.message "🏷️  Creating tag: #{beta_tag}"
+      
+      # Create and push tag
+      sh("git tag #{beta_tag}")
+      sh("git push origin #{beta_tag}")
+      
+      UI.success "✅ Tag created and pushed: #{beta_tag}"
+      
+      # Now run the beta release
+      sh("make beta")
+    end
+    
+    UI.success "✅ Automated beta release completed!"
+    UI.message "Check your GitHub releases for the beta"
+  end
+
+  desc "Create and publish automated production release with auto-generated tag"
+  lane :auto_prod do |options|
+    UI.header "🤖 Automated Production Release"
+    
+    Dir.chdir("..") do
+      # Validate we're on main branch
+      current_branch = sh("git rev-parse --abbrev-ref HEAD", log: false).strip
+      unless current_branch == "main"
+        UI.user_error!("❌ Auto production releases must be created from 'main' branch. Current: #{current_branch}")
+      end
+      
+      # Check for uncommitted changes
+      git_status = sh("git status --porcelain", log: false).strip
+      unless git_status.empty?
+        UI.user_error!("❌ You have uncommitted changes. Please commit or stash them first.")
+      end
+      
+      # Generate production tag
+      version = options[:version] || "1.0.0"
+      prod_tag = "v#{version}"
+      
+      # Check if tag already exists
+      begin
+        existing_tag = sh("git rev-list -n 1 #{prod_tag} 2>/dev/null", log: false).strip
+        if !existing_tag.empty?
+          UI.user_error!("❌ Tag #{prod_tag} already exists. Use a different version or delete the existing tag.")
+        end
+      rescue
+        # Tag doesn't exist, which is what we want
+      end
+      
+      UI.message "🏷️  Creating tag: #{prod_tag}"
+      
+      # Create and push tag
+      sh("git tag #{prod_tag}")
+      sh("git push origin #{prod_tag}")
+      
+      UI.success "✅ Tag created and pushed: #{prod_tag}"
+      
+      # Now run the production release
+      sh("make prod")
+    end
+    
+    UI.success "✅ Automated production release completed!"
+    UI.message "Your production release is now live on GitHub"
+  end
+
+  desc "Bump version and create automated production release"
+  lane :bump_and_release do |options|
+    UI.header "📈 Version Bump and Release"
+    
+    Dir.chdir("..") do
+      # Validate we're on main branch
+      current_branch = sh("git rev-parse --abbrev-ref HEAD", log: false).strip
+      unless current_branch == "main"
+        UI.user_error!("❌ Version bumps must be done from 'main' branch. Current: #{current_branch}")
+      end
+      
+      # Get current version from git tags
+      begin
+        latest_tag = sh("git describe --tags --abbrev=0 --match='v*' 2>/dev/null || echo 'v0.0.0'", log: false).strip
+        current_version = latest_tag.gsub(/^v/, "")
+      rescue
+        current_version = "0.0.0"
+      end
+      
+      UI.message "📋 Current version: #{current_version}"
+      
+      # Parse version components
+      version_parts = current_version.split(".").map(&:to_i)
+      major, minor, patch = version_parts[0] || 0, version_parts[1] || 0, version_parts[2] || 0
+      
+      # Determine bump type
+      bump_type = options[:bump] || "patch"
+      case bump_type
+      when "major"
+        major += 1
+        minor = 0
+        patch = 0
+      when "minor"
+        minor += 1
+        patch = 0
+      when "patch"
+        patch += 1
+      else
+        UI.user_error!("❌ Invalid bump type: #{bump_type}. Use 'major', 'minor', or 'patch'")
+      end
+      
+      new_version = "#{major}.#{minor}.#{patch}"
+      UI.message "🆙 New version: #{new_version}"
+      
+      # Ask for confirmation unless forced
+      unless options[:force]
+        answer = UI.confirm("Create release for v#{new_version}?")
+        unless answer
+          UI.message "❌ Release cancelled by user"
+          next
+        end
+      end
+      
+      # Run auto production release with new version
+      auto_prod(version: new_version)
+    end
   end
 
   error do |lane, exception|

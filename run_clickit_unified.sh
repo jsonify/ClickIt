@@ -36,7 +36,7 @@ case "$BUILD_SYSTEM" in
         echo "📱 Running app bundle..."
         if [ ! -d "dist/ClickIt.app" ]; then
             echo "❌ App bundle not found at dist/ClickIt.app"
-            echo "💡 Build first with: ./build_app_unified.sh"
+            echo "💡 Build first with: ./build_app.sh"
             exit 1
         fi
         

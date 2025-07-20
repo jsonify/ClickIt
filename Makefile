@@ -8,7 +8,7 @@
 
 # Configuration
 APP_NAME = ClickIt
-BUNDLE_ID = com.jsonify.clickit
+BUNDLE_ID = com.jsonify.ClickIt
 DIST_DIR = dist
 BUILD_MODE = release
 
@@ -71,7 +71,8 @@ clean: ## Clean build artifacts and temporary files
 	@echo "$(BLUE)🧹 Cleaning build artifacts...$(NC)"
 	@swift package clean
 	@rm -rf $(DIST_DIR)
-	@rm -rf .build
+	@mkdir -p $(DIST_DIR)/logs
+	@echo "[$(shell date -Iseconds)] Clean operation completed" >> $(DIST_DIR)/logs/build.log
 	@echo "$(GREEN)✅ Clean complete$(NC)"
 
 build: ## Build the project (development mode)
@@ -96,13 +97,27 @@ lint: ## Run SwiftLint code quality checks
 
 local: build test lint ## Build, test, lint, and create local app bundle for testing
 	@echo "$(BLUE)📱 Creating local app bundle...$(NC)"
-	@./build_app.sh $(BUILD_MODE)
+	@if [ -f "./build_app.sh" ]; then \
+		./build_app.sh $(BUILD_MODE); \
+	else \
+		echo "❌ build_app.sh not found"; \
+		exit 1; \
+	fi
 	@echo "$(GREEN)✅ Local build complete! Launch with: open $(DIST_DIR)/$(APP_NAME).app$(NC)"
+	@echo "$(BLUE)📊 Build details: $(DIST_DIR)/build-info.txt$(NC)"
 
 sign: ## Sign the app bundle with development certificate
 	@echo "$(BLUE)🔐 Signing app bundle...$(NC)"
+	@if [ ! -d "$(DIST_DIR)/$(APP_NAME).app" ]; then \
+		echo "$(RED)❌ App bundle not found. Run 'make local' first$(NC)"; \
+		exit 1; \
+	fi
 	@if [ -z "$(CODE_SIGN_IDENTITY)" ]; then \
-		echo "$(RED)❌ CODE_SIGN_IDENTITY not set. See CERTIFICATE_SETUP.md$(NC)"; \
+		echo "$(YELLOW)⚠️  CODE_SIGN_IDENTITY not set$(NC)"; \
+		echo "$(BLUE)Available certificates:$(NC)"; \
+		security find-identity -v -p codesigning | head -5; \
+		echo "$(BLUE)Set with: export CODE_SIGN_IDENTITY=\"Certificate Name\"$(NC)"; \
+		echo "$(BLUE)See CERTIFICATE_SETUP.md for details$(NC)"; \
 		exit 1; \
 	fi
 	@./scripts/sign-app.sh
