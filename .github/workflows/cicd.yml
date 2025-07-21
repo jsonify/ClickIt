@@ -504,6 +504,15 @@ jobs:
               }
           }
           
+          func loadSignatures() -> [String: String] {
+              guard let data = try? Data(contentsOf: URL(fileURLWithPath: "dist/signatures.json")),
+                    let signatures = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
+                  print("⚠️  No signatures found")
+                  return [:]
+              }
+              return signatures
+          }
+          
           // Fetch releases from GitHub API
           let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
           let task = URLSession.shared.dataTask(with: url) { data, response, error in
