@@ -645,6 +645,9 @@ jobs:
           # Generate both production and beta appcasts
           cat > generate_all_appcasts.swift << 'EOF'
           import Foundation
+          #if canImport(FoundationNetworking)
+          import FoundationNetworking
+          #endif
           
           struct GitHubRelease: Codable {
               let tagName: String
@@ -672,6 +675,15 @@ jobs:
                   case name, size
                   case browserDownloadUrl = "browser_download_url"
               }
+          }
+          
+          func loadSignatures() -> [String: String] {
+              guard let data = try? Data(contentsOf: URL(fileURLWithPath: "dist/signatures.json")),
+                    let signatures = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
+                  print("⚠️  No signatures found")
+                  return [:]
+              }
+              return signatures
           }
           
           // Fetch releases from GitHub API
