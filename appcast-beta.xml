@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>ClickIt Beta Updates</title>
+        <link>https://github.com/jsonify/ClickIt</link>
+        <description>Software updates for ClickIt</description>
+        <language>en</language>
+        <lastBuildDate>Mon, 21 Jul 2025 03:44:49 +0000</lastBuildDate>
+        
+<item>
+    <title><![CDATA[Beta Release beta-v1.0.0-202507200129]]></title>
+    <description><![CDATA[Beta release for testing and feedback]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/beta-v1.0.0-202507200129</link>
+    <sparkle:version>1.0.0-202507200129</sparkle:version>
+    <sparkle:shortVersionString>1.0.0-202507200129</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Sun, 20 Jul 2025 08:30:19 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/beta-v1.0.0-202507200129/ClickIt.app.zip" 
+               length="1976844" 
+               type="application/octet-stream" 
+               sparkle:version="1.0.0-202507200129" 
+               sparkle:shortVersionString="1.0.0-202507200129" />
+</item>
+        <item>
+    <title><![CDATA[Beta Release v1.0.0-20250718]]></title>
+    <description><![CDATA[Beta release for testing and feedback
+
+**📦 What's Included:**
+- Universal macOS app (Intel + Apple Silicon)
+- Latest features and improvements
+
+**📱 Installation:**
+1. Download ClickIt.app.zip from Assets below
+2. Unzip and move ClickIt.app to Applications  
+3. Grant required permissions in System Settings > Privacy & Security:
+   - Accessibility (for mouse events)
+   - Screen Recording (for window detection)
+
+**🧪 Testing Notes:**
+This is a beta release. Please report any issues or feedback\!]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/beta-v1.0.0-20250718</link>
+    <sparkle:version>1.0.0-20250718</sparkle:version>
+    <sparkle:shortVersionString>1.0.0-20250718</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Sat, 19 Jul 2025 06:32:45 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/beta-v1.0.0-20250718/ClickIt.app.zip" 
+               length="995331" 
+               type="application/octet-stream" 
+               sparkle:version="1.0.0-20250718" 
+               sparkle:shortVersionString="1.0.0-20250718" />
+</item>
+        
+    </channel>
+</rss>
