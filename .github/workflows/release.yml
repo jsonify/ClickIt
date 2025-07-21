@@ -18,7 +18,7 @@ env:
 jobs:
   build-and-release:
     name: 🔨 Build Universal App & Create Release
-    runs-on: macos-latest
+    runs-on: macos-15
     
     steps:
     - name: 📥 Checkout Code
@@ -52,6 +52,11 @@ jobs:
     - name: 🏗️ Build Universal App with Xcode
       run: |
         echo "🔨 Building ${{ env.APP_NAME }} with Xcode..."
+        # Set environment variables for CI build (disable code signing, fix deployment target)
+        export CODE_SIGN_IDENTITY=""
+        export CODE_SIGNING_REQUIRED=NO
+        export CODE_SIGNING_ALLOWED=NO
+        export MACOSX_DEPLOYMENT_TARGET=14.0
         ./build_app_unified.sh release xcode
         
         echo "📦 Creating release archive..."
@@ -110,7 +115,7 @@ jobs:
         echo "- 🔄 **Auto-Updates**: Built-in Sparkle framework integration" >> release_notes.md
         echo "" >> release_notes.md
         echo "## 📋 System Requirements" >> release_notes.md
-        echo "- **macOS**: 15.0 or later" >> release_notes.md
+        echo "- **macOS**: 14.0 or later" >> release_notes.md
         echo "- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)" >> release_notes.md
         echo "- **Permissions**: Accessibility and Screen Recording access required" >> release_notes.md
         echo "" >> release_notes.md
@@ -135,7 +140,7 @@ jobs:
         echo "🏗️ **Built with**: Xcode on GitHub Actions" >> release_notes.md
         echo "📅 **Build Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> release_notes.md
         echo "🔖 **Version**: ${VERSION}" >> release_notes.md
-        echo "🎯 **Target**: macOS 15.0+" >> release_notes.md
+        echo "🎯 **Target**: macOS 14.0+" >> release_notes.md
         
         echo "release_notes_file=release_notes.md" >> $GITHUB_OUTPUT
     
