@@ -224,9 +224,11 @@ struct ClickCoordinateCapture {
     }
 }
 
-#Preview {
-    ClickPointSelector { point in
-        print("Selected point: \(point)")
+struct ClickPointSelector_Previews: PreviewProvider {
+    static var previews: some View {
+        ClickPointSelector { point in
+            print("Selected point: \(point)")
+        }
+        .frame(width: 400, height: 500)
     }
-    .frame(width: 400, height: 500)
 }

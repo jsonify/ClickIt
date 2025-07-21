@@ -204,6 +204,8 @@ struct InfoRow: View {
     }
 }
 
-#Preview {
-    UpdateNotificationCard(updaterManager: UpdaterManager())
+struct UpdateNotificationCard_Previews: PreviewProvider {
+    static var previews: some View {
+        UpdateNotificationCard(updaterManager: UpdaterManager())
+    }
 }

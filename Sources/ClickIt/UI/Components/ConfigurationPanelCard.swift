@@ -184,13 +184,15 @@ struct TimeInputField: View {
     }
 }
 
-#Preview {
-    ConfigurationPanelCard(viewModel: {
-        let vm = ClickItViewModel()
-        vm.intervalSeconds = 1
-        vm.intervalMilliseconds = 500
-        return vm
-    }())
-    .frame(width: 400)
-    .padding()
+struct ConfigurationPanelCard_Previews: PreviewProvider {
+    static var previews: some View {
+        ConfigurationPanelCard(viewModel: {
+            let vm = ClickItViewModel()
+            vm.intervalSeconds = 1
+            vm.intervalMilliseconds = 500
+            return vm
+        }())
+        .frame(width: 400)
+        .padding()
+    }
 }

@@ -291,12 +291,14 @@ struct CoordinateDisplay: View {
     }
 }
 
-#Preview {
-    TargetPointSelectionCard(viewModel: {
-        let vm = ClickItViewModel()
-        vm.setTargetPoint(CGPoint(x: 1007, y: 260))
-        return vm
-    }())
-    .frame(width: 400)
-    .padding()
+struct TargetPointSelectionCard_Previews: PreviewProvider {
+    static var previews: some View {
+        TargetPointSelectionCard(viewModel: {
+            let vm = ClickItViewModel()
+            vm.setTargetPoint(CGPoint(x: 1007, y: 260))
+            return vm
+        }())
+        .frame(width: 400)
+        .padding()
+    }
 }

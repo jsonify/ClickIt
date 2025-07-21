@@ -45,45 +45,47 @@ struct ElapsedTimeStatisticView: View {
     }
 }
 
-#Preview("Real Time Elapsed View") {
-    VStack(spacing: 20) {
-        Text("Real-Time Elapsed Time Display")
-            .font(.headline)
-        
-        RealTimeElapsedView(timeManager: {
-            let manager = ElapsedTimeManager.shared
-            manager.startTracking()
-            return manager
-        }())
-        
-        Button("Start/Stop Tracking") {
-            let manager = ElapsedTimeManager.shared
-            if manager.isTracking {
-                manager.stopTracking()
-            } else {
+struct RealTimeElapsedView_Previews: PreviewProvider {
+    static var previews: some View {
+        VStack(spacing: 20) {
+            Text("Real-Time Elapsed Time Display")
+                .font(.headline)
+            
+            RealTimeElapsedView(timeManager: {
+                let manager = ElapsedTimeManager.shared
                 manager.startTracking()
+                return manager
+            }())
+            
+            Button("Start/Stop Tracking") {
+                let manager = ElapsedTimeManager.shared
+                if manager.isTracking {
+                    manager.stopTracking()
+                } else {
+                    manager.startTracking()
+                }
             }
+            .buttonStyle(.borderedProminent)
         }
-        .buttonStyle(.borderedProminent)
-    }
-    .padding()
-    .frame(width: 300)
-}
-
-#Preview("Elapsed Time Statistic") {
-    ElapsedTimeStatisticView(
-        timeManager: ElapsedTimeManager.shared,
-        fallbackStatistics: SessionStatistics(
-            duration: 125,
-            totalClicks: 50,
-            successfulClicks: 48,
-            failedClicks: 2,
-            successRate: 0.96,
-            averageClickTime: 0.05,
-            clicksPerSecond: 2.4,
-            isActive: false
+        .padding()
+        .frame(width: 300)
+        .previewDisplayName("Real Time Elapsed View")
+        
+        ElapsedTimeStatisticView(
+            timeManager: ElapsedTimeManager.shared,
+            fallbackStatistics: SessionStatistics(
+                duration: 125,
+                totalClicks: 50,
+                successfulClicks: 48,
+                failedClicks: 2,
+                successRate: 0.96,
+                averageClickTime: 0.05,
+                clicksPerSecond: 2.4,
+                isActive: false
+            )
         )
-    )
-    .frame(width: 120, height: 100)
-    .padding()
+        .frame(width: 120, height: 100)
+        .padding()
+        .previewDisplayName("Elapsed Time Statistic")
+    }
 }

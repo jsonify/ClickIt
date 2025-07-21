@@ -106,6 +106,8 @@ struct AdvancedSettingsWindow: View {
     }
 }
 
-#Preview {
-    AdvancedSettingsWindow(viewModel: ClickItViewModel())
+struct AdvancedSettingsWindow_Previews: PreviewProvider {
+    static var previews: some View {
+        AdvancedSettingsWindow(viewModel: ClickItViewModel())
+    }
 }

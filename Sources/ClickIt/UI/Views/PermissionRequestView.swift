@@ -342,7 +342,9 @@ struct PermissionInstructionsView: View {
     }
 }
 
-#Preview {
-    PermissionRequestView()
-        .environmentObject(PermissionManager.shared)
+struct PermissionRequestView_Previews: PreviewProvider {
+    static var previews: some View {
+        PermissionRequestView()
+            .environmentObject(PermissionManager.shared)
+    }
 }

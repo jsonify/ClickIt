@@ -29,8 +29,10 @@ struct FooterInfoCard: View {
     }
 }
 
-#Preview {
-    FooterInfoCard()
-        .frame(width: 400)
-        .padding()
+struct FooterInfoCard_Previews: PreviewProvider {
+    static var previews: some View {
+        FooterInfoCard()
+            .frame(width: 400)
+            .padding()
+    }
 }

@@ -54,6 +54,8 @@ struct DeveloperUpdateButton: View {
     }
 }
 
-#Preview {
-    DeveloperUpdateButton(updaterManager: UpdaterManager())
+struct DeveloperUpdateButton_Previews: PreviewProvider {
+    static var previews: some View {
+        DeveloperUpdateButton(updaterManager: UpdaterManager())
+    }
 }

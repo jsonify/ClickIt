@@ -100,15 +100,17 @@ struct ActiveTimerView: View {
     }
 }
 
-#Preview {
-    ActiveTimerView(viewModel: {
-        let vm = ClickItViewModel()
-        vm.isCountingDown = true
-        vm.remainingTime = 123 // 2:03
-        vm.timerDurationMinutes = 2
-        vm.timerDurationSeconds = 30
-        return vm
-    }())
-    .frame(width: 350)
-    .padding()
+struct ActiveTimerView_Previews: PreviewProvider {
+    static var previews: some View {
+        ActiveTimerView(viewModel: {
+            let vm = ClickItViewModel()
+            vm.isCountingDown = true
+            vm.remainingTime = 123 // 2:03
+            vm.timerDurationMinutes = 2
+            vm.timerDurationSeconds = 30
+            return vm
+        }())
+        .frame(width: 350)
+        .padding()
+    }
 }
