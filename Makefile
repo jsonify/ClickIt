@@ -95,8 +95,8 @@ lint: ## Run SwiftLint code quality checks
 		swiftlint lint --strict; \
 		echo "$(GREEN)✅ Linting passed$(NC)"; \
 	else \
-		echo "$(YELLOW)⚠️  SwiftLint not installed. Run: brew install swiftlint$(NC)"; \
-		exit 1; \
+		echo "$(YELLOW)⚠️  SwiftLint not installed. Skipping linting$(NC)"; \
+		echo "$(BLUE)💡 Install with: brew install swiftlint$(NC)"; \
 	fi
 
 local: build test lint ## Build, test, lint, and create local app bundle for testing
