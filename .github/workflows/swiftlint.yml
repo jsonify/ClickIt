@@ -38,7 +38,7 @@ jobs:
         run: |
           # Install SwiftLint using the official install script
           curl -sSL https://github.com/realm/SwiftLint/releases/latest/download/swiftlint_linux.zip -o swiftlint.zip
-          unzip swiftlint.zip
+          unzip -o swiftlint.zip
           sudo mv swiftlint /usr/local/bin/
           swiftlint version
       
