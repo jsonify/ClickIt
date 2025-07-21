@@ -152,7 +152,6 @@ jobs:
         body_path: release_notes.md
         draft: false
         prerelease: false
-        make_latest: true
         files: |
           dist/${{ env.APP_NAME }}.app.zip
           dist/build-info.txt

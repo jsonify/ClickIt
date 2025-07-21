@@ -219,7 +219,7 @@ else
     <key>CFBundleVersion</key>
     <string>$BUILD_NUMBER</string>
     <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
+    <string>${MACOSX_DEPLOYMENT_TARGET:-14.0}</string>
     <key>LSUIElement</key>
     <false/>
     <key>NSHighResolutionCapable</key>
