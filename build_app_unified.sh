@@ -61,8 +61,29 @@ if [ "$BUILD_SYSTEM" = "xcode" ]; then
     
     echo "⚙️  Building with configuration: $XCODE_CONFIG"
     
-    # Build with Xcode
-    xcodebuild -project "$XCODE_PROJECT" -scheme ClickIt -configuration "$XCODE_CONFIG" build
+    # Build with Xcode using custom Info.plist
+    echo "🔧 Configuring Xcode build to use custom Info.plist..."
+    
+    # Prepare build settings
+    BUILD_SETTINGS="INFOPLIST_FILE=ClickIt/Info.plist GENERATE_INFOPLIST_FILE=NO"
+    
+    # Add code signing settings if specified (for CI)
+    if [ -n "$CODE_SIGN_IDENTITY" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS CODE_SIGN_IDENTITY=$CODE_SIGN_IDENTITY"
+    fi
+    if [ -n "$CODE_SIGNING_REQUIRED" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS CODE_SIGNING_REQUIRED=$CODE_SIGNING_REQUIRED"
+    fi
+    if [ -n "$CODE_SIGNING_ALLOWED" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS CODE_SIGNING_ALLOWED=$CODE_SIGNING_ALLOWED"
+    fi
+    if [ -n "$MACOSX_DEPLOYMENT_TARGET" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET"
+    fi
+    
+    xcodebuild -project "$XCODE_PROJECT" -scheme ClickIt -configuration "$XCODE_CONFIG" \
+        $BUILD_SETTINGS \
+        build
     
     # Find the built app
     DERIVED_DATA_PATH=$(xcodebuild -project "$XCODE_PROJECT" -scheme ClickIt -configuration "$XCODE_CONFIG" -showBuildSettings | grep "BUILT_PRODUCTS_DIR" | cut -d'=' -f2 | xargs)
@@ -153,8 +174,29 @@ else
 
     # Copy executable
     cp "$FINAL_BINARY" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+    
+    # Bundle Sparkle framework for SPM builds
+    echo "📦 Bundling Sparkle framework..."
+    SPARKLE_FRAMEWORK_PATH=".build/checkouts/Sparkle/Sparkle.framework"
+    if [ -d "$SPARKLE_FRAMEWORK_PATH" ]; then
+        mkdir -p "$APP_BUNDLE/Contents/Frameworks"
+        cp -R "$SPARKLE_FRAMEWORK_PATH" "$APP_BUNDLE/Contents/Frameworks/"
+        echo "✅ Sparkle framework bundled successfully"
+    else
+        echo "⚠️  Sparkle framework not found at $SPARKLE_FRAMEWORK_PATH"
+        echo "🔍 Searching for Sparkle framework..."
+        SPARKLE_SEARCH=$(find .build -name "Sparkle.framework" -type d 2>/dev/null | head -1)
+        if [ -n "$SPARKLE_SEARCH" ]; then
+            mkdir -p "$APP_BUNDLE/Contents/Frameworks"
+            cp -R "$SPARKLE_SEARCH" "$APP_BUNDLE/Contents/Frameworks/"
+            echo "✅ Found and bundled Sparkle framework from $SPARKLE_SEARCH"
+        else
+            echo "❌ Sparkle framework not found - app will crash on launch"
+            echo "💡 Run 'swift package resolve' to ensure dependencies are downloaded"
+        fi
+    fi
 
-    # Create Info.plist
+    # Create Info.plist with required permissions
     cat > "$APP_BUNDLE/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -184,6 +226,10 @@ else
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>ClickIt needs to send Apple Events to simulate mouse clicks in target applications.</string>
+    <key>NSSystemAdministrationUsageDescription</key>
+    <string>ClickIt requires accessibility access to simulate mouse clicks and detect window information.</string>
 </dict>
 </plist>
 EOF
@@ -191,15 +237,24 @@ EOF
     # Make executable
     chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
     
+    # Fix rpath for bundled frameworks (SPM builds)
+    echo "🔧 Adding Frameworks directory to rpath..."
+    install_name_tool -add_rpath "@loader_path/../Frameworks" "$APP_BUNDLE/Contents/MacOS/$APP_NAME" 2>/dev/null || echo "  rpath already exists or modification failed"
+    
     echo "✅ SPM build completed successfully!"
 fi
 
 # Common post-build steps for both systems
-echo "🔐 Attempting to code sign the app..."
-CERT_NAME=""
+# Skip code signing if explicitly disabled (CI environment)
+if [ "$CODE_SIGNING_ALLOWED" = "NO" ] || [ "$CODE_SIGNING_REQUIRED" = "NO" ]; then
+    echo "⏭️  Skipping code signing (disabled for CI)"
+    CERT_NAME=""
+else
+    echo "🔐 Attempting to code sign the app..."
+    CERT_NAME=""
 
-# Try to find a suitable code signing certificate
-echo "🔍 Looking for code signing certificates..."
+    # Try to find a suitable code signing certificate
+    echo "🔍 Looking for code signing certificates..."
 
 # First, check if ClickIt Developer Certificate exists (even if not shown by find-identity)
 if security find-certificate -c "ClickIt Developer Certificate" >/dev/null 2>&1; then
@@ -231,7 +286,28 @@ fi
 
 if [ -n "$CERT_NAME" ]; then
     echo "🔐 Code signing with certificate: $CERT_NAME"
-    if codesign --deep --force --sign "$CERT_NAME" "$APP_BUNDLE" 2>/dev/null; then
+    
+    # Sign frameworks first (if they exist)
+    if [ -d "$APP_BUNDLE/Contents/Frameworks" ]; then
+        echo "🔐 Signing embedded frameworks..."
+        for framework in "$APP_BUNDLE/Contents/Frameworks"/*.framework; do
+            if [ -d "$framework" ]; then
+                echo "  Signing $(basename "$framework")..."
+                codesign --deep --force --sign "$CERT_NAME" "$framework" 2>/dev/null || echo "    ⚠️  Failed to sign $(basename "$framework")"
+            fi
+        done
+    fi
+    
+    # Sign the main app bundle (after all modifications including rpath changes)
+    # Use entitlements if they exist
+    ENTITLEMENTS_FILE="ClickIt/ClickIt.entitlements"
+    CODESIGN_ARGS="--deep --force --sign \"$CERT_NAME\""
+    if [ -f "$ENTITLEMENTS_FILE" ]; then
+        echo "🔐 Using entitlements from $ENTITLEMENTS_FILE"
+        CODESIGN_ARGS="$CODESIGN_ARGS --entitlements \"$ENTITLEMENTS_FILE\""
+    fi
+    
+    if eval "codesign $CODESIGN_ARGS \"$APP_BUNDLE\"" 2>/dev/null; then
         echo "✅ Code signing successful!"
         
         # Verify the signature
@@ -248,6 +324,8 @@ else
     echo "📋 To improve permission persistence, create a self-signed certificate:"
     echo "   See CERTIFICATE_SETUP.md for instructions"
 fi
+
+fi  # End of code signing conditional
 
 # Create build metadata
 echo "📋 Creating build metadata..."

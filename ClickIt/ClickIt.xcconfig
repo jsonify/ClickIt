@@ -1,0 +1,23 @@
+// ClickIt Xcode Build Configuration
+// This file ensures Xcode uses the custom Info.plist with permission descriptions
+
+// Use custom Info.plist with permission descriptions
+INFOPLIST_FILE = ClickIt/Info.plist
+GENERATE_INFOPLIST_FILE = NO
+
+// Ensure entitlements are used
+CODE_SIGN_ENTITLEMENTS = ClickIt/ClickIt.entitlements
+
+// App configuration
+PRODUCT_BUNDLE_IDENTIFIER = com.jsonify.ClickIt
+PRODUCT_NAME = ClickIt
+
+// Deployment settings
+MACOSX_DEPLOYMENT_TARGET = 15.0
+
+// Swift settings  
+SWIFT_VERSION = 5.0
+ENABLE_TESTABILITY = YES
+
+// Code signing
+CODE_SIGN_STYLE = Automatic
