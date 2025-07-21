@@ -274,7 +274,11 @@ jobs:
           
           // Fetch releases from GitHub API
           let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
-          let task = URLSession.shared.dataTask(with: url) { data, response, error in
+          var request = URLRequest(url: url)
+          request.setValue("Bearer ${{ secrets.GITHUB_TOKEN }}", forHTTPHeaderField: "Authorization")
+          request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
+          
+          let task = URLSession.shared.dataTask(with: request) { data, response, error in
               guard let data = data else { 
                   print("Failed to fetch releases")
                   exit(1)
@@ -519,7 +523,11 @@ jobs:
           
           // Fetch releases from GitHub API
           let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
-          let task = URLSession.shared.dataTask(with: url) { data, response, error in
+          var request = URLRequest(url: url)
+          request.setValue("Bearer ${{ secrets.GITHUB_TOKEN }}", forHTTPHeaderField: "Authorization")
+          request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
+          
+          let task = URLSession.shared.dataTask(with: request) { data, response, error in
               if let error = error {
                   print("Network error: \(error)")
                   exit(1)
@@ -719,7 +727,11 @@ jobs:
           
           // Fetch releases from GitHub API
           let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
-          let task = URLSession.shared.dataTask(with: url) { data, response, error in
+          var request = URLRequest(url: url)
+          request.setValue("Bearer ${{ secrets.GITHUB_TOKEN }}", forHTTPHeaderField: "Authorization")
+          request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
+          
+          let task = URLSession.shared.dataTask(with: request) { data, response, error in
               guard let data = data else { 
                   print("Failed to fetch releases")
                   exit(1)
