@@ -17,7 +17,7 @@ platform :mac do
   desc "Build ClickIt app (Debug)"
   lane :build_debug do
     Dir.chdir("..") do
-      sh("./build_app.sh debug")
+      sh("./build_app_unified.sh debug spm")
     end
     UI.success("Debug build completed! 🎉")
     UI.message("App location: dist/ClickIt.app")
@@ -26,7 +26,7 @@ platform :mac do
   desc "Build ClickIt app (Release)"
   lane :build_release do
     Dir.chdir("..") do
-      sh("./build_app.sh release")
+      sh("./build_app_unified.sh release spm")
     end
     UI.success("Release build completed! 🚀")
     UI.message("App location: dist/ClickIt.app")
