@@ -16,6 +16,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Required permissions for GitHub Actions
+permissions:
+  contents: write
+  packages: read
+  pages: write
+  id-token: write
+
 env:
   # Consistent environment across jobs
   APP_NAME: ClickIt
