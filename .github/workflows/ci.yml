@@ -92,7 +92,7 @@ jobs:
     
     - name: 📦 Upload Build Artifacts
       if: matrix.build_mode == 'release'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "${{ env.APP_NAME }}-${{ matrix.build_system }}-${{ github.sha }}"
         path: |
