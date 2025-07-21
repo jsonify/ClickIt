@@ -144,16 +144,6 @@ jobs:
         with:
           xcode-version: latest-stable
       
-      - name: 💎 Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-      
-      - name: 🔧 Install Fastlane Dependencies
-        run: |
-          bundle install
-          bundle exec fastlane install_plugins
       
       - name: 🏗️ Build App Bundle
         run: |
@@ -391,16 +381,6 @@ jobs:
         with:
           xcode-version: latest-stable
       
-      - name: 💎 Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-      
-      - name: 🔧 Install Fastlane Dependencies
-        run: |
-          bundle install
-          bundle exec fastlane install_plugins
       
       - name: 🏗️ Build App Bundle
         run: |
