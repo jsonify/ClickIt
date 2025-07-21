@@ -520,12 +520,38 @@ jobs:
           // Fetch releases from GitHub API
           let url = URL(string: "https://api.github.com/repos/${{ github.repository }}/releases")!
           let task = URLSession.shared.dataTask(with: url) { data, response, error in
+              if let error = error {
+                  print("Network error: \(error)")
+                  exit(1)
+              }
+              
+              guard let httpResponse = response as? HTTPURLResponse else {
+                  print("Invalid response type")
+                  exit(1)
+              }
+              
               guard let data = data else { 
-                  print("Failed to fetch releases")
+                  print("No data received")
+                  exit(1)
+              }
+              
+              // Log response for debugging
+              if httpResponse.statusCode != 200 {
+                  print("HTTP \(httpResponse.statusCode): \(String(data: data, encoding: .utf8) ?? "unknown error")")
                   exit(1)
               }
               
               do {
+                  // First try to decode as a GitHubError to handle API errors
+                  if let errorResponse = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                     let message = errorResponse["message"] as? String {
+                      print("GitHub API Error: \(message)")
+                      if let documentationUrl = errorResponse["documentation_url"] as? String {
+                          print("Documentation: \(documentationUrl)")
+                      }
+                      exit(1)
+                  }
+                  
                   let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
                   let prodReleases = releases.filter { !$0.prerelease && !$0.assets.isEmpty }
                       .sorted { lhs, rhs in
@@ -538,7 +564,8 @@ jobs:
                   print("✅ Production appcast generated successfully")
                   exit(0)
               } catch {
-                  print("Error: \(error)")
+                  print("JSON Decoding Error: \(error)")
+                  print("Raw response: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
                   exit(1)
               }
           }
