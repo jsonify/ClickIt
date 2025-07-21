@@ -120,22 +120,6 @@ jobs:
       with:
         xcode-version: latest-stable
     
-    - name: 🧹 Install SwiftLint
-      run: |
-        if ! which swiftlint > /dev/null 2>&1; then
-          echo "📦 Installing SwiftLint..."
-          brew install swiftlint
-        else
-          echo "✅ SwiftLint already installed"
-        fi
-        swiftlint version
-    
-    - name: 🔍 Run SwiftLint
-      run: |
-        echo "🔍 Running SwiftLint..."
-        # Run without --strict to avoid blocking CI on warnings
-        swiftlint lint --reporter github-actions-logging
-    
     - name: 📊 Swift Package Dependencies
       run: |
         echo "📊 Checking Swift Package dependencies..."

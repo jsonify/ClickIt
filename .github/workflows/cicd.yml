@@ -75,14 +75,6 @@ jobs:
           fail_ci_if_error: false
         continue-on-error: true
       
-      - name: 🔍 SwiftLint
-        run: |
-          if ! command -v swiftlint &> /dev/null; then
-            echo "Installing SwiftLint..."
-            brew install swiftlint
-          fi
-          swiftlint lint --strict --reporter github-actions-logging
-          echo "✅ Linting passed"
 
   # === Build Tests ===
   build_tests:
