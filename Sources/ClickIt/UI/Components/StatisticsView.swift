@@ -60,8 +60,10 @@ struct StatisticsView: View {
     }
 }
 
-#Preview {
-    StatisticsView()
-        .environmentObject(ClickCoordinator.shared)
-        .frame(width: 300, height: 100)
+struct StatisticsView_Previews: PreviewProvider {
+    static var previews: some View {
+        StatisticsView()
+            .environmentObject(ClickCoordinator.shared)
+            .frame(width: 300, height: 100)
+    }
 }

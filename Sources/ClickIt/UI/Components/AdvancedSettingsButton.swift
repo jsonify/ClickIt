@@ -46,8 +46,10 @@ struct AdvancedSettingsButton: View {
     }
 }
 
-#Preview {
-    AdvancedSettingsButton(viewModel: ClickItViewModel())
-        .frame(width: 400)
-        .padding()
+struct AdvancedSettingsButton_Previews: PreviewProvider {
+    static var previews: some View {
+        AdvancedSettingsButton(viewModel: ClickItViewModel())
+            .frame(width: 400)
+            .padding()
+    }
 }

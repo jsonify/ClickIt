@@ -123,8 +123,10 @@ struct StatisticView: View {
     }
 }
 
-#Preview {
-    StatusHeaderCard(viewModel: ClickItViewModel())
-        .frame(width: 400)
-        .padding()
+struct StatusHeaderCard_Previews: PreviewProvider {
+    static var previews: some View {
+        StatusHeaderCard(viewModel: ClickItViewModel())
+            .frame(width: 400)
+            .padding()
+    }
 }

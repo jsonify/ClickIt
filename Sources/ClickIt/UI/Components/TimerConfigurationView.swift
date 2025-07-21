@@ -148,13 +148,15 @@ struct TimerConfigurationView: View {
     }
 }
 
-#Preview {
-    TimerConfigurationView(viewModel: {
-        let vm = ClickItViewModel()
-        vm.timerDurationMinutes = 0
-        vm.timerDurationSeconds = 15
-        return vm
-    }())
-    .frame(width: 350)
-    .padding()
+struct TimerConfigurationView_Previews: PreviewProvider {
+    static var previews: some View {
+        TimerConfigurationView(viewModel: {
+            let vm = ClickItViewModel()
+            vm.timerDurationMinutes = 0
+            vm.timerDurationSeconds = 15
+            return vm
+        }())
+        .frame(width: 350)
+        .padding()
+    }
 }

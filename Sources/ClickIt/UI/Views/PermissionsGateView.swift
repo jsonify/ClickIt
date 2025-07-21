@@ -251,6 +251,8 @@ struct PermissionGateRow: View {
     }
 }
 
-#Preview {
-    PermissionsGateView()
+struct PermissionsGateView_Previews: PreviewProvider {
+    static var previews: some View {
+        PermissionsGateView()
+    }
 }

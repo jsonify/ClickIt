@@ -7,6 +7,10 @@
 	<key>com.apple.security.app-sandbox</key>
 	<false/>
 	
+	<!-- Essential entitlement for Accessibility API access -->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+	
 	<!-- Allow ClickIt to read user-selected files if needed -->
 	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>

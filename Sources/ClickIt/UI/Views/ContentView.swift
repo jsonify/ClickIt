@@ -149,9 +149,11 @@ struct ContentView: View {
     }
 }
 
-#Preview {
-    ContentView()
-        .environmentObject(PermissionManager.shared)
-        .environmentObject(HotkeyManager.shared)
-        .environmentObject(ClickItViewModel())
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(PermissionManager.shared)
+            .environmentObject(HotkeyManager.shared)
+            .environmentObject(ClickItViewModel())
+    }
 }

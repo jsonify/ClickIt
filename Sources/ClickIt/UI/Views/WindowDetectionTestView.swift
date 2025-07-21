@@ -263,6 +263,8 @@ struct TestResultRowView: View {
     }
 }
 
-#Preview {
-    WindowDetectionTestView()
+struct WindowDetectionTestView_Previews: PreviewProvider {
+    static var previews: some View {
+        WindowDetectionTestView()
+    }
 }

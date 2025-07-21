@@ -196,12 +196,14 @@ struct PermissionHealthBadge: View {
     }
 }
 
-#Preview("Permission Status Indicator") {
-    VStack(spacing: 16) {
-        PermissionStatusIndicator()
-        CompactPermissionStatus()
-        PermissionHealthBadge()
+struct PermissionStatusIndicator_Previews: PreviewProvider {
+    static var previews: some View {
+        VStack(spacing: 16) {
+            PermissionStatusIndicator()
+            CompactPermissionStatus()
+            PermissionHealthBadge()
+        }
+        .padding()
+        .environmentObject(PermissionManager.shared)
     }
-    .padding()
-    .environmentObject(PermissionManager.shared)
 }

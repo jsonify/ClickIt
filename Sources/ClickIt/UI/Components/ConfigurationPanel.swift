@@ -394,8 +394,10 @@ struct ConfigurationPanel: View {
     }
 }
 
-#Preview {
-    ConfigurationPanel(selectedClickPoint: CGPoint(x: 100, y: 100))
-        .environmentObject(ClickCoordinator.shared)
-        .frame(width: 400, height: 600)
+struct ConfigurationPanel_Previews: PreviewProvider {
+    static var previews: some View {
+        ConfigurationPanel(selectedClickPoint: CGPoint(x: 100, y: 100))
+            .environmentObject(ClickCoordinator.shared)
+            .frame(width: 400, height: 600)
+    }
 }
