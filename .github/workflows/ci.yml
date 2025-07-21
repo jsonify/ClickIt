@@ -28,7 +28,7 @@ jobs:
     - name: 🔍 Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: latest-stable
+        xcode-version: '16.2'
     
     - name: 📋 Environment Info
       run: |
@@ -111,7 +111,7 @@ jobs:
     - name: 🔍 Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: latest-stable
+        xcode-version: '16.2'
     
     - name: 🧹 Install SwiftLint
       run: |
