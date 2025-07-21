@@ -53,6 +53,13 @@ jobs:
     - name: 🏗️ Build App Bundle
       run: |
         echo "🔨 Building ${{ env.APP_NAME }} (${{ matrix.build_mode }} mode, ${{ matrix.build_system }} system)..."
+        if [ "${{ matrix.build_system }}" = "xcode" ]; then
+          # For Xcode builds in CI, disable code signing and set deployment target
+          export CODE_SIGN_IDENTITY=""
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGNING_ALLOWED=NO
+          export MACOSX_DEPLOYMENT_TARGET=15.0
+        fi
         ./build_app_unified.sh ${{ matrix.build_mode }} ${{ matrix.build_system }}
         
         echo "📋 Build completed!"

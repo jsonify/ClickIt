@@ -63,9 +63,26 @@ if [ "$BUILD_SYSTEM" = "xcode" ]; then
     
     # Build with Xcode using custom Info.plist
     echo "🔧 Configuring Xcode build to use custom Info.plist..."
+    
+    # Prepare build settings
+    BUILD_SETTINGS="INFOPLIST_FILE=ClickIt/Info.plist GENERATE_INFOPLIST_FILE=NO"
+    
+    # Add code signing settings if specified (for CI)
+    if [ -n "$CODE_SIGN_IDENTITY" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS CODE_SIGN_IDENTITY=$CODE_SIGN_IDENTITY"
+    fi
+    if [ -n "$CODE_SIGNING_REQUIRED" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS CODE_SIGNING_REQUIRED=$CODE_SIGNING_REQUIRED"
+    fi
+    if [ -n "$CODE_SIGNING_ALLOWED" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS CODE_SIGNING_ALLOWED=$CODE_SIGNING_ALLOWED"
+    fi
+    if [ -n "$MACOSX_DEPLOYMENT_TARGET" ]; then
+        BUILD_SETTINGS="$BUILD_SETTINGS MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET"
+    fi
+    
     xcodebuild -project "$XCODE_PROJECT" -scheme ClickIt -configuration "$XCODE_CONFIG" \
-        INFOPLIST_FILE="ClickIt/Info.plist" \
-        GENERATE_INFOPLIST_FILE=NO \
+        $BUILD_SETTINGS \
         build
     
     # Find the built app
@@ -228,11 +245,16 @@ EOF
 fi
 
 # Common post-build steps for both systems
-echo "🔐 Attempting to code sign the app..."
-CERT_NAME=""
+# Skip code signing if explicitly disabled (CI environment)
+if [ "$CODE_SIGNING_ALLOWED" = "NO" ] || [ "$CODE_SIGNING_REQUIRED" = "NO" ]; then
+    echo "⏭️  Skipping code signing (disabled for CI)"
+    CERT_NAME=""
+else
+    echo "🔐 Attempting to code sign the app..."
+    CERT_NAME=""
 
-# Try to find a suitable code signing certificate
-echo "🔍 Looking for code signing certificates..."
+    # Try to find a suitable code signing certificate
+    echo "🔍 Looking for code signing certificates..."
 
 # First, check if ClickIt Developer Certificate exists (even if not shown by find-identity)
 if security find-certificate -c "ClickIt Developer Certificate" >/dev/null 2>&1; then
@@ -302,6 +324,8 @@ else
     echo "📋 To improve permission persistence, create a self-signed certificate:"
     echo "   See CERTIFICATE_SETUP.md for instructions"
 fi
+
+fi  # End of code signing conditional
 
 # Create build metadata
 echo "📋 Creating build metadata..."
