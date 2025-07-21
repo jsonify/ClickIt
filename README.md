@@ -1,5 +1,9 @@
 # ClickIt
 
+[![CI - Build & Test](https://github.com/jsonify/ClickIt/actions/workflows/ci.yml/badge.svg)](https://github.com/jsonify/ClickIt/actions/workflows/ci.yml)
+[![Release](https://github.com/jsonify/ClickIt/actions/workflows/release.yml/badge.svg)](https://github.com/jsonify/ClickIt/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/jsonify/ClickIt)](https://github.com/jsonify/ClickIt/releases/latest)
+
 A lightweight, native macOS Auto-Clicker application with precision timing and advanced targeting capabilities. Designed for gamers, automation enthusiasts, and productivity users who need reliable, accurate clicking automation.
 
 ## Features

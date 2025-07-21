@@ -17,43 +17,43 @@ ClickIt is a native macOS auto-clicker application built with Swift Package Mana
 
 ## Build and Development Commands
 
-### Primary Development Workflow
-- **Build app**: `./build_app_unified.sh` (auto-detects Xcode project, builds release version)
+### Primary Development Workflow (SPM-based)
+- **Open in Xcode**: `open Package.swift` (opens the SPM project in Xcode)
+- **Build app bundle**: `./build_app_unified.sh` (builds universal release app bundle)
 - **Build debug**: `./build_app_unified.sh debug`
-- **Run app**: `./run_clickit_unified.sh` (auto-detects best run method)
-- **Open in Xcode**: `open ClickIt.xcodeproj`
+- **Run app**: `./run_clickit_unified.sh` (launches the built app bundle)
 
-### Alternative Build Methods
-- **Force Xcode build**: `./build_app_unified.sh release xcode`
-- **Force SPM build**: `./build_app_unified.sh release spm`
-- **Run from app bundle**: `./run_clickit_unified.sh app`
-- **Run with Xcode**: `./run_clickit_unified.sh xcode`
-
-### Traditional Swift Package Manager Commands
+### Swift Package Manager Commands
 ```bash
-# Build the project
+# Open the package in Xcode (recommended for development)
+open Package.swift
+
+# Build the project (command line)
 swift build
 
-# Run the application
+# Run the application (command line, won't create app bundle)
 swift run
 
 # Run tests
 swift test
 
-# Build for release
+# Build for release (command line)
 swift build -c release
+
+# Build universal app bundle (recommended for distribution)
+./build_app_unified.sh release
 ```
 
 ### Package Management
 ```bash
-# Generate Xcode project (if needed)
-swift package generate-xcodeproj
-
 # Resolve dependencies
 swift package resolve
 
 # Clean build artifacts
 swift package clean
+
+# Reset Package.resolved
+swift package reset
 ```
 
 ### Fastlane Automation
@@ -67,11 +67,225 @@ swift package clean
 - **Development workflow**: `fastlane dev`
 
 ### Development Notes
-- Project supports both Xcode and Swift Package Manager workflows
-- Xcode project is primary development environment
-- Built apps are placed in `dist/` directory
+- Project uses Swift Package Manager as the primary build system
+- Open `Package.swift` in Xcode for the best development experience
+- Built app bundles are placed in `dist/` directory
 - No traditional test suite - testing is done through the UI and manual validation
 - Fastlane provides automation lanes that wrap existing build scripts
+
+## Complete SPM Development Guide
+
+### Getting Started with SPM + Xcode
+
+**1. Open the Project**
+```bash
+# Navigate to the project directory
+cd /path/to/clickit
+
+# Open the Swift Package in Xcode (recommended)
+open Package.swift
+```
+
+This will open the package in Xcode with full IDE support including:
+- Code completion and syntax highlighting
+- Integrated debugging
+- Build and run capabilities
+- Package dependency management
+- Git integration
+
+**2. Build and Run in Xcode**
+- **Scheme**: Select "ClickIt" scheme in Xcode
+- **Build**: ⌘+B to build the executable
+- **Run**: ⌘+R to run in debug mode
+- **Archive**: Use Product → Archive for release builds
+
+**Note**: Running directly in Xcode (⌘+R) runs the executable but doesn't create an app bundle. For a complete app bundle with proper macOS integration, use the build scripts.
+
+### App Bundle Creation
+
+**For Distribution (Recommended)**
+```bash
+# Create universal app bundle (Intel + Apple Silicon)
+./build_app_unified.sh release
+
+# Launch the app bundle
+./run_clickit_unified.sh
+# or
+open dist/ClickIt.app
+```
+
+**For Development Testing**
+```bash
+# Create debug app bundle
+./build_app_unified.sh debug
+
+# Quick development cycle with Fastlane
+fastlane dev  # builds debug + runs automatically
+```
+
+### SPM Project Structure
+
+```
+ClickIt/
+├── Package.swift                 # SPM manifest
+├── Package.resolved             # Locked dependency versions
+├── Sources/
+│   └── ClickIt/                 # Main executable target
+│       ├── main.swift           # App entry point
+│       ├── UI/                  # SwiftUI views
+│       ├── Core/               # Business logic
+│       ├── Utils/              # Utilities and constants
+│       └── Resources/          # App resources
+├── Tests/
+│   └── ClickItTests/           # Test target
+└── dist/                       # Built app bundles
+    └── ClickIt.app
+```
+
+### Dependency Management
+
+**View Dependencies**
+```bash
+# Show dependency graph
+swift package show-dependencies
+
+# Show dependency tree
+swift package show-dependencies --format tree
+```
+
+**Update Dependencies**
+```bash
+# Update to latest compatible versions
+swift package update
+
+# Update specific dependency
+swift package update Sparkle
+```
+
+**Add New Dependencies**
+Edit `Package.swift` and add to the `dependencies` array:
+```swift
+dependencies: [
+    .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.5.2"),
+    .package(url: "https://github.com/new-dependency/repo", from: "1.0.0")
+]
+```
+
+### Build Configurations
+
+**Debug Build**
+- Optimizations disabled
+- Debug symbols included
+- Assertions enabled
+- Fast compilation
+
+```bash
+swift build                      # Debug by default
+swift build -c debug            # Explicit debug
+./build_app_unified.sh debug     # Debug app bundle
+```
+
+**Release Build**
+- Full optimizations enabled
+- Debug symbols stripped
+- Assertions disabled
+- Longer compilation time
+
+```bash
+swift build -c release              # Release executable
+./build_app_unified.sh release      # Release app bundle (recommended)
+```
+
+### Xcode Integration Features
+
+**When you open `Package.swift` in Xcode, you get:**
+
+1. **Full IDE Support**
+   - Code completion and IntelliSense
+   - Real-time error checking
+   - Refactoring tools
+   - Jump to definition
+
+2. **Integrated Building**
+   - Build with ⌘+B
+   - Clean build folder with ⌘+Shift+K
+   - Build settings accessible via scheme editor
+
+3. **Debugging**
+   - Breakpoints and stepping
+   - Variable inspection
+   - Console output
+   - Memory debugging tools
+
+4. **Testing**
+   - ⌘+U to run tests
+   - Test navigator showing all tests
+   - Code coverage reports
+
+5. **Git Integration**
+   - Source control navigator
+   - Commit and push directly from Xcode
+   - Diff views and blame annotations
+
+### Performance and Architecture
+
+**Universal Binary Support**
+The build script automatically detects and builds for available architectures:
+- Intel x64 (`x86_64`)
+- Apple Silicon (`arm64`)
+- Creates universal binary when both are available
+
+**Build Optimization**
+```bash
+# Check what architectures are supported
+swift build --arch x86_64 --show-bin-path  # Intel
+swift build --arch arm64 --show-bin-path   # Apple Silicon
+
+# Build script automatically handles both
+./build_app_unified.sh release
+```
+
+### Troubleshooting SPM Workflow
+
+**Common Issues:**
+
+1. **Dependencies not resolving**
+   ```bash
+   swift package clean
+   swift package resolve
+   ```
+
+2. **Xcode can't find Package.swift**
+   ```bash
+   # Make sure you're in the right directory
+   ls Package.swift
+   
+   # Open explicitly
+   open Package.swift
+   ```
+
+3. **Build errors after dependency changes**
+   ```bash
+   swift package clean
+   swift package resolve
+   swift build
+   ```
+
+4. **App bundle not working correctly**
+   ```bash
+   # Ensure all dependencies are resolved first
+   swift package resolve
+   
+   # Build fresh app bundle
+   rm -rf dist/ClickIt.app
+   ./build_app_unified.sh release
+   ```
+
+**Best Practices:**
+- Always use `open Package.swift` instead of trying to create/open Xcode project files
+- Use `./build_app_unified.sh` for app bundles rather than raw `swift build`
+- Commit `Package.resolved` to ensure reproducible builds
+- Use `swift package clean` when switching between architectures or configurations
 
 ## Architecture Overview
 
@@ -193,10 +407,10 @@ During development of Issue #8 (Visual Feedback System), several critical stabil
 
 ### Build & Deployment Pipeline
 
-**Correct Workflow**:
+**Correct SPM Workflow**:
 ```bash
-# 1. Build universal release binary
-./build_app.sh
+# 1. Build universal release app bundle
+./build_app_unified.sh release
 
 # 2. Sign with valid certificate (preserves binary)
 CODE_SIGN_IDENTITY="Apple Development: Your Name (TEAM_ID)" ./scripts/sign-app.sh
@@ -254,3 +468,40 @@ Then you can use any of the configured lanes:
 The Fastlane setup integrates with existing build scripts and adds automation conveniences.
 
 For detailed usage instructions, workflows, and troubleshooting, see: **[docs/fastlane-guide.md](docs/fastlane-guide.md)**
+
+## Quick Reference: SPM Development Workflow
+
+### Daily Development
+```bash
+# 1. Open project in Xcode
+open Package.swift
+
+# 2. Develop in Xcode with full IDE support
+#    - Use ⌘+B to build
+#    - Use ⌘+R to run (for quick testing)
+#    - Use breakpoints and debugging tools
+
+# 3. Create app bundle for full testing
+./build_app_unified.sh debug    # or 'release'
+
+# 4. Test the app bundle
+open dist/ClickIt.app
+```
+
+### Release Workflow
+```bash
+# 1. Final testing
+./build_app_unified.sh release
+
+# 2. Code signing (optional)
+./scripts/sign-app.sh
+
+# 3. Distribution
+# App bundle ready at: dist/ClickIt.app
+```
+
+### Key Differences from Traditional Xcode Projects
+- **No `.xcodeproj` file**: Use `Package.swift` as the entry point
+- **Direct SPM integration**: Dependencies managed via Package.swift, not Xcode project settings
+- **Universal builds**: Build script handles multi-architecture builds automatically
+- **App bundle creation**: Use build scripts for proper app bundles with frameworks and Info.plist

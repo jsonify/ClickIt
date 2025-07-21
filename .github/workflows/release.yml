@@ -1,0 +1,162 @@
+name: 🚀 Build and Release ClickIt
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.3.0
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v1.3.0)'
+        required: true
+        type: string
+
+env:
+  APP_NAME: "ClickIt"
+  BUNDLE_ID: "com.jsonify.clickit"
+
+jobs:
+  build-and-release:
+    name: 🔨 Build Universal App & Create Release
+    runs-on: macos-latest
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for proper tagging
+    
+    - name: 🔍 Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+    
+    - name: 📋 Extract Version from Tag
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          TAG_NAME="${{ github.event.inputs.tag }}"
+        else
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+        fi
+        VERSION=${TAG_NAME#v}  # Remove 'v' prefix
+        echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "📦 Building version: ${VERSION} (tag: ${TAG_NAME})"
+    
+    - name: 🔧 Update Version in Build Script
+      run: |
+        sed -i '' "s/VERSION=\"1.0.0\"/VERSION=\"${{ steps.version.outputs.version }}\"/" build_app_unified.sh
+        echo "✅ Updated version to ${{ steps.version.outputs.version }}"
+    
+    - name: 🏗️ Build Universal App with Xcode
+      run: |
+        echo "🔨 Building ${{ env.APP_NAME }} with Xcode..."
+        ./build_app_unified.sh release xcode
+        
+        echo "📦 Creating release archive..."
+        cd dist
+        zip -r ${{ env.APP_NAME }}.app.zip ${{ env.APP_NAME }}.app
+        cd ..
+        
+        echo "📋 Build completed successfully!"
+        ls -la dist/
+    
+    - name: 🔍 Verify Build
+      run: |
+        echo "🔍 Verifying app bundle..."
+        if [ -d "dist/${{ env.APP_NAME }}.app" ]; then
+          echo "✅ App bundle created successfully"
+          ls -la "dist/${{ env.APP_NAME }}.app/Contents/"
+          
+          # Check if binary exists and get architecture info
+          if [ -f "dist/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}" ]; then
+            echo "📱 Binary architecture:"
+            file "dist/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
+          fi
+        else
+          echo "❌ App bundle not found!"
+          exit 1
+        fi
+        
+        if [ -f "dist/${{ env.APP_NAME }}.app.zip" ]; then
+          echo "✅ Archive created successfully"
+          ls -lh "dist/${{ env.APP_NAME }}.app.zip"
+        else
+          echo "❌ Archive not found!"
+          exit 1
+        fi
+    
+    - name: 📝 Generate Release Notes
+      id: release_notes
+      run: |
+        TAG_NAME="${{ steps.version.outputs.tag }}"
+        VERSION="${{ steps.version.outputs.version }}"
+        
+        # Get the previous tag for changelog
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        
+        echo "# ${{ env.APP_NAME }} ${TAG_NAME}" > release_notes.md
+        echo "" >> release_notes.md
+        echo "🎉 **Native macOS Auto-Clicker Application**" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## ✨ Features" >> release_notes.md
+        echo "- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy" >> release_notes.md
+        echo "- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon" >> release_notes.md
+        echo "- 🎯 **Background Operation**: Works without requiring app focus" >> release_notes.md
+        echo "- ⚡ **Global Hotkeys**: ESC key controls for instant stop" >> release_notes.md
+        echo "- 🔧 **Advanced Configuration**: CPS rates, click types, and presets" >> release_notes.md
+        echo "- 👁️ **Visual Feedback**: Real-time overlay indicators" >> release_notes.md
+        echo "- 🔄 **Auto-Updates**: Built-in Sparkle framework integration" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## 📋 System Requirements" >> release_notes.md
+        echo "- **macOS**: 15.0 or later" >> release_notes.md
+        echo "- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)" >> release_notes.md
+        echo "- **Permissions**: Accessibility and Screen Recording access required" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## 🚀 Installation" >> release_notes.md
+        echo "1. Download \`${{ env.APP_NAME }}.app.zip\` below" >> release_notes.md
+        echo "2. Extract and move \`${{ env.APP_NAME }}.app\` to Applications folder" >> release_notes.md
+        echo "3. First launch: Right-click → Open (to bypass Gatekeeper)" >> release_notes.md
+        echo "4. Grant Accessibility and Screen Recording permissions when prompted" >> release_notes.md
+        echo "" >> release_notes.md
+        
+        if [ -n "$PREVIOUS_TAG" ]; then
+          echo "## 📈 Changes Since ${PREVIOUS_TAG}" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          git log --oneline ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s" >> release_notes.md || echo "- Initial release" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        echo "---" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "🏗️ **Built with**: Xcode on GitHub Actions" >> release_notes.md
+        echo "📅 **Build Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> release_notes.md
+        echo "🔖 **Version**: ${VERSION}" >> release_notes.md
+        echo "🎯 **Target**: macOS 15.0+" >> release_notes.md
+        
+        echo "release_notes_file=release_notes.md" >> $GITHUB_OUTPUT
+    
+    - name: 🚀 Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: "${{ env.APP_NAME }} ${{ steps.version.outputs.tag }}"
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        make_latest: true
+        files: |
+          dist/${{ env.APP_NAME }}.app.zip
+          dist/build-info.txt
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: ✅ Release Complete
+      run: |
+        echo "🎉 Release ${{ steps.version.outputs.tag }} completed successfully!"
+        echo "📂 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}"
+        echo "📦 Assets uploaded:"
+        echo "  - ${{ env.APP_NAME }}.app.zip (Universal macOS App)"
+        echo "  - build-info.txt (Build metadata)"

@@ -257,7 +257,8 @@
 				DEVELOPMENT_TEAM = TZD57UD8UQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClickIt/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ClickIt;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -286,7 +287,8 @@
 				DEVELOPMENT_TEAM = TZD57UD8UQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ClickIt/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ClickIt;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
