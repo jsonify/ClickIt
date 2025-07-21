@@ -22,7 +22,7 @@ env:
   BUNDLE_ID: com.jsonify.clickit
   
   # macOS deployment target
-  MACOSX_DEPLOYMENT_TARGET: "15.0"
+  MACOSX_DEPLOYMENT_TARGET: "14.0"
   
   # Swift configuration
   SWIFT_VERSION: "6.1"
@@ -157,7 +157,7 @@ jobs:
       
       - name: 🏗️ Build App Bundle
         run: |
-          ./build_app.sh release
+          ./build_app_unified.sh release
           echo "✅ App bundle created"
       
       - name: 📦 Create Release Assets
@@ -206,14 +206,14 @@ jobs:
           fi
           
           CHANGELOG="⚠️ **This is a beta release for testing purposes.**\n\n${CHANGELOG}"
-          CHANGELOG="${CHANGELOG}\n\n---\n🤖 Generated with [Claude Code](https://claude.ai/code)\n📱 Compatible with macOS 15.0 or later"
+          CHANGELOG="${CHANGELOG}\n\n---\n🤖 Generated with [Claude Code](https://claude.ai/code)\n📱 Compatible with macOS 14.0 or later"
           
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       
       - name: 🐙 Create GitHub Release
-        uses: ncipollo/create-release@v1
+        uses: ncipollo/create-release@v1.14.0
         with:
           tag: ${{ github.ref_name }}
           name: "${{ env.APP_NAME }} ${{ env.BETA_VERSION }}"
@@ -320,7 +320,7 @@ jobs:
                       <link>\(release.htmlUrl)</link>
                       <sparkle:version>\(version)</sparkle:version>
                       <sparkle:shortVersionString>\(version)</sparkle:shortVersionString>
-                      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+                      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
                       <pubDate>\(pubDate)</pubDate>
                       <enclosure url="\(zipAsset.browserDownloadUrl)" 
                                  length="\(zipAsset.size)" 
@@ -404,7 +404,7 @@ jobs:
       
       - name: 🏗️ Build App Bundle
         run: |
-          ./build_app.sh release
+          ./build_app_unified.sh release
           echo "✅ App bundle created"
       
       - name: 📦 Create Release Assets
@@ -452,14 +452,14 @@ jobs:
             done
           fi
           
-          CHANGELOG="${CHANGELOG}\n\n---\n🤖 Generated with [Claude Code](https://claude.ai/code)\n📱 Compatible with macOS 15.0 or later"
+          CHANGELOG="${CHANGELOG}\n\n---\n🤖 Generated with [Claude Code](https://claude.ai/code)\n📱 Compatible with macOS 14.0 or later"
           
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       
       - name: 🐙 Create GitHub Release
-        uses: ncipollo/create-release@v1
+        uses: ncipollo/create-release@v1.14.0
         with:
           tag: ${{ github.ref_name }}
           name: "${{ env.APP_NAME }} v${{ env.VERSION }}"
@@ -559,7 +559,7 @@ jobs:
                       <link>\(release.htmlUrl)</link>
                       <sparkle:version>\(version)</sparkle:version>
                       <sparkle:shortVersionString>\(version)</sparkle:shortVersionString>
-                      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+                      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
                       <pubDate>\(pubDate)</pubDate>
                       <enclosure url="\(zipAsset.browserDownloadUrl)" 
                                  length="\(zipAsset.size)" 
@@ -723,7 +723,7 @@ jobs:
                       <link>\(release.htmlUrl)</link>
                       <sparkle:version>\(version)</sparkle:version>
                       <sparkle:shortVersionString>\(version)</sparkle:shortVersionString>
-                      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+                      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
                       <pubDate>\(pubDate)</pubDate>
                       <enclosure url="\(zipAsset.browserDownloadUrl)" 
                                  length="\(zipAsset.size)" 
