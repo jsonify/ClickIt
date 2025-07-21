@@ -223,6 +223,8 @@ jobs:
           prerelease: true
           artifacts: "dist/${{ env.APP_NAME }}-${{ env.BETA_VERSION }}.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          replacesArtifacts: true
       
       - name: 📡 Generate Beta Appcast
         run: |
@@ -466,6 +468,8 @@ jobs:
             dist/${{ env.APP_NAME }}-${{ env.VERSION }}.zip
             dist/${{ env.APP_NAME }}-${{ env.VERSION }}.dmg
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          replacesArtifacts: true
       
       - name: 📡 Generate Production Appcast
         run: |
