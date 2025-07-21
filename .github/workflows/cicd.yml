@@ -147,6 +147,11 @@ jobs:
       
       - name: 🏗️ Build App Bundle
         run: |
+          # Set environment variables for CI build (disable code signing, fix deployment target)
+          export CODE_SIGN_IDENTITY=""
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGNING_ALLOWED=NO
+          export MACOSX_DEPLOYMENT_TARGET=14.0
           ./build_app_unified.sh release
           echo "✅ App bundle created"
       
@@ -384,6 +389,11 @@ jobs:
       
       - name: 🏗️ Build App Bundle
         run: |
+          # Set environment variables for CI build (disable code signing, fix deployment target)
+          export CODE_SIGN_IDENTITY=""
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGNING_ALLOWED=NO
+          export MACOSX_DEPLOYMENT_TARGET=14.0
           ./build_app_unified.sh release
           echo "✅ App bundle created"
       
