@@ -230,6 +230,10 @@ else
     <string>ClickIt needs to send Apple Events to simulate mouse clicks in target applications.</string>
     <key>NSSystemAdministrationUsageDescription</key>
     <string>ClickIt requires accessibility access to simulate mouse clicks and detect window information.</string>
+    <key>NSAccessibilityUsageDescription</key>
+    <string>ClickIt needs accessibility access to control mouse clicks and interact with other applications.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>ClickIt needs screen recording access to detect windows and provide visual feedback overlays.</string>
 </dict>
 </plist>
 EOF

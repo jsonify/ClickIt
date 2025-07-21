@@ -54,15 +54,15 @@ jobs:
         sed -i '' "s/VERSION=\"1.0.0\"/VERSION=\"${{ steps.version.outputs.version }}\"/" build_app_unified.sh
         echo "✅ Updated version to ${{ steps.version.outputs.version }}"
     
-    - name: 🏗️ Build Universal App with Xcode
+    - name: 🏗️ Build Universal App with SPM
       run: |
-        echo "🔨 Building ${{ env.APP_NAME }} with Xcode..."
+        echo "🔨 Building ${{ env.APP_NAME }} with Swift Package Manager..."
         # Set environment variables for CI build (disable code signing, fix deployment target)
         export CODE_SIGN_IDENTITY=""
         export CODE_SIGNING_REQUIRED=NO
         export CODE_SIGNING_ALLOWED=NO
         export MACOSX_DEPLOYMENT_TARGET=14.0
-        ./build_app_unified.sh release xcode
+        ./build_app_unified.sh release spm
         
         echo "📦 Creating release archive..."
         cd dist
