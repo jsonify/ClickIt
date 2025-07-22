@@ -7,13 +7,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks
 
-- [ ] 1. **Implement Pause/Resume UI Controls**
-  - [ ] 1.1 Write tests for pause/resume button components and state management
-  - [ ] 1.2 Add pause/resume buttons to main automation control panel in ClickItViewModel
-  - [ ] 1.3 Integrate pause/resume functionality with ElapsedTimeManager and ClickCoordinator
-  - [ ] 1.4 Update visual feedback overlay to reflect pause/resume states
-  - [ ] 1.5 Ensure session statistics preservation during pause state
-  - [ ] 1.6 Verify all tests pass and UI responds correctly
+- [x] 1. **Implement Pause/Resume UI Controls**
+  - [x] 1.1 Write tests for pause/resume button components and state management
+  - [x] 1.2 Add pause/resume buttons to main automation control panel in ClickItViewModel
+  - [x] 1.3 Integrate pause/resume functionality with ElapsedTimeManager and ClickCoordinator
+  - [x] 1.4 Update visual feedback overlay to reflect pause/resume states
+  - [x] 1.5 Ensure session statistics preservation during pause state
+  - [x] 1.6 Verify all tests pass and UI responds correctly
 
 - [ ] 2. **Build Enhanced Preset Management System**
   - [ ] 2.1 Write tests for PresetManager and PresetConfiguration data structures

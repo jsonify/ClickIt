@@ -66,28 +66,71 @@ struct StatusHeaderCard: View {
                 )
             }
             
-            // Primary Action Button
-            Button(action: {
-                if viewModel.isRunning {
-                    viewModel.stopAutomation()
-                } else {
-                    viewModel.startAutomation()
-                }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: viewModel.isRunning ? "stop.fill" : "play.fill")
-                        .font(.system(size: 16, weight: .medium))
+            // Control Buttons
+            if viewModel.isRunning || viewModel.isPaused {
+                // Running/Paused state: Show Pause/Resume and Stop buttons
+                HStack(spacing: 12) {
+                    // Pause/Resume Button
+                    Button(action: {
+                        if viewModel.canPause {
+                            viewModel.pauseAutomation()
+                        } else if viewModel.canResume {
+                            viewModel.resumeAutomation()
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: viewModel.isPaused ? "play.fill" : "pause.fill")
+                                .font(.system(size: 14, weight: .medium))
+                            
+                            Text(viewModel.isPaused ? "Resume" : "Pause")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 36)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!viewModel.canPause && !viewModel.canResume)
+                    .tint(viewModel.isPaused ? .green : .orange)
                     
-                    Text(viewModel.isRunning ? "Stop Automation" : "Start Automation")
-                        .font(.headline)
-                        .fontWeight(.medium)
+                    // Stop Button
+                    Button(action: {
+                        viewModel.stopAutomation()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "stop.fill")
+                                .font(.system(size: 14, weight: .medium))
+                            
+                            Text("Stop")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 36)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 44)
+            } else {
+                // Ready state: Show Start button
+                Button(action: {
+                    viewModel.startAutomation()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 16, weight: .medium))
+                        
+                        Text("Start Automation")
+                            .font(.headline)
+                            .fontWeight(.medium)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!viewModel.canStartAutomation)
+                .tint(.green)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(!viewModel.canStartAutomation && !viewModel.isRunning)
-            .tint(viewModel.isRunning ? .red : .green)
         }
         .padding(16)
         .background(Color(NSColor.controlBackgroundColor))
