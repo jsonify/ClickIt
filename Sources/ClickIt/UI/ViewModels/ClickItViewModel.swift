@@ -15,6 +15,7 @@ class ClickItViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var targetPoint: CGPoint?
     @Published var isRunning = false
+    @Published var isPaused = false
     @Published var appStatus: AppStatus = .ready
     
     // Configuration Properties
@@ -67,6 +68,14 @@ class ClickItViewModel: ObservableObject {
     var isValidTimerDuration: Bool {
         let total = totalTimerSeconds
         return total >= 1 && total <= 3600 // 1 second to 60 minutes
+    }
+    
+    var canPause: Bool {
+        isRunning && !isPaused
+    }
+    
+    var canResume: Bool {
+        isPaused && !isRunning
     }
     
     // MARK: - Dependencies
@@ -151,7 +160,81 @@ class ClickItViewModel: ObservableObject {
         clickCoordinator.stopAutomation()
         cancelTimer() // Also cancel any active timer
         isRunning = false
+        isPaused = false
         appStatus = .ready
+    }
+    
+    func pauseAutomation() {
+        guard isRunning && !isPaused else { return }
+        
+        clickCoordinator.stopAutomation()
+        ElapsedTimeManager.shared.pauseTracking()
+        
+        // Update visual feedback to show paused state (dimmed)
+        if showVisualFeedback, let point = targetPoint {
+            VisualFeedbackOverlay.shared.updateOverlay(at: point, isActive: false)
+        }
+        
+        isRunning = false
+        isPaused = true
+        appStatus = .paused
+    }
+    
+    func resumeAutomation() {
+        guard isPaused && !isRunning else { return }
+        
+        // Resume elapsed time tracking
+        ElapsedTimeManager.shared.resumeTracking()
+        
+        // Restart automation with current configuration
+        guard let point = targetPoint else { return }
+        
+        let config = AutomationConfiguration(
+            location: point,
+            clickType: clickType,
+            clickInterval: Double(totalMilliseconds) / 1000.0,
+            targetApplication: nil,
+            maxClicks: durationMode == .clickCount ? maxClicks : nil,
+            maxDuration: durationMode == .timeLimit ? durationSeconds : nil,
+            stopOnError: stopOnError,
+            randomizeLocation: randomizeLocation,
+            locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
+            showVisualFeedback: showVisualFeedback,
+            useDynamicMouseTracking: false
+        )
+        
+        clickCoordinator.startAutomation(with: config)
+        isRunning = true
+        isPaused = false
+        appStatus = .running
+        
+        // Update visual feedback to show active state
+        if showVisualFeedback {
+            VisualFeedbackOverlay.shared.updateOverlay(at: point, isActive: true)
+        }
+    }
+    
+    // MARK: - Testing Methods
+    func startAutomationForTesting() {
+        guard let point = targetPoint else { return }
+        
+        let config = AutomationConfiguration(
+            location: point,
+            clickType: clickType,
+            clickInterval: Double(totalMilliseconds) / 1000.0,
+            targetApplication: nil,
+            maxClicks: durationMode == .clickCount ? maxClicks : nil,
+            maxDuration: durationMode == .timeLimit ? durationSeconds : nil,
+            stopOnError: stopOnError,
+            randomizeLocation: randomizeLocation,
+            locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
+            showVisualFeedback: false, // Disable visual feedback for tests
+            useDynamicMouseTracking: false
+        )
+        
+        clickCoordinator.startAutomation(with: config)
+        isRunning = true
+        appStatus = .running
     }
     
     func resetConfiguration() {
@@ -189,9 +272,10 @@ class ClickItViewModel: ObservableObject {
             guard let self = self else { return }
             
             // Sync ViewModel state with ClickCoordinator state
-            if !isActive && self.isRunning {
+            if !isActive && (self.isRunning || self.isPaused) {
                 print("ClickItViewModel: Automation stopped externally (e.g., DELETE key), updating UI state")
                 self.isRunning = false
+                self.isPaused = false
                 self.appStatus = .ready
                 // Also cancel any active timer when automation stops
                 self.cancelTimer()
@@ -349,6 +433,7 @@ enum TimerMode {
 enum AppStatus {
     case ready
     case running
+    case paused
     case error(String)
     
     var displayText: String {
@@ -357,6 +442,8 @@ enum AppStatus {
             return "Ready"
         case .running:
             return "Running"
+        case .paused:
+            return "Paused"
         case .error(let message):
             return "Error: \(message)"
         }
@@ -368,6 +455,8 @@ enum AppStatus {
             return .green
         case .running:
             return .blue
+        case .paused:
+            return .orange
         case .error:
             return .red
         }
