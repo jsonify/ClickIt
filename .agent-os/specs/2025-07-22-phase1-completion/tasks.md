@@ -15,15 +15,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.5 Ensure session statistics preservation during pause state
   - [x] 1.6 Verify all tests pass and UI responds correctly
 
-- [ ] 2. **🚨 EMERGENCY: Enhance Emergency Stop System** (HIGH PRIORITY)
-  - [ ] 2.1 Write tests for enhanced emergency stop functionality
-  - [ ] 2.2 Implement multiple emergency stop key options (ESC, F1, Cmd+Period, Space)
-  - [ ] 2.3 Add configurable emergency stop key selection in settings
-  - [ ] 2.4 Implement immediate stop with <50ms response time guarantee
-  - [ ] 2.5 Add visual confirmation of emergency stop activation
-  - [ ] 2.6 Ensure emergency stop works even when app is in background
-  - [ ] 2.7 Add emergency stop status to automation panel and overlay
-  - [ ] 2.8 Verify emergency stop reliability across all automation states
+- [x] 2. **🚨 EMERGENCY: Enhance Emergency Stop System** (HIGH PRIORITY)
+  - [x] 2.1 Write tests for enhanced emergency stop functionality
+  - [x] 2.2 Implement multiple emergency stop key options (ESC, F1, Cmd+Period, Space)
+  - [x] 2.3 Add configurable emergency stop key selection in settings
+  - [x] 2.4 Implement immediate stop with <50ms response time guarantee
+  - [x] 2.5 Add visual confirmation of emergency stop activation
+  - [x] 2.6 Ensure emergency stop works even when app is in background
+  - [x] 2.7 Add emergency stop status to automation panel and overlay
+  - [x] 2.8 Verify emergency stop reliability across all automation states
 
 - [ ] 3. **Build Enhanced Preset Management System**
   - [ ] 3.1 Write tests for PresetManager and PresetConfiguration data structures

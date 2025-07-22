@@ -14,6 +14,9 @@ class ClickCoordinator: ObservableObject {
     /// Current click session state
     @Published var isActive: Bool = false
     
+    /// Pause state for automation
+    @Published var isPaused: Bool = false
+    
     /// Click statistics
     @Published var clickCount: Int = 0
     @Published var successRate: Double = 1.0
@@ -88,6 +91,7 @@ class ClickCoordinator: ObservableObject {
         }
         
         isActive = false
+        isPaused = false  // Clear pause state when stopping
         automationTask?.cancel()
         automationTask = nil
         
@@ -101,6 +105,58 @@ class ClickCoordinator: ObservableObject {
         
         automationConfig = nil
         print("ClickCoordinator: stopAutomation() completed")
+    }
+    
+    /// EMERGENCY PRIORITY: Immediate automation termination for <50ms response guarantee
+    func emergencyStopAutomation() {
+        print("ClickCoordinator: EMERGENCY STOP - immediate termination")
+        
+        // Critical: Set inactive state first to prevent any new operations
+        isActive = false
+        isPaused = false
+        
+        // Immediate task cancellation without waiting
+        automationTask?.cancel()
+        automationTask = nil
+        
+        // Priority cleanup - all operations must be synchronous for speed
+        timeManager.stopTracking()
+        VisualFeedbackOverlay.shared.hideOverlay()
+        automationConfig = nil
+        
+        print("ClickCoordinator: EMERGENCY STOP completed")
+    }
+    
+    /// Pauses the current automation session
+    func pauseAutomation() {
+        guard isActive && !isPaused else { 
+            print("ClickCoordinator: pauseAutomation() - not active or already paused")
+            return 
+        }
+        
+        print("ClickCoordinator: pauseAutomation() called")
+        isPaused = true
+        
+        // Pause elapsed time tracking
+        timeManager.pauseTracking()
+        
+        print("ClickCoordinator: automation paused")
+    }
+    
+    /// Resumes the current automation session
+    func resumeAutomation() {
+        guard isActive && isPaused else { 
+            print("ClickCoordinator: resumeAutomation() - not active or not paused")
+            return 
+        }
+        
+        print("ClickCoordinator: resumeAutomation() called")
+        isPaused = false
+        
+        // Resume elapsed time tracking
+        timeManager.resumeTracking()
+        
+        print("ClickCoordinator: automation resumed")
     }
     
     /// Performs a single click with the given configuration
@@ -206,6 +262,12 @@ class ClickCoordinator: ObservableObject {
     /// - Parameter configuration: Automation configuration
     private func runAutomationLoop(configuration: AutomationConfiguration) async {
         while isActive && !Task.isCancelled {
+            // Skip execution if paused, but continue loop
+            if isPaused {
+                try? await Task.sleep(nanoseconds: 50_000_000) // 50ms pause check interval
+                continue
+            }
+            
             let result = await executeAutomationStep(configuration: configuration)
             
             if !result.success {
