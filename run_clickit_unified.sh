@@ -41,10 +41,22 @@ case "$BUILD_SYSTEM" in
         fi
         
         echo "🚀 Launching ClickIt.app..."
-        open "dist/ClickIt.app"
-        
-        echo "✅ ClickIt launched successfully!"
-        echo "🔧 The app should appear in your Dock and System Settings > Accessibility"
+        if open "dist/ClickIt.app" 2>/dev/null; then
+            echo "✅ ClickIt launched successfully!"
+            echo "🔧 The app should appear in your Dock and System Settings > Accessibility"
+        else
+            echo "⚠️  App bundle launch failed - trying direct executable..."
+            if [ -f "dist/ClickIt.app/Contents/MacOS/ClickIt" ]; then
+                echo "🚀 Launching executable directly..."
+                "./dist/ClickIt.app/Contents/MacOS/ClickIt" &
+                echo "✅ ClickIt launched via direct executable!"
+                echo "🔧 The app should appear in your Dock and System Settings > Accessibility"
+            else
+                echo "❌ Could not launch ClickIt"
+                echo "💡 Try: codesign --force --deep --sign - dist/ClickIt.app"
+                exit 1
+            fi
+        fi
         ;;
         
     "xcode")

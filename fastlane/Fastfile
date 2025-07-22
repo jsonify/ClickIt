@@ -18,6 +18,20 @@ platform :mac do
   lane :build_debug do
     Dir.chdir("..") do
       sh("./build_app_unified.sh debug spm")
+      
+      # Apply adhoc signature if no certificate was found
+      app_path = "dist/ClickIt.app"
+      if File.exist?(app_path)
+        begin
+          # Check if app is already properly signed
+          sh("codesign -v '#{app_path}' 2>/dev/null")
+          UI.message("✅ App already properly signed")
+        rescue
+          UI.message("🔐 Applying adhoc signature for local development...")
+          sh("codesign --force --deep --sign - --timestamp=none --options=runtime '#{app_path}'")
+          UI.success("✅ Adhoc signature applied successfully")
+        end
+      end
     end
     UI.success("Debug build completed! 🎉")
     UI.message("App location: dist/ClickIt.app")
@@ -27,6 +41,20 @@ platform :mac do
   lane :build_release do
     Dir.chdir("..") do
       sh("./build_app_unified.sh release spm")
+      
+      # Apply adhoc signature if no certificate was found
+      app_path = "dist/ClickIt.app"
+      if File.exist?(app_path)
+        begin
+          # Check if app is already properly signed
+          sh("codesign -v '#{app_path}' 2>/dev/null")
+          UI.message("✅ App already properly signed")
+        rescue
+          UI.message("🔐 Applying adhoc signature for local development...")
+          sh("codesign --force --deep --sign - --timestamp=none --options=runtime '#{app_path}'")
+          UI.success("✅ Adhoc signature applied successfully")
+        end
+      end
     end
     UI.success("Release build completed! 🚀")
     UI.message("App location: dist/ClickIt.app")

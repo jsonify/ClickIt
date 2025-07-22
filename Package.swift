@@ -14,15 +14,11 @@ let package = Package(
             targets: ["ClickIt"]
         )
     ],
-    dependencies: [
-        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.5.2")
-    ],
+    dependencies: [],
     targets: [
         .executableTarget(
             name: "ClickIt",
-            dependencies: [
-                .product(name: "Sparkle", package: "Sparkle")
-            ],
+            dependencies: [],
             resources: [.process("Resources")]
         ),
         .testTarget(
