@@ -12,9 +12,7 @@ struct ContentView: View {
     @EnvironmentObject private var permissionManager: PermissionManager
     @EnvironmentObject private var hotkeyManager: HotkeyManager
     @EnvironmentObject private var viewModel: ClickItViewModel
-    @StateObject private var updaterManager = UpdaterManager()
     @State private var showingPermissionSetup = false
-    @State private var showingUpdateSettings = false
     
     var body: some View {
         if permissionManager.allPermissionsGranted {
@@ -33,17 +31,6 @@ struct ContentView: View {
                 // Status Header Card
                 StatusHeaderCard(viewModel: viewModel)
                 
-                // Development Update Button (Phase 1 MVP)
-                #if DEBUG
-                if AppConstants.DeveloperUpdateConfig.enabled {
-                    DeveloperUpdateButton(updaterManager: updaterManager)
-                }
-                #endif
-                
-                // Update Notification (if available)
-                if updaterManager.isUpdateAvailable || updaterManager.isCheckingForUpdates {
-                    UpdateNotificationCard(updaterManager: updaterManager)
-                }
                 
                 // Target Point Selection Card
                 TargetPointSelectionCard(viewModel: viewModel)
@@ -61,24 +48,6 @@ struct ContentView: View {
         .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
             permissionManager.updatePermissionStatus()
-            
-            // Check for updates on app launch (respecting development configuration)
-            #if DEBUG
-            // In development builds, only manual checking is enabled
-            if !AppConstants.DeveloperUpdateConfig.manualCheckOnly,
-               updaterManager.autoUpdateEnabled,
-               let timeSinceLastCheck = updaterManager.timeSinceLastCheck,
-               timeSinceLastCheck > AppConstants.updateCheckInterval {
-                updaterManager.checkForUpdates()
-            }
-            #else
-            // In production builds, use normal automatic checking
-            if updaterManager.autoUpdateEnabled,
-               let timeSinceLastCheck = updaterManager.timeSinceLastCheck,
-               timeSinceLastCheck > AppConstants.updateCheckInterval {
-                updaterManager.checkForUpdates()
-            }
-            #endif
         }
     }
     

@@ -53,46 +53,6 @@ struct AppConstants {
     // System Requirements
     static let minimumMemoryRequirementGB: Double = 4.0
     
-    // Auto-Update Configuration
-    static let appcastURL = "https://jsonify.github.io/clickit/appcast.xml"
-    static let updateCheckInterval: TimeInterval = 24 * 60 * 60 // 24 hours
-    static let betaAppcastURL = "https://jsonify.github.io/clickit/appcast-beta.xml"
-    static let githubReleasesAPI = "https://api.github.com/repos/jsonify/clickit/releases"
-    static let githubRepository = "jsonify/clickit"
-    
-    // Update Settings Keys (UserDefaults)
-    static let autoUpdateEnabledKey = "autoUpdateEnabled"
-    static let checkForBetaUpdatesKey = "checkForBetaUpdates"
-    static let lastUpdateCheckKey = "lastUpdateCheck"
-    static let skipVersionKey = "skipVersion"
-    
-    // Development Update Configuration (Phase 1 MVP)
-    struct DeveloperUpdateConfig {
-        static let enabled = true
-        static let manualCheckOnly = true
-        static let skipBetaChannel = true
-        static let skipSkipVersion = true
-        
-        // Build-specific configuration
-        #if DEBUG
-        static let updateConfigMode = "development"
-        static let enableAutomaticChecking = false
-        static let showAdvancedOptions = false
-        #elseif BETA
-        static let updateConfigMode = "beta"
-        static let enableAutomaticChecking = true
-        static let showAdvancedOptions = true
-        static let enableBetaChannel = true
-        #else
-        static let updateConfigMode = "production"
-        static let enableAutomaticChecking = true
-        static let showAdvancedOptions = true
-        static let enableBetaChannel = false
-        #endif
-        
-        // Private initializer to prevent instantiation
-        private init() {}
-    }
     
     // Private initializer to prevent instantiation
     private init() {}
