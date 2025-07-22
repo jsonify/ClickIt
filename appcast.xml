@@ -5,9 +5,29 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Mon, 21 Jul 2025 23:01:17 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 22 Jul 2025 12:10:35 +0000</lastBuildDate>
         
 <item>
+    <title><![CDATA[ClickIt v1.4.15]]></title>
+    <description><![CDATA[## What's New
+
+
+
+---
+🤖 Generated with [Claude Code](https://claude.ai/code)
+📱 Compatible with macOS 14.0 or later]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.4.15</link>
+    <sparkle:version>1.4.15</sparkle:version>
+    <sparkle:shortVersionString>1.4.15</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Tue, 22 Jul 2025 12:07:54 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.15/ClickIt-1.4.15.zip" 
+               length="971135" 
+               type="application/octet-stream" 
+               sparkle:version="1.4.15" 
+               sparkle:shortVersionString="1.4.15" />
+</item>
+        <item>
     <title><![CDATA[ClickIt v1.4.14]]></title>
     <description><![CDATA[## What's New
 
