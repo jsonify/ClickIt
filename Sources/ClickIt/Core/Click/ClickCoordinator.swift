@@ -25,6 +25,9 @@ class ClickCoordinator: ObservableObject {
     /// Elapsed time manager for real-time tracking
     private let timeManager = ElapsedTimeManager.shared
     
+    /// Error recovery manager for handling failures
+    private let errorRecoveryManager = ErrorRecoveryManager()
+    
     /// Elapsed time since automation started (legacy compatibility)
     var elapsedTime: TimeInterval {
         return timeManager.currentSessionTime
@@ -237,6 +240,18 @@ class ClickCoordinator: ObservableObject {
         )
     }
     
+    /// Gets current error recovery manager for UI access
+    /// - Returns: Current error recovery manager
+    var errorRecovery: ErrorRecoveryManager {
+        return errorRecoveryManager
+    }
+    
+    /// Gets recovery statistics for display
+    /// - Returns: Current recovery statistics
+    func getRecoveryStatistics() -> RecoveryStatistics {
+        return errorRecoveryManager.getRecoveryStatistics()
+    }
+    
     // MARK: - Private Methods
     
     /// Runs the main automation loop
@@ -287,7 +302,7 @@ class ClickCoordinator: ObservableObject {
         }
     }
     
-    /// Executes a single automation step
+    /// Executes a single automation step with error recovery
     /// - Parameter configuration: Automation configuration
     /// - Returns: Result of the automation step
     private func executeAutomationStep(configuration: AutomationConfiguration) async -> ClickResult {
@@ -315,28 +330,129 @@ class ClickCoordinator: ObservableObject {
         
         print("ClickCoordinator: Executing automation step at \(location) (dynamic: \(configuration.useDynamicMouseTracking))")
         
-        // Perform the actual click
+        // Perform the actual click with error recovery
         print("ClickCoordinator: Performing actual click at \(location)")
-        let result: ClickResult
-        
-        if let targetApp = configuration.targetApplication {
-            result = await performBackgroundClick(
-                bundleIdentifier: targetApp,
-                at: location,
-                clickType: configuration.clickType
-            )
-        } else {
-            let config = ClickConfiguration(
-                type: configuration.clickType,
-                location: location,
-                targetPID: nil
-            )
-            result = await performSingleClick(configuration: config)
-        }
+        let result = await executeClickWithRecovery(
+            location: location,
+            configuration: configuration
+        )
         
         print("ClickCoordinator: Click result: success=\(result.success)")
         
         return result
+    }
+    
+    /// Executes a click with integrated error recovery
+    /// - Parameters:
+    ///   - location: Location to click
+    ///   - configuration: Automation configuration
+    /// - Returns: Result of the click operation with recovery attempts
+    private func executeClickWithRecovery(
+        location: CGPoint,
+        configuration: AutomationConfiguration
+    ) async -> ClickResult {
+        let clickConfig = ClickConfiguration(
+            type: configuration.clickType,
+            location: location,
+            targetPID: nil
+        )
+        
+        var attemptCount = 0
+        let maxAttempts = 3
+        
+        while attemptCount < maxAttempts {
+            let result: ClickResult
+            
+            // Perform the click
+            if let targetApp = configuration.targetApplication {
+                result = await performBackgroundClick(
+                    bundleIdentifier: targetApp,
+                    at: location,
+                    clickType: configuration.clickType
+                )
+            } else {
+                result = await performSingleClick(configuration: clickConfig)
+            }
+            
+            // If successful, return immediately
+            if result.success {
+                return result
+            }
+            
+            // Handle error with recovery system
+            if let error = result.error {
+                let context = ErrorContext(
+                    originalError: error,
+                    attemptCount: attemptCount,
+                    configuration: clickConfig
+                )
+                
+                let recoveryAction = await errorRecoveryManager.attemptRecovery(for: context)
+                await errorRecoveryManager.recordRecoveryAttempt(success: false, for: context)
+                
+                // Check if we should retry
+                if recoveryAction.shouldRetry && attemptCount < maxAttempts - 1 {
+                    attemptCount += 1
+                    
+                    // Wait for recovery delay
+                    if recoveryAction.retryDelay > 0 {
+                        try? await Task.sleep(nanoseconds: UInt64(recoveryAction.retryDelay * 1_000_000_000))
+                    }
+                    
+                    // Apply recovery strategy adjustments
+                    await applyRecoveryStrategy(recoveryAction.strategy, for: configuration)
+                    
+                    continue // Retry the operation
+                } else {
+                    // Max attempts reached or recovery says don't retry
+                    print("ClickCoordinator: Recovery failed or max attempts reached for error: \(error)")
+                    return result
+                }
+            }
+            
+            attemptCount += 1
+        }
+        
+        // This should not be reached, but provide a fallback
+        return ClickResult(
+            success: false,
+            actualLocation: location,
+            timestamp: CFAbsoluteTimeGetCurrent(),
+            error: .eventPostingFailed
+        )
+    }
+    
+    /// Applies recovery strategy adjustments to the automation configuration
+    /// - Parameters:
+    ///   - strategy: Recovery strategy to apply
+    ///   - configuration: Current automation configuration
+    private func applyRecoveryStrategy(
+        _ strategy: RecoveryStrategy,
+        for configuration: AutomationConfiguration
+    ) async {
+        switch strategy {
+        case .resourceCleanup:
+            // Give system time to clean up resources
+            try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+            
+        case .adjustPerformanceSettings:
+            // Could adjust timing or other performance-related settings
+            // This is a placeholder for future performance adjustments
+            break
+            
+        case .recheckPermissions:
+            // Force permission status update
+            await PermissionManager.shared.updatePermissionStatus()
+            
+        case .fallbackToSystemWide:
+            // This would modify the configuration to use system-wide clicks
+            // For now, we'll just log the intention
+            print("ClickCoordinator: Falling back to system-wide clicks")
+            
+        case .automaticRetry, .gracefulDegradation:
+            // These strategies are handled by the retry loop logic
+            break
+        }
     }
     
     /// Randomizes a location within specified variance

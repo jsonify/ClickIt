@@ -39,6 +39,12 @@ class PermissionManager: ObservableObject {
         allPermissionsGranted = accessibility && screenRecording
     }
     
+    func updatePermissionStatus() async {
+        await MainActor.run {
+            updatePermissionStatus()
+        }
+    }
+    
     // MARK: - Permission Requesting
     
     func requestAccessibilityPermission() async -> Bool {
