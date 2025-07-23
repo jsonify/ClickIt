@@ -20,7 +20,7 @@
 
 ### Should-Have Features
 
-- [ ] **Advanced Hotkey Management** - Customizable global hotkeys beyond ESC key `M`
+- [x] **Advanced Hotkey Management** - Customizable global hotkeys beyond ESC key `M`
 - [ ] **Click Validation** - Verify successful clicks with feedback `S`
 - [ ] **Settings Export/Import** - Backup and restore user configurations `S`
 
