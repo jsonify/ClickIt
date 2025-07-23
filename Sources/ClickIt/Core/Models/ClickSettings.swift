@@ -226,8 +226,7 @@ class ClickSettings: ObservableObject {
             maxDuration: maxDurationValue,
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
-            locationVariance: CGFloat(locationVariance),
-            showVisualFeedback: showVisualFeedback
+            locationVariance: CGFloat(locationVariance)
         )
     }
 }

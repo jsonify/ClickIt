@@ -23,7 +23,7 @@ final class EmergencyStopTests: XCTestCase {
         
         // Test initial state
         XCTAssertNotNil(hotkeyManager.currentHotkey, "Should have default hotkey configuration")
-        XCTAssertEqual(hotkeyManager.currentHotkey.description, "DELETE Key", "Default should be DELETE key")
+        XCTAssertEqual(hotkeyManager.currentHotkey.description, "Shift + F1", "Default should be Shift + F1 key")
     }
     
     @MainActor
@@ -31,19 +31,19 @@ final class EmergencyStopTests: XCTestCase {
         let hotkeyManager = HotkeyManager.shared
         let defaultConfig = hotkeyManager.currentHotkey
         
-        XCTAssertEqual(defaultConfig.keyCode, 51, "Default emergency stop should be DELETE key (keyCode 51)")
-        XCTAssertEqual(defaultConfig.modifiers, 0, "Default should have no modifiers")
-        XCTAssertEqual(defaultConfig.description, "DELETE Key", "Default description should match")
+        XCTAssertEqual(defaultConfig.keyCode, 122, "Default emergency stop should be F1 key (keyCode 122)")
+        XCTAssertEqual(defaultConfig.modifiers, UInt32(NSEvent.ModifierFlags.shift.rawValue), "Default should have Shift modifier")
+        XCTAssertEqual(defaultConfig.description, "Shift + F1", "Default description should match")
     }
     
     @MainActor
     func testHotkeyRegistrationSuccess() {
         let hotkeyManager = HotkeyManager.shared
-        let testConfig = HotkeyConfiguration.deleteKey
+        let testConfig = HotkeyConfiguration.shiftF1Key
         
         let success = hotkeyManager.registerGlobalHotkey(testConfig)
         
-        XCTAssertTrue(success, "DELETE key registration should succeed")
+        XCTAssertTrue(success, "Shift+F1 key registration should succeed")
         XCTAssertTrue(hotkeyManager.isRegistered, "Manager should report as registered")
         XCTAssertNil(hotkeyManager.lastError, "Should have no error on successful registration")
         

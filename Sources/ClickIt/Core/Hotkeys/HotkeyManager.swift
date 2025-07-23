@@ -130,39 +130,36 @@ class HotkeyManager: ObservableObject {
         // PRIORITY PATH: Direct synchronous emergency stop for <50ms guarantee
         print("HotkeyManager: EMERGENCY STOP activated (\(config.description))")
         
-        // Immediate synchronous stop - no async overhead
-        DispatchQueue.main.sync {
-            let coordinator = ClickCoordinator.shared
+        // CRITICAL FIX: We're already on @MainActor, so call coordinator methods directly
+        // without additional dispatch to avoid deadlock
+        let coordinator = ClickCoordinator.shared
+        
+        if coordinator.isActive {
+            // Call emergency stop method directly - no dispatch needed since we're on MainActor
+            coordinator.emergencyStopAutomation()
             
-            if coordinator.isActive {
-                // Call priority emergency stop method for immediate termination
-                coordinator.emergencyStopAutomation()
+            // Track response time
+            if let tracker = self.responseTimeTracker {
+                let responseTime = tracker.stopTracking()
+                print("HotkeyManager: Emergency stop response time: \(responseTime)ms")
                 
-                // Show visual confirmation immediately after stopping
-                VisualFeedbackOverlay.shared.showEmergencyStopConfirmation()
-                
-                // Track response time
-                if let tracker = self.responseTimeTracker {
-                    let responseTime = tracker.stopTracking()
-                    print("HotkeyManager: Emergency stop response time: \(responseTime)ms")
-                    
-                    // Log warning if response time exceeds target
-                    if responseTime > 50.0 {
-                        print("⚠️ HotkeyManager: Emergency stop response time exceeded 50ms target: \(responseTime)ms")
-                    }
+                // Log warning if response time exceeds target
+                if responseTime > 50.0 {
+                    print("⚠️ HotkeyManager: Emergency stop response time exceeded 50ms target: \(responseTime)ms")
                 }
-            } else {
-                print("HotkeyManager: Emergency stop triggered but no automation running")
-                
-                // Still track response time for diagnostic purposes
-                if let tracker = self.responseTimeTracker {
-                    let responseTime = tracker.stopTracking()
-                    print("HotkeyManager: Emergency stop response time (no automation): \(responseTime)ms")
-                }
+            }
+        } else {
+            print("HotkeyManager: Emergency stop triggered but no automation running")
+            
+            // Still track response time for diagnostic purposes
+            if let tracker = self.responseTimeTracker {
+                let responseTime = tracker.stopTracking()
+                print("HotkeyManager: Emergency stop response time (no automation): \(responseTime)ms")
             }
         }
         
-        // Reset emergency stop state after brief visual feedback period (async is fine here)
+        // Reset emergency stop state after brief visual feedback period
+        // Use async dispatch since this is not time-critical
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.emergencyStopActivated = false
             self.responseTimeTracker = nil
@@ -229,8 +226,7 @@ class HotkeyManager: ObservableObject {
             let testConfig = AutomationConfiguration(
                 location: CGPoint(x: 100, y: 100),
                 clickInterval: 5.0, // Long interval for testing
-                maxClicks: 1000,
-                showVisualFeedback: false
+                maxClicks: 1000
             )
             
             ClickCoordinator.shared.startAutomation(with: testConfig)
@@ -399,9 +395,9 @@ struct HotkeyConfiguration {
     let description: String
     
     static let `default` = HotkeyConfiguration(
-        keyCode: FrameworkConstants.CarbonConfig.deleteKeyCode,
-        modifiers: 0, // No modifiers for DELETE key
-        description: "DELETE Key"
+        keyCode: 122, // F1 key
+        modifiers: UInt32(NSEvent.ModifierFlags.shift.rawValue), // Shift modifier
+        description: "Shift + F1"
     )
 }
 
@@ -426,6 +422,12 @@ extension HotkeyConfiguration {
         keyCode: 122, // F1 key
         modifiers: 0,
         description: "F1 Key"
+    )
+    
+    static let shiftF1Key = HotkeyConfiguration(
+        keyCode: 122, // F1 key
+        modifiers: UInt32(NSEvent.ModifierFlags.shift.rawValue),
+        description: "Shift + F1"
     )
     
     static let spaceKey = HotkeyConfiguration(
@@ -457,13 +459,7 @@ extension HotkeyConfiguration {
     // MARK: - All Available Emergency Stop Keys
     
     static let allEmergencyStopKeys: [HotkeyConfiguration] = [
-        .escapeKey,      // ESC - Universal emergency stop
-        .deleteKey,      // DELETE - Current default
-        .f1Key,          // F1 - Easy to reach function key
-        .spaceKey,       // Space - Large, easy target
-        .cmdPeriod,      // Cmd+Period - macOS standard cancel
-        .cmdDelete,      // Cmd+DELETE - Modified delete
-        .optionDelete    // Option+DELETE - Alternative modifier
+        .shiftF1Key      // Shift + F1 - Single emergency stop key
     ]
     
     // MARK: - Key Code Constants

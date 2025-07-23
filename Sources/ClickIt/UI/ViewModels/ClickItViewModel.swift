@@ -115,7 +115,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false // Normal automation uses fixed position
         )
         
@@ -148,7 +147,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: false, // Disable stopOnError for timer mode to avoid timing constraint issues
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: true // Enable dynamic mouse tracking for timer mode
         )
         
@@ -204,7 +202,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false
         )
         
@@ -233,7 +230,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: false, // Disable visual feedback for tests
             useDynamicMouseTracking: false
         )
         

@@ -60,20 +60,7 @@ class ClickCoordinator: ObservableObject {
         // Start real-time elapsed time tracking
         timeManager.startTracking()
         
-        // Show visual feedback overlay if enabled
-        if configuration.showVisualFeedback {
-            if configuration.useDynamicMouseTracking {
-                print("ClickCoordinator: Starting dynamic automation with visual feedback")
-                // For dynamic mode, show overlay at current mouse position (in AppKit coordinates)
-                let currentAppKitPosition = NSEvent.mouseLocation
-                VisualFeedbackOverlay.shared.showOverlay(at: currentAppKitPosition, isActive: true)
-            } else {
-                print("ClickCoordinator: Starting fixed automation with visual feedback at \(configuration.location)")
-                VisualFeedbackOverlay.shared.showOverlay(at: configuration.location, isActive: true)
-            }
-        } else {
-            print("ClickCoordinator: Starting automation without visual feedback")
-        }
+        print("ClickCoordinator: Starting automation at \(configuration.location)")
         
         automationTask = Task {
             await runAutomationLoop(configuration: configuration)
@@ -98,11 +85,6 @@ class ClickCoordinator: ObservableObject {
         // Stop real-time elapsed time tracking
         timeManager.stopTracking()
         
-        // Hide visual feedback overlay immediately
-        print("ClickCoordinator: About to hide visual feedback overlay")
-        VisualFeedbackOverlay.shared.hideOverlay()
-        print("ClickCoordinator: Visual feedback overlay hidden")
-        
         automationConfig = nil
         print("ClickCoordinator: stopAutomation() completed")
     }
@@ -121,7 +103,6 @@ class ClickCoordinator: ObservableObject {
         
         // Priority cleanup - all operations must be synchronous for speed
         timeManager.stopTracking()
-        VisualFeedbackOverlay.shared.hideOverlay()
         automationConfig = nil
         
         print("ClickCoordinator: EMERGENCY STOP completed")
@@ -334,20 +315,6 @@ class ClickCoordinator: ObservableObject {
         
         print("ClickCoordinator: Executing automation step at \(location) (dynamic: \(configuration.useDynamicMouseTracking))")
         
-        // Update visual feedback overlay if enabled
-        if configuration.showVisualFeedback {
-            await MainActor.run {
-                if configuration.useDynamicMouseTracking {
-                    // Convert back to AppKit coordinates for overlay positioning
-                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
-                    print("[Dynamic Debug] Overlay position (AppKit): \(appKitLocation)")
-                    VisualFeedbackOverlay.shared.updateOverlay(at: appKitLocation, isActive: true)
-                } else {
-                    VisualFeedbackOverlay.shared.updateOverlay(at: location, isActive: true)
-                }
-            }
-        }
-        
         // Perform the actual click
         print("ClickCoordinator: Performing actual click at \(location)")
         let result: ClickResult
@@ -368,19 +335,6 @@ class ClickCoordinator: ObservableObject {
         }
         
         print("ClickCoordinator: Click result: success=\(result.success)")
-        
-        // Show click pulse for successful clicks
-        if configuration.showVisualFeedback && result.success {
-            await MainActor.run {
-                if configuration.useDynamicMouseTracking {
-                    // Convert back to AppKit coordinates for pulse positioning
-                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
-                    VisualFeedbackOverlay.shared.showClickPulse(at: appKitLocation)
-                } else {
-                    VisualFeedbackOverlay.shared.showClickPulse(at: location)
-                }
-            }
-        }
         
         return result
     }
@@ -486,7 +440,6 @@ struct AutomationConfiguration {
     let stopOnError: Bool
     let randomizeLocation: Bool
     let locationVariance: CGFloat
-    let showVisualFeedback: Bool
     let useDynamicMouseTracking: Bool
     
     init(
@@ -499,7 +452,6 @@ struct AutomationConfiguration {
         stopOnError: Bool = false,
         randomizeLocation: Bool = false,
         locationVariance: CGFloat = 0,
-        showVisualFeedback: Bool = true,
         useDynamicMouseTracking: Bool = false
     ) {
         self.location = location
@@ -511,7 +463,6 @@ struct AutomationConfiguration {
         self.stopOnError = stopOnError
         self.randomizeLocation = randomizeLocation
         self.locationVariance = locationVariance
-        self.showVisualFeedback = showVisualFeedback
         self.useDynamicMouseTracking = useDynamicMouseTracking
     }
 }
@@ -536,13 +487,11 @@ extension ClickCoordinator {
     ///   - location: Location to click
     ///   - interval: Interval between clicks
     ///   - maxClicks: Maximum number of clicks (optional)
-    ///   - showVisualFeedback: Whether to show visual feedback overlay
-    func startSimpleAutomation(at location: CGPoint, interval: TimeInterval, maxClicks: Int? = nil, showVisualFeedback: Bool = true) {
+    func startSimpleAutomation(at location: CGPoint, interval: TimeInterval, maxClicks: Int? = nil) {
         let config = AutomationConfiguration(
             location: location,
             clickInterval: interval,
             maxClicks: maxClicks,
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false
         )
         startAutomation(with: config)
@@ -554,13 +503,11 @@ extension ClickCoordinator {
     ///   - interval: Interval between clicks
     ///   - variance: Location randomization variance
     ///   - maxClicks: Maximum number of clicks (optional)
-    ///   - showVisualFeedback: Whether to show visual feedback overlay
     func startRandomizedAutomation(
         at location: CGPoint,
         interval: TimeInterval,
         variance: CGFloat,
-        maxClicks: Int? = nil,
-        showVisualFeedback: Bool = true
+        maxClicks: Int? = nil
     ) {
         let config = AutomationConfiguration(
             location: location,
@@ -568,7 +515,6 @@ extension ClickCoordinator {
             maxClicks: maxClicks,
             randomizeLocation: true,
             locationVariance: variance,
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false
         )
         startAutomation(with: config)

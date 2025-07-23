@@ -36,15 +36,11 @@ struct PresetSelectionView: View {
         .padding()
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
-        .alert("Save Preset", isPresented: $showingSavePresetDialog) {
-            savePresetDialog
-        } message: {
-            Text("Enter a name for this preset configuration")
+        .sheet(isPresented: $showingSavePresetDialog) {
+            savePresetSheetView
         }
-        .alert("Rename Preset", isPresented: $showingRenameDialog) {
-            renamePresetDialog
-        } message: {
-            Text("Enter a new name for '\(presetToRename?.name ?? "")'")
+        .sheet(isPresented: $showingRenameDialog) {
+            renamePresetSheetView
         }
         .alert("Delete Preset", isPresented: $showingDeleteConfirmation) {
             deleteConfirmationDialog
@@ -327,6 +323,72 @@ struct PresetSelectionView: View {
     
     // MARK: - Dialog Components
     
+    private var savePresetSheetView: some View {
+        VStack(spacing: 20) {
+            // Header
+            HStack {
+                Image(systemName: "bookmark.circle.fill")
+                    .foregroundColor(.blue)
+                    .font(.title2)
+                
+                Text("Save Preset")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+            }
+            
+            // Instructions
+            Text("Enter a name for this preset configuration")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Text field
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Preset Name:")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                TextField("Enter preset name...", text: $newPresetName)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit {
+                        if !newPresetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            saveCurrentPreset()
+                        }
+                    }
+            }
+            
+            Spacer()
+            
+            // Action buttons
+            HStack(spacing: 12) {
+                Button("Cancel") {
+                    showingSavePresetDialog = false
+                    newPresetName = ""
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
+                
+                Button("Save") {
+                    saveCurrentPreset()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(newPresetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(24)
+        .frame(width: 400, height: 200)
+        .background(Color(NSColor.windowBackgroundColor))
+        .onAppear {
+            // Focus the text field when the sheet appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                // Text field will be automatically focused in macOS
+            }
+        }
+    }
+    
     private var savePresetDialog: some View {
         Group {
             TextField("Preset name", text: $newPresetName)
@@ -342,6 +404,73 @@ struct PresetSelectionView: View {
                     saveCurrentPreset()
                 }
                 .disabled(newPresetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+    }
+    
+    private var renamePresetSheetView: some View {
+        VStack(spacing: 20) {
+            // Header
+            HStack {
+                Image(systemName: "pencil.circle.fill")
+                    .foregroundColor(.blue)
+                    .font(.title2)
+                
+                Text("Rename Preset")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+            }
+            
+            // Instructions
+            Text("Enter a new name for '\(presetToRename?.name ?? "")'")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Text field
+            VStack(alignment: .leading, spacing: 6) {
+                Text("New Name:")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                TextField("Enter new name...", text: $renamePresetName)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit {
+                        if !renamePresetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            renameSelectedPreset()
+                        }
+                    }
+            }
+            
+            Spacer()
+            
+            // Action buttons
+            HStack(spacing: 12) {
+                Button("Cancel") {
+                    showingRenameDialog = false
+                    presetToRename = nil
+                    renamePresetName = ""
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
+                
+                Button("Rename") {
+                    renameSelectedPreset()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(renamePresetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(24)
+        .frame(width: 400, height: 200)
+        .background(Color(NSColor.windowBackgroundColor))
+        .onAppear {
+            // Focus the text field when the sheet appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                // Text field will be automatically focused in macOS
             }
         }
     }
