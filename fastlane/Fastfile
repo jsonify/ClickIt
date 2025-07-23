@@ -10,7 +10,7 @@ default_platform(:mac)
 
 # Global configuration
 APP_NAME = "ClickIt"
-BUNDLE_ID = "com.jsonify.ClickIt"
+BUNDLE_ID = "com.jsonify.clickit"
 DIST_DIR = "dist"
 
 platform :mac do

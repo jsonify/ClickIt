@@ -305,13 +305,17 @@ if [ -n "$CERT_NAME" ]; then
     # Sign the main app bundle (after all modifications including rpath changes)
     # Use entitlements if they exist
     ENTITLEMENTS_FILE="ClickIt/ClickIt.entitlements"
-    CODESIGN_ARGS="--deep --force --sign \"$CERT_NAME\""
     if [ -f "$ENTITLEMENTS_FILE" ]; then
         echo "🔐 Using entitlements from $ENTITLEMENTS_FILE"
-        CODESIGN_ARGS="$CODESIGN_ARGS --entitlements \"$ENTITLEMENTS_FILE\""
+        codesign --deep --force --sign "$CERT_NAME" --entitlements "$ENTITLEMENTS_FILE" "$APP_BUNDLE"
+        CODESIGN_RESULT=$?
+    else
+        echo "⚠️  No entitlements file found at $ENTITLEMENTS_FILE"
+        codesign --deep --force --sign "$CERT_NAME" "$APP_BUNDLE"
+        CODESIGN_RESULT=$?
     fi
     
-    if eval "codesign $CODESIGN_ARGS \"$APP_BUNDLE\"" 2>/dev/null; then
+    if [ $CODESIGN_RESULT -eq 0 ]; then
         echo "✅ Code signing successful!"
         
         # Verify the signature
