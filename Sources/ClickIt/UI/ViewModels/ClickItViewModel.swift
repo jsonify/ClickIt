@@ -46,7 +46,7 @@ class ClickItViewModel: ObservableObject {
     // MARK: - Timer Mode Properties
     @Published var timerMode: TimerMode = .off
     @Published var timerDurationMinutes: Int = 0
-    @Published var timerDurationSeconds: Int = 10
+    @Published var timerDurationSeconds: Int = 5
     @Published var isCountingDown: Bool = false
     @Published var remainingTime: TimeInterval = 0
     @Published var timerIsActive: Bool = false

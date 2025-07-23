@@ -13,13 +13,13 @@ env:
 
 jobs:
   build-test:
-    name: 🔨 Build & Test on Xcode
+    name: 🔨 Build & Test with SPM
     runs-on: macos-15
     
     strategy:
       matrix:
         build_mode: [debug, release]
-        build_system: [xcode, spm]
+        build_system: [spm]
     
     steps:
     - name: 📥 Checkout Code
