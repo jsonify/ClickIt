@@ -5,6 +5,7 @@ import SwiftUI
 struct ClickItApp: App {
     @StateObject private var permissionManager = PermissionManager.shared
     @StateObject private var hotkeyManager = HotkeyManager.shared
+    @StateObject private var viewModel = ClickItViewModel()
     
     init() {
         // Force app to appear in foreground when launched from command line
@@ -39,6 +40,7 @@ struct ClickItApp: App {
                     ContentView()
                         .environmentObject(permissionManager)
                         .environmentObject(hotkeyManager)
+                        .environmentObject(viewModel)
                 } else {
                     PermissionsGateView()
                         .environmentObject(permissionManager)
