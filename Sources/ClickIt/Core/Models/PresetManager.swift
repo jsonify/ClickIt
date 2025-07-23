@@ -375,7 +375,16 @@ class PresetManager: ObservableObject {
     
     private func setError(_ message: String) {
         lastError = message
+        
+        // Only print errors when not running tests
+        #if !DEBUG
         print("PresetManager Error: \(message)")
+        #else
+        // In debug mode, check if we're running tests
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+            print("PresetManager Error: \(message)")
+        }
+        #endif
     }
     
     private func clearError() {
