@@ -84,6 +84,7 @@ class ClickItViewModel: ObservableObject {
     
     // MARK: - Dependencies
     private let clickCoordinator = ClickCoordinator.shared
+    private let timerAutomationEngine = TimerAutomationEngine()
     
     // MARK: - Initialization
     init() {
@@ -118,9 +119,11 @@ class ClickItViewModel: ObservableObject {
             useDynamicMouseTracking: false // Normal automation uses fixed position
         )
         
-        clickCoordinator.startAutomation(with: config)
-        isRunning = true
-        appStatus = .running
+        // Use TimerAutomationEngine for enhanced automation with better timing control
+        timerAutomationEngine.startAutomation(with: config)
+        
+        // Note: UI state will be updated automatically through bindings
+        print("ClickItViewModel: Started enhanced automation with TimerAutomationEngine")
     }
     
     private func startDynamicAutomation() {
@@ -152,68 +155,55 @@ class ClickItViewModel: ObservableObject {
         
         print("[Timer Debug] Created automation config with interval: \(config.clickInterval)s, dynamic: \(config.useDynamicMouseTracking)")
         
-        clickCoordinator.startAutomation(with: config)
-        isRunning = true
-        appStatus = .running
+        // Use TimerAutomationEngine for enhanced dynamic automation
+        timerAutomationEngine.startAutomation(with: config)
         
-        print("[Timer Debug] Automation started - isRunning: \(isRunning)")
+        print("[Timer Debug] Enhanced automation started with TimerAutomationEngine - dynamic: \(config.useDynamicMouseTracking)")
+        // Note: UI state will be updated automatically through bindings
     }
     
     func stopAutomation() {
+        // Use TimerAutomationEngine for enhanced stop functionality
+        timerAutomationEngine.stopAutomation()
+        
+        // Also stop click coordinator for fallback compatibility
         clickCoordinator.stopAutomation()
-        cancelTimer() // Also cancel any active timer
-        isRunning = false
-        isPaused = false
-        appStatus = .ready
+        
+        // Cancel any active timer
+        cancelTimer()
+        
+        // Note: UI state will be updated automatically through bindings
+        print("ClickItViewModel: Stopped automation with TimerAutomationEngine")
     }
     
     func pauseAutomation() {
         guard isRunning && !isPaused else { return }
         
-        clickCoordinator.stopAutomation()
-        ElapsedTimeManager.shared.pauseTracking()
+        // Use TimerAutomationEngine for enhanced pause functionality
+        timerAutomationEngine.pauseAutomation()
         
         // Update visual feedback to show paused state (dimmed)
         if showVisualFeedback, let point = targetPoint {
             VisualFeedbackOverlay.shared.updateOverlay(at: point, isActive: false)
         }
         
-        isRunning = false
-        isPaused = true
-        appStatus = .paused
+        // Note: UI state will be updated automatically through bindings
+        print("ClickItViewModel: Paused automation with TimerAutomationEngine")
     }
     
     func resumeAutomation() {
         guard isPaused && !isRunning else { return }
         
-        // Resume elapsed time tracking
-        ElapsedTimeManager.shared.resumeTracking()
-        
-        // Restart automation with current configuration
-        guard let point = targetPoint else { return }
-        
-        let config = AutomationConfiguration(
-            location: point,
-            clickType: clickType,
-            clickInterval: Double(totalMilliseconds) / 1000.0,
-            targetApplication: nil,
-            maxClicks: durationMode == .clickCount ? maxClicks : nil,
-            maxDuration: durationMode == .timeLimit ? durationSeconds : nil,
-            stopOnError: stopOnError,
-            randomizeLocation: randomizeLocation,
-            locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            useDynamicMouseTracking: false
-        )
-        
-        clickCoordinator.startAutomation(with: config)
-        isRunning = true
-        isPaused = false
-        appStatus = .running
+        // Use TimerAutomationEngine for enhanced resume functionality
+        timerAutomationEngine.resumeAutomation()
         
         // Update visual feedback to show active state
-        if showVisualFeedback {
+        if showVisualFeedback, let point = targetPoint {
             VisualFeedbackOverlay.shared.updateOverlay(at: point, isActive: true)
         }
+        
+        // Note: UI state will be updated automatically through bindings
+        print("ClickItViewModel: Resumed automation with TimerAutomationEngine")
     }
     
     // MARK: - Testing Methods
@@ -283,10 +273,91 @@ class ClickItViewModel: ObservableObject {
             }
         }
         .store(in: &cancellables)
+        
+        // Monitor TimerAutomationEngine state changes
+        timerAutomationEngine.$automationState.sink { [weak self] state in
+            guard let self = self else { return }
+            
+            // Sync UI state with TimerAutomationEngine state
+            switch state {
+            case .idle:
+                self.isRunning = false
+                self.isPaused = false
+                self.appStatus = .ready
+            case .running:
+                self.isRunning = true
+                self.isPaused = false
+                self.appStatus = .running
+            case .paused:
+                self.isRunning = false
+                self.isPaused = true
+                self.appStatus = .paused
+            case .stopped:
+                self.isRunning = false
+                self.isPaused = false
+                self.appStatus = .ready
+            case .error:
+                self.isRunning = false
+                self.isPaused = false
+                self.appStatus = .error("Timer automation error")
+            }
+        }
+        .store(in: &cancellables)
+        
+        // Monitor TimerAutomationEngine session statistics
+        timerAutomationEngine.$currentSession.sink { [weak self] session in
+            guard let self = self else { return }
+            
+            // Update statistics from timer engine session
+            if let session = session {
+                self.statistics = SessionStatistics(
+                    duration: session.duration,
+                    totalClicks: session.totalClicks,
+                    successfulClicks: session.successfulClicks,
+                    failedClicks: session.failedClicks,
+                    successRate: session.successRate,
+                    averageClickTime: session.averageClickTime,
+                    clicksPerSecond: session.clicksPerSecond,
+                    isActive: session.isActive
+                )
+            }
+        }
+        .store(in: &cancellables)
     }
     
     private func updateStatistics() {
-        statistics = clickCoordinator.getSessionStatistics()
+        // Prioritize TimerAutomationEngine statistics if available
+        if let timerStats = timerAutomationEngine.getSessionStatistics() {
+            statistics = timerStats
+        } else {
+            // Fallback to ClickCoordinator statistics
+            statistics = clickCoordinator.getSessionStatistics()
+        }
+    }
+    
+    // MARK: - Enhanced Automation Status
+    
+    /// Gets the current automation status from TimerAutomationEngine
+    func getCurrentAutomationStatus() -> AutomationStatus {
+        return timerAutomationEngine.getCurrentStatus()
+    }
+    
+    /// Gets timing accuracy statistics from TimerAutomationEngine
+    func getTimingAccuracy() -> TimingAccuracyStats? {
+        return timerAutomationEngine.getTimingAccuracy()
+    }
+    
+    /// Performs emergency stop using TimerAutomationEngine
+    func emergencyStopAutomation() {
+        timerAutomationEngine.emergencyStopAutomation()
+        
+        // Also stop click coordinator for fallback compatibility
+        clickCoordinator.emergencyStopAutomation()
+        
+        // Cancel any active timer
+        cancelTimer()
+        
+        print("ClickItViewModel: Emergency stop executed with TimerAutomationEngine")
     }
     
     /// Checks if a position is within any available screen bounds (supports multiple monitors)
