@@ -5,6 +5,8 @@ struct PermissionsGateView: View {
     @State private var showingDetailedInstructions = false
     @State private var selectedPermission: PermissionType?
     @State private var isRequestingPermissions = false
+    @State private var isRefreshingPermissions = false
+    @State private var refreshErrorMessage: String?
     
     var body: some View {
         VStack(spacing: 32) {
@@ -75,17 +77,35 @@ struct PermissionsGateView: View {
                         .controlSize(.large)
                         .disabled(isRequestingPermissions)
                         
-                        Button("Refresh Status") {
-                            refreshPermissionStatus()
+                        Button(action: { refreshPermissionStatus() }) {
+                            HStack(spacing: 8) {
+                                if isRefreshingPermissions {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                                Text(isRefreshingPermissions ? "Resetting..." : "Refresh Status")
+                            }
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.regular)
+                        .disabled(isRefreshingPermissions)
                         
                         Button("Need Help?") {
                             showingDetailedInstructions = true
                         }
                         .buttonStyle(.borderless)
                         .controlSize(.small)
+                    }
+                    
+                    // Error Message Display
+                    if let errorMessage = refreshErrorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                     }
                 }
             }
@@ -181,7 +201,24 @@ struct PermissionsGateView: View {
     }
     
     private func refreshPermissionStatus() {
-        permissionManager.updatePermissionStatus()
+        isRefreshingPermissions = true
+        refreshErrorMessage = nil
+        
+        Task {
+            let success = await permissionManager.refreshWithReset()
+            
+            await MainActor.run {
+                isRefreshingPermissions = false
+                if !success {
+                    refreshErrorMessage = "Could not reset permissions. Try manually removing ClickIt from Accessibility settings."
+                    
+                    // Auto-clear error after 5 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        refreshErrorMessage = nil
+                    }
+                }
+            }
+        }
     }
     
     private func openSystemSettings(for permission: PermissionType) {

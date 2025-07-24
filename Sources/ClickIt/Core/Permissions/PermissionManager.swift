@@ -45,6 +45,73 @@ class PermissionManager: ObservableObject {
         }
     }
     
+    // MARK: - Permission Reset Functionality
+    
+    func resetAccessibilityPermission() async -> Bool {
+        guard let bundleId = Bundle.main.bundleIdentifier else {
+            print("Error: Could not get bundle identifier")
+            return false
+        }
+        
+        print("Resetting accessibility permission for bundle: \(bundleId)")
+        
+        return await withCheckedContinuation { continuation in
+            Task {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+                process.arguments = ["reset", "Accessibility", bundleId]
+                
+                // Set up timeout handling
+                let timeoutTask = Task {
+                    try await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
+                    if !process.isRunning {
+                        return
+                    }
+                    print("tccutil process timed out, terminating...")
+                    process.terminate()
+                }
+                
+                do {
+                    try process.run()
+                    process.waitUntilExit()
+                    timeoutTask.cancel()
+                    
+                    let exitCode = process.terminationStatus
+                    print("tccutil reset completed with exit code: \(exitCode)")
+                    
+                    if exitCode == 0 {
+                        // Wait for system to process the reset
+                        try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                        
+                        // Request permission again to trigger dialog
+                        let granted = await self.requestAccessibilityPermission()
+                        continuation.resume(returning: granted)
+                    } else {
+                        print("tccutil reset failed with exit code: \(exitCode)")
+                        continuation.resume(returning: false)
+                    }
+                } catch {
+                    timeoutTask.cancel()
+                    print("Failed to reset accessibility permission: \(error)")
+                    continuation.resume(returning: false)
+                }
+            }
+        }
+    }
+    
+    func refreshWithReset() async -> Bool {
+        // First try to reset accessibility permission if not granted
+        var resetSuccess = true
+        if !accessibilityPermissionGranted {
+            resetSuccess = await resetAccessibilityPermission()
+        }
+        
+        // Always update all permission status regardless of reset result
+        await self.updatePermissionStatus()
+        
+        return resetSuccess
+    }
+    
     // MARK: - Permission Requesting
     
     func requestAccessibilityPermission() async -> Bool {
