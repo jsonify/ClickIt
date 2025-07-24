@@ -55,12 +55,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 5.7 Create performance dashboard for user visibility into timing accuracy
   - [x] 5.8 Verify all performance targets met and benchmarks pass consistently
 
-- [ ] 6. **Implement Advanced CPS Randomization**
-  - [ ] 6.1 Write tests for CPSRandomizer and timing pattern generation
-  - [ ] 6.2 Create CPSRandomizer with configurable variance and distribution patterns
-  - [ ] 6.3 Add UI controls for randomization settings and pattern selection
-  - [ ] 6.4 Implement statistical distributions (normal, uniform) for natural timing variation
-  - [ ] 6.5 Integrate randomization with AutomationConfiguration and clicking loops
-  - [ ] 6.6 Add validation to ensure randomization doesn't break timing requirements
-  - [ ] 6.7 Implement anti-detection patterns to avoid automation signature detection
-  - [ ] 6.8 Verify all tests pass and randomization produces human-like patterns
+- [x] 6. **Implement Advanced CPS Randomization**
+  - [x] 6.1 Write tests for CPSRandomizer and timing pattern generation
+  - [x] 6.2 Create CPSRandomizer with configurable variance and distribution patterns
+  - [x] 6.3 Add UI controls for randomization settings and pattern selection
+  - [x] 6.4 Implement statistical distributions (normal, uniform) for natural timing variation
+  - [x] 6.5 Integrate randomization with AutomationConfiguration and clicking loops
+  - [x] 6.6 Add validation to ensure randomization doesn't break timing requirements
+  - [x] 6.7 Implement anti-detection patterns to avoid automation signature detection
+  - [x] 6.8 Verify all tests pass and randomization produces human-like patterns

@@ -22,7 +22,7 @@ enum SettingsSection: String, CaseIterable {
     var subtitle: String {
         switch self {
         case .clickBehavior: return "Click type and randomization"
-        case .timing: return "Duration and timing settings"
+        case .timing: return "Duration, timing & randomization"
         case .targeting: return "Application targeting"
         case .feedback: return "Visual and audio feedback"
         case .automation: return "Automation behavior"
@@ -57,7 +57,7 @@ enum SettingsSection: String, CaseIterable {
         case .clickBehavior:
             return "Configure mouse click behavior, including click type selection and location randomization for more natural clicking patterns."
         case .timing:
-            return "Set up automation duration controls and review timing performance estimates for your configuration."
+            return "Configure timing intervals, duration controls, and randomization patterns for human-like automation behavior."
         case .targeting:
             return "Configure application targeting and window handling settings for precise automation control."
         case .feedback:

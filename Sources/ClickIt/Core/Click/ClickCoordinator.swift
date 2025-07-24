@@ -42,6 +42,9 @@ class ClickCoordinator: ObservableObject {
     /// High-precision timer for optimized automation timing
     private var automationTimer: HighPrecisionTimer?
     
+    /// CPS randomizer for human-like timing patterns
+    private var cpsRandomizer: CPSRandomizer?
+    
     /// Performance monitor for resource optimization
     private let performanceMonitor = PerformanceMonitor.shared
     
@@ -302,17 +305,30 @@ class ClickCoordinator: ObservableObject {
             return
         }
         
-        // Create high-precision timer for automation
-        automationTimer = HighPrecisionTimer()
+        // Initialize CPS randomizer with configuration
+        cpsRandomizer = CPSRandomizer(configuration: configuration.cpsRandomizerConfig)
         
-        // Start timer-based automation loop
-        automationTimer?.startRepeatingTimer(interval: configuration.clickInterval) { [weak self] in
+        // Start first automation step
+        scheduleNextAutomationStep(configuration: configuration)
+        
+        print("ClickCoordinator: Started optimized automation loop with \(configuration.clickInterval * 1000)ms base interval, randomization: \(configuration.cpsRandomizerConfig.enabled)")
+    }
+    
+    /// Schedules the next automation step with randomized timing
+    /// - Parameter configuration: Automation configuration
+    private func scheduleNextAutomationStep(configuration: AutomationConfiguration) {
+        guard isActive else { return }
+        
+        // Calculate next interval with randomization
+        let nextInterval = cpsRandomizer?.randomizeInterval(configuration.clickInterval) ?? configuration.clickInterval
+        
+        // Create new one-shot timer for next step (required for dynamic intervals)
+        automationTimer = HighPrecisionTimer()
+        automationTimer?.startOneShotTimer(delay: nextInterval) { [weak self] in
             Task { @MainActor in
                 await self?.performOptimizedAutomationStep(configuration: configuration)
             }
         }
-        
-        print("ClickCoordinator: Started optimized automation loop with \(configuration.clickInterval * 1000)ms interval")
     }
     
     /// Performs a single optimized automation step with minimal overhead
@@ -344,7 +360,11 @@ class ClickCoordinator: ObservableObject {
         // Handle failed click with minimal processing
         if !result.success && configuration.stopOnError {
             stopAutomation()
+            return
         }
+        
+        // Schedule next automation step with randomized timing
+        scheduleNextAutomationStep(configuration: configuration)
     }
     
     /// Executes a single automation step with error recovery
@@ -602,6 +622,7 @@ struct AutomationConfiguration {
     let randomizeLocation: Bool
     let locationVariance: CGFloat
     let useDynamicMouseTracking: Bool
+    let cpsRandomizerConfig: CPSRandomizer.Configuration
     
     init(
         location: CGPoint,
@@ -613,7 +634,8 @@ struct AutomationConfiguration {
         stopOnError: Bool = false,
         randomizeLocation: Bool = false,
         locationVariance: CGFloat = 0,
-        useDynamicMouseTracking: Bool = false
+        useDynamicMouseTracking: Bool = false,
+        cpsRandomizerConfig: CPSRandomizer.Configuration = CPSRandomizer.Configuration()
     ) {
         self.location = location
         self.clickType = clickType
@@ -625,6 +647,7 @@ struct AutomationConfiguration {
         self.randomizeLocation = randomizeLocation
         self.locationVariance = locationVariance
         self.useDynamicMouseTracking = useDynamicMouseTracking
+        self.cpsRandomizerConfig = cpsRandomizerConfig
     }
 }
 
