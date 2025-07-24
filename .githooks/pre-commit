@@ -1,0 +1,24 @@
+#!/bin/bash
+# .githooks/pre-commit
+# Pre-commit hook for version validation
+
+set -e
+
+echo "🔍 Pre-commit: Validating version synchronization..."
+
+# Check if validation script exists
+if [ ! -f "scripts/validate-github-version-sync.sh" ]; then
+    echo "⚠️  Version validation script not found, skipping check"
+    exit 0
+fi
+
+# Run version validation (but don't fail the commit if GitHub CLI is unavailable)
+if ./scripts/validate-github-version-sync.sh 2>/dev/null; then
+    echo "✅ Pre-commit: Version validation passed"
+else
+    echo "⚠️  Pre-commit: Version validation failed or GitHub CLI unavailable"
+    echo "💡 Consider running: ./scripts/sync-version-from-github.sh"
+    echo "🔄 Continuing with commit (validation not enforced)"
+fi
+
+echo "✅ Pre-commit checks complete"

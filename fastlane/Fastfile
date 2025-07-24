@@ -175,6 +175,25 @@ platform :mac do
   lane :dev do
     UI.header("Starting ClickIt Development Workflow")
     
+    # Validate and auto-sync version before development
+    begin
+      UI.message("🔍 Checking version synchronization...")
+      validate_github_sync
+      UI.success("✅ Version already synchronized")
+    rescue => exception
+      UI.message("⚠️  Version mismatch detected: #{exception.message}")
+      UI.message("🔄 Auto-syncing version with GitHub release...")
+      
+      begin
+        sync_version_with_github(auto_sync: true)
+        UI.success("✅ Version automatically synchronized for development")
+      rescue => sync_exception
+        UI.error("❌ Auto-sync failed: #{sync_exception.message}")
+        UI.message("💡 Manual fix required: ./scripts/sync-version-from-github.sh")
+        UI.message("🔄 Continuing with development workflow anyway...")
+      end
+    end
+    
     # Build debug and run
     launch
     
@@ -384,6 +403,104 @@ platform :mac do
     
     # Run auto production release with new version (this will handle its own directory context)
     auto_prod(version: new_version)
+  end
+
+  desc "🔍 Validate GitHub version synchronization"
+  lane :validate_github_sync do
+    UI.header "🔍 GitHub Version Validation"
+    
+    project_root = File.expand_path("..", Dir.pwd) if File.basename(Dir.pwd) == "fastlane"
+    project_root ||= Dir.pwd
+    
+    Dir.chdir(project_root) do
+      begin
+        # Get versions
+        plist_version = sh("/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' ClickIt/Info.plist", log: false).strip
+        github_tag = sh("gh release list --limit 1 --json tagName --jq '.[0].tagName'", log: false).strip
+        github_version = github_tag.gsub(/^v/, '')
+        
+        UI.message("📋 Version Status:")
+        UI.message("   Info.plist (UI): #{plist_version}")
+        UI.message("   GitHub Release: #{github_version}")
+        
+        if plist_version != github_version
+          UI.error("")
+          UI.error("❌ VERSION MISMATCH DETECTED!")
+          UI.error("   The UI will show v#{plist_version}")
+          UI.error("   But the latest release is #{github_tag}")
+          UI.error("")
+          UI.error("🔧 To fix, run: fastlane sync_version_with_github")
+          UI.user_error!("Version synchronization required")
+        else
+          UI.success("✅ Versions are synchronized")
+          UI.success("   UI will display: v#{plist_version}")
+          UI.success("   GitHub release: #{github_tag}")
+        end
+        
+      rescue => exception
+        UI.error("❌ GitHub CLI not available or authentication failed")
+        raise exception
+      end
+    end
+  end
+
+  desc "🔄 Sync version with latest GitHub release"
+  lane :sync_version_with_github do |options|
+    UI.header "🔄 Syncing Version with GitHub"
+    
+    # Ensure we're in project root
+    project_root = File.expand_path("..", Dir.pwd) if File.basename(Dir.pwd) == "fastlane"
+    project_root ||= Dir.pwd
+    
+    Dir.chdir(project_root) do
+      begin
+        # Try GitHub CLI first
+        latest_release = sh("gh release list --limit 1 --json tagName --jq '.[0].tagName'", log: false).strip
+        version = latest_release.gsub(/^v/, '')
+        
+        UI.message("📦 Latest GitHub release: #{latest_release}")
+        UI.message("📝 Extracted version: #{version}")
+        
+      rescue => gh_exception
+        # Fallback to git tags if GitHub CLI fails
+        UI.message("⚠️  GitHub CLI unavailable, falling back to git tags...")
+        begin
+          latest_tag = sh("git describe --tags --abbrev=0", log: false).strip
+          version = latest_tag.gsub(/^v/, '')
+          UI.message("📦 Latest git tag: #{latest_tag}")
+          UI.message("📝 Extracted version: #{version}")
+        rescue => git_exception
+          if options[:auto_sync]
+            UI.error("❌ Cannot determine latest version (GitHub CLI and git tags both failed)")
+            raise "Auto-sync failed: No version source available"
+          else
+            UI.error("❌ GitHub CLI not available or not authenticated")
+            UI.message("Install GitHub CLI: brew install gh")
+            UI.message("Authenticate: gh auth login")
+            raise gh_exception
+          end
+        end
+      end
+      
+      # Get current Info.plist version
+      current_version = sh("/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' ClickIt/Info.plist", log: false).strip
+      
+      if version != current_version
+        UI.message("⚠️  Version mismatch detected!")
+        UI.message("   Info.plist: #{current_version}")
+        UI.message("   Latest release/tag: #{version}")
+        UI.message("")
+        UI.message("🔧 Updating Info.plist to match latest version...")
+        
+        # Update Info.plist
+        sh("/usr/libexec/PlistBuddy -c 'Set CFBundleShortVersionString #{version}' ClickIt/Info.plist")
+        
+        UI.success("✅ Info.plist updated to v#{version}")
+        UI.success("🔄 UI will now display v#{version}")
+      else
+        UI.success("✅ Versions are synchronized (v#{version})")
+      end
+    end
   end
 
   error do |lane, exception|
