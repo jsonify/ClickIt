@@ -39,6 +39,12 @@ class ClickCoordinator: ObservableObject {
     /// Active automation task
     private var automationTask: Task<Void, Never>?
     
+    /// High-precision timer for optimized automation timing
+    private var automationTimer: HighPrecisionTimer?
+    
+    /// Performance monitor for resource optimization
+    private let performanceMonitor = PerformanceMonitor.shared
+    
     /// Statistics tracking
     private var sessionStartTime: TimeInterval = 0
     private var totalClicks: Int = 0
@@ -65,9 +71,13 @@ class ClickCoordinator: ObservableObject {
         
         print("ClickCoordinator: Starting automation at \(configuration.location)")
         
-        automationTask = Task {
-            await runAutomationLoop(configuration: configuration)
+        // Start performance monitoring if not already running
+        if !performanceMonitor.isMonitoring {
+            performanceMonitor.startMonitoring()
         }
+        
+        // Use high-precision timer for better CPU efficiency
+        startOptimizedAutomationLoop(configuration: configuration)
     }
     
     /// Stops the current automation session
@@ -82,6 +92,12 @@ class ClickCoordinator: ObservableObject {
         
         isActive = false
         isPaused = false  // Clear pause state when stopping
+        
+        // Stop automation timer
+        automationTimer?.stopTimer()
+        automationTimer = nil
+        
+        // Cancel any remaining automation task
         automationTask?.cancel()
         automationTask = nil
         
@@ -100,7 +116,9 @@ class ClickCoordinator: ObservableObject {
         isActive = false
         isPaused = false
         
-        // Immediate task cancellation without waiting
+        // Immediate timer and task cancellation without waiting
+        automationTimer?.stopTimer()
+        automationTimer = nil
         automationTask?.cancel()
         automationTask = nil
         
@@ -252,53 +270,80 @@ class ClickCoordinator: ObservableObject {
         return errorRecoveryManager.getRecoveryStatistics()
     }
     
+    /// Gets current performance metrics
+    /// - Returns: Current performance report
+    func getPerformanceMetrics() -> PerformanceReport {
+        return performanceMonitor.getPerformanceReport()
+    }
+    
+    /// Gets timing accuracy statistics from the automation timer
+    /// - Returns: Timing accuracy statistics
+    func getTimingAccuracy() -> TimingAccuracyStats? {
+        return automationTimer?.getTimingAccuracy()
+    }
+    
+    /// Optimizes performance based on current metrics
+    func optimizePerformance() {
+        performanceMonitor.optimizeMemoryUsage()
+        
+        // Reset timing statistics for fresh measurement
+        automationTimer?.resetTimingStats()
+        
+        print("[ClickCoordinator] Performance optimization completed")
+    }
+    
     // MARK: - Private Methods
     
-    /// Runs the main automation loop
+    /// Starts optimized automation loop using HighPrecisionTimer for better CPU efficiency
     /// - Parameter configuration: Automation configuration
-    private func runAutomationLoop(configuration: AutomationConfiguration) async {
-        while isActive && !Task.isCancelled {
-            // Skip execution if paused, but continue loop
-            if isPaused {
-                try? await Task.sleep(nanoseconds: 50_000_000) // 50ms pause check interval
-                continue
+    private func startOptimizedAutomationLoop(configuration: AutomationConfiguration) {
+        guard configuration.clickInterval > 0 else {
+            print("ClickCoordinator: Invalid click interval: \(configuration.clickInterval)")
+            return
+        }
+        
+        // Create high-precision timer for automation
+        automationTimer = HighPrecisionTimer()
+        
+        // Start timer-based automation loop
+        automationTimer?.startRepeatingTimer(interval: configuration.clickInterval) { [weak self] in
+            Task { @MainActor in
+                await self?.performOptimizedAutomationStep(configuration: configuration)
             }
-            
-            let result = await executeAutomationStep(configuration: configuration)
-            
-            if !result.success {
-                // Handle failed click based on configuration
-                if configuration.stopOnError {
-                    await MainActor.run {
-                        stopAutomation()
-                    }
-                    break
-                }
+        }
+        
+        print("ClickCoordinator: Started optimized automation loop with \(configuration.clickInterval * 1000)ms interval")
+    }
+    
+    /// Performs a single optimized automation step with minimal overhead
+    /// - Parameter configuration: Automation configuration
+    private func performOptimizedAutomationStep(configuration: AutomationConfiguration) async {
+        // Quick exit checks for maximum efficiency
+        guard isActive else { return }
+        
+        // Skip execution if paused but keep timer running
+        guard !isPaused else { return }
+        
+        // Check limits before execution for efficiency
+        if let maxClicks = configuration.maxClicks, totalClicks >= maxClicks {
+            stopAutomation()
+            return
+        }
+        
+        if let maxDuration = configuration.maxDuration {
+            let elapsedTime = CFAbsoluteTimeGetCurrent() - sessionStartTime
+            if elapsedTime >= maxDuration {
+                stopAutomation()
+                return
             }
-            
-            // Apply click interval
-            if configuration.clickInterval > 0 {
-                try? await Task.sleep(nanoseconds: UInt64(configuration.clickInterval * 1_000_000_000))
-            }
-            
-            // Check for maximum clicks limit
-            if let maxClicks = configuration.maxClicks, totalClicks >= maxClicks {
-                await MainActor.run {
-                    stopAutomation()
-                }
-                break
-            }
-            
-            // Check for maximum duration limit
-            if let maxDuration = configuration.maxDuration {
-                let elapsedTime = CFAbsoluteTimeGetCurrent() - sessionStartTime
-                if elapsedTime >= maxDuration {
-                    await MainActor.run {
-                        stopAutomation()
-                    }
-                    break
-                }
-            }
+        }
+        
+        // Execute click with minimal overhead
+        let result = await executeAutomationStep(configuration: configuration)
+        
+        // Handle failed click with minimal processing
+        if !result.success && configuration.stopOnError {
+            stopAutomation()
         }
     }
     
