@@ -439,6 +439,109 @@ echo 'export CODE_SIGN_IDENTITY="Apple Development: Your Name (TEAM_ID)"' >> ~/.
 2. **Avoid concurrency conflicts**: Use proper `@MainActor` isolation without redundant dispatch
 3. **Test permission changes**: Always test toggling permissions ON/OFF during development
 
+## Version Management System
+
+ClickIt uses an automated version management system that synchronizes version numbers between the UI, GitHub releases, and build processes.
+
+### Version Architecture
+
+**Single Source of Truth**: GitHub Release tags (e.g., `v1.4.15`)
+- **GitHub Release**: Latest published version
+- **Info.plist**: `CFBundleShortVersionString` (synced automatically)
+- **UI Display**: Reads from `Bundle.main.infoDictionary` at runtime
+- **Build Scripts**: Extract version from Info.plist (no hardcoding)
+
+### Version Management Scripts
+
+**Sync version with GitHub releases**:
+```bash
+./scripts/sync-version-from-github.sh
+```
+Automatically updates Info.plist to match the latest GitHub release version.
+
+**Validate version synchronization**:
+```bash
+./scripts/validate-github-version-sync.sh
+```
+Checks if local version matches GitHub release. Used in build validation.
+
+**Update to new version**:
+```bash
+./scripts/update-version.sh 1.5.0    # Creates GitHub release automatically
+./scripts/update-version.sh 1.5.0 false  # Update without GitHub release
+```
+Complete version update workflow including Info.plist update, git commit, tag creation, and optional GitHub release trigger.
+
+### Fastlane Integration
+
+**Sync with GitHub**:
+```bash
+fastlane sync_version_with_github
+```
+
+**Release new version**:
+```bash
+fastlane release_with_github version:1.5.0
+```
+
+**Validate synchronization**:
+```bash
+fastlane validate_github_sync
+```
+
+### Git Hooks (Optional)
+
+**Install version validation hooks**:
+```bash
+./scripts/install-git-hooks.sh
+```
+Adds pre-commit hook that validates version synchronization before commits.
+
+### Build Integration
+
+Build scripts automatically:
+- Extract version from Info.plist
+- Validate sync with GitHub releases
+- Display version warnings if mismatched
+- Build with correct version in app bundle
+
+### Troubleshooting Version Issues
+
+**UI shows wrong version**:
+```bash
+# Sync Info.plist with GitHub release
+./scripts/sync-version-from-github.sh
+
+# Rebuild app bundle
+./build_app_unified.sh release
+```
+
+**Version mismatch detected**:
+```bash
+# Check current status
+./scripts/validate-github-version-sync.sh
+
+# Fix automatically
+./scripts/sync-version-from-github.sh
+```
+
+**Release new version**:
+```bash
+# Complete workflow (recommended)
+./scripts/update-version.sh 1.5.0
+
+# Or use Fastlane
+fastlane release_with_github version:1.5.0
+```
+
+### CI/CD Integration
+
+The GitHub Actions release workflow (`.github/workflows/release.yml`) automatically:
+- Validates version synchronization
+- Auto-fixes version mismatches
+- Verifies built app version matches tag
+- Creates releases with proper version metadata
+
 ## Documentation References
 
 - Full product requirements: `docs/clickit_autoclicker_prd.md`

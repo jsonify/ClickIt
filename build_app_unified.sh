@@ -9,10 +9,32 @@ BUILD_SYSTEM="${2:-auto}"    # auto, spm, xcode
 DIST_DIR="dist"
 APP_NAME="ClickIt"
 BUNDLE_ID="com.jsonify.clickit"
-VERSION="1.0.0"
+# Get version from Info.plist (synced with GitHub releases)
+get_version_from_plist() {
+    /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" ClickIt/Info.plist 2>/dev/null || echo "1.0.0"
+}
+
+VERSION=$(get_version_from_plist)
 BUILD_NUMBER=$(date +%Y%m%d%H%M)
 
 echo "🔨 Building $APP_NAME app bundle ($BUILD_MODE mode)..."
+echo "📦 Version: $VERSION (from Info.plist, synced with GitHub releases)"
+
+# Validate version is synchronized with GitHub (optional validation)
+if command -v gh > /dev/null 2>&1; then
+    GITHUB_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")
+    if [ -n "$GITHUB_TAG" ]; then
+        GITHUB_VERSION=${GITHUB_TAG#v}
+        if [ "$VERSION" != "$GITHUB_VERSION" ]; then
+            echo "⚠️  Warning: Version mismatch detected!"
+            echo "   Building: v$VERSION"
+            echo "   GitHub: $GITHUB_TAG"
+            echo "   Run './scripts/sync-version-from-github.sh' to sync versions"
+        else
+            echo "✅ Version synchronized with GitHub release $GITHUB_TAG"
+        fi
+    fi
+fi
 
 # Detect build system
 detect_build_system() {
