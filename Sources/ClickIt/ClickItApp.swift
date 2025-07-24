@@ -33,33 +33,6 @@ struct ClickItApp: App {
         }
     }
     
-    private func openSettingsWindow() {
-        // Check if settings window is already open
-        for window in NSApp.windows {
-            if window.title == "Advanced Settings" {
-                window.makeKeyAndOrderFront(nil)
-                return
-            }
-        }
-        
-        // Create new settings window
-        let settingsView = AdvancedSettingsWindow(viewModel: viewModel)
-        let settingsWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
-            styleMask: [.titled, .closable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        
-        settingsWindow.title = "Advanced Settings"
-        settingsWindow.contentView = NSHostingView(rootView: settingsView)
-        settingsWindow.center()
-        settingsWindow.makeKeyAndOrderFront(nil)
-        
-        // Keep a reference to prevent deallocation
-        settingsWindow.isReleasedWhenClosed = false
-    }
-    
     var body: some Scene {
         WindowGroup {
             Group {
@@ -88,16 +61,6 @@ struct ClickItApp: App {
         .defaultSize(width: 500, height: 800)
         .windowToolbarStyle(.unified)
         .commands {
-            // Add Settings to main menu in proper location
-            CommandGroup(after: .appInfo) {
-                Button("Settings...") {
-                    openSettingsWindow()
-                }
-                .keyboardShortcut(",", modifiers: .command)
-                
-                Divider()
-            }
-            
             CommandGroup(replacing: .help) {
                 Button("Permission Setup Guide") {
                     // Open permission setup guide

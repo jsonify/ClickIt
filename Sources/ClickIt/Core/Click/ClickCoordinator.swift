@@ -14,6 +14,9 @@ class ClickCoordinator: ObservableObject {
     /// Current click session state
     @Published var isActive: Bool = false
     
+    /// Pause state for automation
+    @Published var isPaused: Bool = false
+    
     /// Click statistics
     @Published var clickCount: Int = 0
     @Published var successRate: Double = 1.0
@@ -21,6 +24,9 @@ class ClickCoordinator: ObservableObject {
     
     /// Elapsed time manager for real-time tracking
     private let timeManager = ElapsedTimeManager.shared
+    
+    /// Error recovery manager for handling failures
+    private let errorRecoveryManager = ErrorRecoveryManager()
     
     /// Elapsed time since automation started (legacy compatibility)
     var elapsedTime: TimeInterval {
@@ -32,6 +38,15 @@ class ClickCoordinator: ObservableObject {
     
     /// Active automation task
     private var automationTask: Task<Void, Never>?
+    
+    /// High-precision timer for optimized automation timing
+    private var automationTimer: HighPrecisionTimer?
+    
+    /// CPS randomizer for human-like timing patterns
+    private var cpsRandomizer: CPSRandomizer?
+    
+    /// Performance monitor for resource optimization
+    private let performanceMonitor = PerformanceMonitor.shared
     
     /// Statistics tracking
     private var sessionStartTime: TimeInterval = 0
@@ -57,24 +72,15 @@ class ClickCoordinator: ObservableObject {
         // Start real-time elapsed time tracking
         timeManager.startTracking()
         
-        // Show visual feedback overlay if enabled
-        if configuration.showVisualFeedback {
-            if configuration.useDynamicMouseTracking {
-                print("ClickCoordinator: Starting dynamic automation with visual feedback")
-                // For dynamic mode, show overlay at current mouse position (in AppKit coordinates)
-                let currentAppKitPosition = NSEvent.mouseLocation
-                VisualFeedbackOverlay.shared.showOverlay(at: currentAppKitPosition, isActive: true)
-            } else {
-                print("ClickCoordinator: Starting fixed automation with visual feedback at \(configuration.location)")
-                VisualFeedbackOverlay.shared.showOverlay(at: configuration.location, isActive: true)
-            }
-        } else {
-            print("ClickCoordinator: Starting automation without visual feedback")
+        print("ClickCoordinator: Starting automation at \(configuration.location)")
+        
+        // Start performance monitoring if not already running
+        if !performanceMonitor.isMonitoring {
+            performanceMonitor.startMonitoring()
         }
         
-        automationTask = Task {
-            await runAutomationLoop(configuration: configuration)
-        }
+        // Use high-precision timer for better CPU efficiency
+        startOptimizedAutomationLoop(configuration: configuration)
     }
     
     /// Stops the current automation session
@@ -88,19 +94,74 @@ class ClickCoordinator: ObservableObject {
         }
         
         isActive = false
+        isPaused = false  // Clear pause state when stopping
+        
+        // Stop automation timer
+        automationTimer?.stopTimer()
+        automationTimer = nil
+        
+        // Cancel any remaining automation task
         automationTask?.cancel()
         automationTask = nil
         
         // Stop real-time elapsed time tracking
         timeManager.stopTracking()
         
-        // Hide visual feedback overlay immediately
-        print("ClickCoordinator: About to hide visual feedback overlay")
-        VisualFeedbackOverlay.shared.hideOverlay()
-        print("ClickCoordinator: Visual feedback overlay hidden")
-        
         automationConfig = nil
         print("ClickCoordinator: stopAutomation() completed")
+    }
+    
+    /// EMERGENCY PRIORITY: Immediate automation termination for <50ms response guarantee
+    func emergencyStopAutomation() {
+        print("ClickCoordinator: EMERGENCY STOP - immediate termination")
+        
+        // Critical: Set inactive state first to prevent any new operations
+        isActive = false
+        isPaused = false
+        
+        // Immediate timer and task cancellation without waiting
+        automationTimer?.stopTimer()
+        automationTimer = nil
+        automationTask?.cancel()
+        automationTask = nil
+        
+        // Priority cleanup - all operations must be synchronous for speed
+        timeManager.stopTracking()
+        automationConfig = nil
+        
+        print("ClickCoordinator: EMERGENCY STOP completed")
+    }
+    
+    /// Pauses the current automation session
+    func pauseAutomation() {
+        guard isActive && !isPaused else { 
+            print("ClickCoordinator: pauseAutomation() - not active or already paused")
+            return 
+        }
+        
+        print("ClickCoordinator: pauseAutomation() called")
+        isPaused = true
+        
+        // Pause elapsed time tracking
+        timeManager.pauseTracking()
+        
+        print("ClickCoordinator: automation paused")
+    }
+    
+    /// Resumes the current automation session
+    func resumeAutomation() {
+        guard isActive && isPaused else { 
+            print("ClickCoordinator: resumeAutomation() - not active or not paused")
+            return 
+        }
+        
+        print("ClickCoordinator: resumeAutomation() called")
+        isPaused = false
+        
+        // Resume elapsed time tracking
+        timeManager.resumeTracking()
+        
+        print("ClickCoordinator: automation resumed")
     }
     
     /// Performs a single click with the given configuration
@@ -200,51 +261,113 @@ class ClickCoordinator: ObservableObject {
         )
     }
     
+    /// Gets current error recovery manager for UI access
+    /// - Returns: Current error recovery manager
+    var errorRecovery: ErrorRecoveryManager {
+        return errorRecoveryManager
+    }
+    
+    /// Gets recovery statistics for display
+    /// - Returns: Current recovery statistics
+    func getRecoveryStatistics() -> RecoveryStatistics {
+        return errorRecoveryManager.getRecoveryStatistics()
+    }
+    
+    /// Gets current performance metrics
+    /// - Returns: Current performance report
+    func getPerformanceMetrics() -> PerformanceReport {
+        return performanceMonitor.getPerformanceReport()
+    }
+    
+    /// Gets timing accuracy statistics from the automation timer
+    /// - Returns: Timing accuracy statistics
+    func getTimingAccuracy() -> TimingAccuracyStats? {
+        return automationTimer?.getTimingAccuracy()
+    }
+    
+    /// Optimizes performance based on current metrics
+    func optimizePerformance() {
+        performanceMonitor.optimizeMemoryUsage()
+        
+        // Reset timing statistics for fresh measurement
+        automationTimer?.resetTimingStats()
+        
+        print("[ClickCoordinator] Performance optimization completed")
+    }
+    
     // MARK: - Private Methods
     
-    /// Runs the main automation loop
+    /// Starts optimized automation loop using HighPrecisionTimer for better CPU efficiency
     /// - Parameter configuration: Automation configuration
-    private func runAutomationLoop(configuration: AutomationConfiguration) async {
-        while isActive && !Task.isCancelled {
-            let result = await executeAutomationStep(configuration: configuration)
-            
-            if !result.success {
-                // Handle failed click based on configuration
-                if configuration.stopOnError {
-                    await MainActor.run {
-                        stopAutomation()
-                    }
-                    break
-                }
-            }
-            
-            // Apply click interval
-            if configuration.clickInterval > 0 {
-                try? await Task.sleep(nanoseconds: UInt64(configuration.clickInterval * 1_000_000_000))
-            }
-            
-            // Check for maximum clicks limit
-            if let maxClicks = configuration.maxClicks, totalClicks >= maxClicks {
-                await MainActor.run {
-                    stopAutomation()
-                }
-                break
-            }
-            
-            // Check for maximum duration limit
-            if let maxDuration = configuration.maxDuration {
-                let elapsedTime = CFAbsoluteTimeGetCurrent() - sessionStartTime
-                if elapsedTime >= maxDuration {
-                    await MainActor.run {
-                        stopAutomation()
-                    }
-                    break
-                }
+    private func startOptimizedAutomationLoop(configuration: AutomationConfiguration) {
+        guard configuration.clickInterval > 0 else {
+            print("ClickCoordinator: Invalid click interval: \(configuration.clickInterval)")
+            return
+        }
+        
+        // Initialize CPS randomizer with configuration
+        cpsRandomizer = CPSRandomizer(configuration: configuration.cpsRandomizerConfig)
+        
+        // Start first automation step
+        scheduleNextAutomationStep(configuration: configuration)
+        
+        print("ClickCoordinator: Started optimized automation loop with \(configuration.clickInterval * 1000)ms base interval, randomization: \(configuration.cpsRandomizerConfig.enabled)")
+    }
+    
+    /// Schedules the next automation step with randomized timing
+    /// - Parameter configuration: Automation configuration
+    private func scheduleNextAutomationStep(configuration: AutomationConfiguration) {
+        guard isActive else { return }
+        
+        // Calculate next interval with randomization
+        let nextInterval = cpsRandomizer?.randomizeInterval(configuration.clickInterval) ?? configuration.clickInterval
+        
+        // Create new one-shot timer for next step (required for dynamic intervals)
+        automationTimer = HighPrecisionTimer()
+        automationTimer?.startOneShotTimer(delay: nextInterval) { [weak self] in
+            Task { @MainActor in
+                await self?.performOptimizedAutomationStep(configuration: configuration)
             }
         }
     }
     
-    /// Executes a single automation step
+    /// Performs a single optimized automation step with minimal overhead
+    /// - Parameter configuration: Automation configuration
+    private func performOptimizedAutomationStep(configuration: AutomationConfiguration) async {
+        // Quick exit checks for maximum efficiency
+        guard isActive else { return }
+        
+        // Skip execution if paused but keep timer running
+        guard !isPaused else { return }
+        
+        // Check limits before execution for efficiency
+        if let maxClicks = configuration.maxClicks, totalClicks >= maxClicks {
+            stopAutomation()
+            return
+        }
+        
+        if let maxDuration = configuration.maxDuration {
+            let elapsedTime = CFAbsoluteTimeGetCurrent() - sessionStartTime
+            if elapsedTime >= maxDuration {
+                stopAutomation()
+                return
+            }
+        }
+        
+        // Execute click with minimal overhead
+        let result = await executeAutomationStep(configuration: configuration)
+        
+        // Handle failed click with minimal processing
+        if !result.success && configuration.stopOnError {
+            stopAutomation()
+            return
+        }
+        
+        // Schedule next automation step with randomized timing
+        scheduleNextAutomationStep(configuration: configuration)
+    }
+    
+    /// Executes a single automation step with error recovery
     /// - Parameter configuration: Automation configuration
     /// - Returns: Result of the automation step
     private func executeAutomationStep(configuration: AutomationConfiguration) async -> ClickResult {
@@ -272,55 +395,129 @@ class ClickCoordinator: ObservableObject {
         
         print("ClickCoordinator: Executing automation step at \(location) (dynamic: \(configuration.useDynamicMouseTracking))")
         
-        // Update visual feedback overlay if enabled
-        if configuration.showVisualFeedback {
-            await MainActor.run {
-                if configuration.useDynamicMouseTracking {
-                    // Convert back to AppKit coordinates for overlay positioning
-                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
-                    print("[Dynamic Debug] Overlay position (AppKit): \(appKitLocation)")
-                    VisualFeedbackOverlay.shared.updateOverlay(at: appKitLocation, isActive: true)
-                } else {
-                    VisualFeedbackOverlay.shared.updateOverlay(at: location, isActive: true)
-                }
-            }
-        }
-        
-        // Perform the actual click
+        // Perform the actual click with error recovery
         print("ClickCoordinator: Performing actual click at \(location)")
-        let result: ClickResult
-        
-        if let targetApp = configuration.targetApplication {
-            result = await performBackgroundClick(
-                bundleIdentifier: targetApp,
-                at: location,
-                clickType: configuration.clickType
-            )
-        } else {
-            let config = ClickConfiguration(
-                type: configuration.clickType,
-                location: location,
-                targetPID: nil
-            )
-            result = await performSingleClick(configuration: config)
-        }
+        let result = await executeClickWithRecovery(
+            location: location,
+            configuration: configuration
+        )
         
         print("ClickCoordinator: Click result: success=\(result.success)")
         
-        // Show click pulse for successful clicks
-        if configuration.showVisualFeedback && result.success {
-            await MainActor.run {
-                if configuration.useDynamicMouseTracking {
-                    // Convert back to AppKit coordinates for pulse positioning
-                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
-                    VisualFeedbackOverlay.shared.showClickPulse(at: appKitLocation)
+        return result
+    }
+    
+    /// Executes a click with integrated error recovery
+    /// - Parameters:
+    ///   - location: Location to click
+    ///   - configuration: Automation configuration
+    /// - Returns: Result of the click operation with recovery attempts
+    private func executeClickWithRecovery(
+        location: CGPoint,
+        configuration: AutomationConfiguration
+    ) async -> ClickResult {
+        let clickConfig = ClickConfiguration(
+            type: configuration.clickType,
+            location: location,
+            targetPID: nil
+        )
+        
+        var attemptCount = 0
+        let maxAttempts = 3
+        
+        while attemptCount < maxAttempts {
+            let result: ClickResult
+            
+            // Perform the click
+            if let targetApp = configuration.targetApplication {
+                result = await performBackgroundClick(
+                    bundleIdentifier: targetApp,
+                    at: location,
+                    clickType: configuration.clickType
+                )
+            } else {
+                result = await performSingleClick(configuration: clickConfig)
+            }
+            
+            // If successful, return immediately
+            if result.success {
+                return result
+            }
+            
+            // Handle error with recovery system
+            if let error = result.error {
+                let context = ErrorContext(
+                    originalError: error,
+                    attemptCount: attemptCount,
+                    configuration: clickConfig
+                )
+                
+                let recoveryAction = await errorRecoveryManager.attemptRecovery(for: context)
+                await errorRecoveryManager.recordRecoveryAttempt(success: false, for: context)
+                
+                // Check if we should retry
+                if recoveryAction.shouldRetry && attemptCount < maxAttempts - 1 {
+                    attemptCount += 1
+                    
+                    // Wait for recovery delay
+                    if recoveryAction.retryDelay > 0 {
+                        try? await Task.sleep(nanoseconds: UInt64(recoveryAction.retryDelay * 1_000_000_000))
+                    }
+                    
+                    // Apply recovery strategy adjustments
+                    await applyRecoveryStrategy(recoveryAction.strategy, for: configuration)
+                    
+                    continue // Retry the operation
                 } else {
-                    VisualFeedbackOverlay.shared.showClickPulse(at: location)
+                    // Max attempts reached or recovery says don't retry
+                    print("ClickCoordinator: Recovery failed or max attempts reached for error: \(error)")
+                    return result
                 }
             }
+            
+            attemptCount += 1
         }
         
-        return result
+        // This should not be reached, but provide a fallback
+        return ClickResult(
+            success: false,
+            actualLocation: location,
+            timestamp: CFAbsoluteTimeGetCurrent(),
+            error: .eventPostingFailed
+        )
+    }
+    
+    /// Applies recovery strategy adjustments to the automation configuration
+    /// - Parameters:
+    ///   - strategy: Recovery strategy to apply
+    ///   - configuration: Current automation configuration
+    private func applyRecoveryStrategy(
+        _ strategy: RecoveryStrategy,
+        for configuration: AutomationConfiguration
+    ) async {
+        switch strategy {
+        case .resourceCleanup:
+            // Give system time to clean up resources
+            try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+            
+        case .adjustPerformanceSettings:
+            // Could adjust timing or other performance-related settings
+            // This is a placeholder for future performance adjustments
+            break
+            
+        case .recheckPermissions:
+            // Force permission status update
+            await PermissionManager.shared.updatePermissionStatus()
+            
+        case .fallbackToSystemWide:
+            // This would modify the configuration to use system-wide clicks
+            // For now, we'll just log the intention
+            print("ClickCoordinator: Falling back to system-wide clicks")
+            
+        case .automaticRetry, .gracefulDegradation:
+            // These strategies are handled by the retry loop logic
+            break
+        }
     }
     
     /// Randomizes a location within specified variance
@@ -424,8 +621,8 @@ struct AutomationConfiguration {
     let stopOnError: Bool
     let randomizeLocation: Bool
     let locationVariance: CGFloat
-    let showVisualFeedback: Bool
     let useDynamicMouseTracking: Bool
+    let cpsRandomizerConfig: CPSRandomizer.Configuration
     
     init(
         location: CGPoint,
@@ -437,8 +634,8 @@ struct AutomationConfiguration {
         stopOnError: Bool = false,
         randomizeLocation: Bool = false,
         locationVariance: CGFloat = 0,
-        showVisualFeedback: Bool = true,
-        useDynamicMouseTracking: Bool = false
+        useDynamicMouseTracking: Bool = false,
+        cpsRandomizerConfig: CPSRandomizer.Configuration = CPSRandomizer.Configuration()
     ) {
         self.location = location
         self.clickType = clickType
@@ -449,8 +646,8 @@ struct AutomationConfiguration {
         self.stopOnError = stopOnError
         self.randomizeLocation = randomizeLocation
         self.locationVariance = locationVariance
-        self.showVisualFeedback = showVisualFeedback
         self.useDynamicMouseTracking = useDynamicMouseTracking
+        self.cpsRandomizerConfig = cpsRandomizerConfig
     }
 }
 
@@ -474,13 +671,11 @@ extension ClickCoordinator {
     ///   - location: Location to click
     ///   - interval: Interval between clicks
     ///   - maxClicks: Maximum number of clicks (optional)
-    ///   - showVisualFeedback: Whether to show visual feedback overlay
-    func startSimpleAutomation(at location: CGPoint, interval: TimeInterval, maxClicks: Int? = nil, showVisualFeedback: Bool = true) {
+    func startSimpleAutomation(at location: CGPoint, interval: TimeInterval, maxClicks: Int? = nil) {
         let config = AutomationConfiguration(
             location: location,
             clickInterval: interval,
             maxClicks: maxClicks,
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false
         )
         startAutomation(with: config)
@@ -492,13 +687,11 @@ extension ClickCoordinator {
     ///   - interval: Interval between clicks
     ///   - variance: Location randomization variance
     ///   - maxClicks: Maximum number of clicks (optional)
-    ///   - showVisualFeedback: Whether to show visual feedback overlay
     func startRandomizedAutomation(
         at location: CGPoint,
         interval: TimeInterval,
         variance: CGFloat,
-        maxClicks: Int? = nil,
-        showVisualFeedback: Bool = true
+        maxClicks: Int? = nil
     ) {
         let config = AutomationConfiguration(
             location: location,
@@ -506,7 +699,6 @@ extension ClickCoordinator {
             maxClicks: maxClicks,
             randomizeLocation: true,
             locationVariance: variance,
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false
         )
         startAutomation(with: config)

@@ -35,6 +35,9 @@ struct ContentView: View {
                 // Target Point Selection Card
                 TargetPointSelectionCard(viewModel: viewModel)
                 
+                // Preset Management
+                PresetSelectionView(viewModel: viewModel)
+                
                 // Configuration Panel Card
                 ConfigurationPanelCard(viewModel: viewModel)
                 

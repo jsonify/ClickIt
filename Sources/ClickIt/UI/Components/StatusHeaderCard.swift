@@ -11,6 +11,7 @@ import SwiftUI
 struct StatusHeaderCard: View {
     @ObservedObject var viewModel: ClickItViewModel
     @ObservedObject var timeManager: ElapsedTimeManager = ElapsedTimeManager.shared
+    @ObservedObject var hotkeyManager: HotkeyManager = HotkeyManager.shared
     
     var body: some View {
         VStack(spacing: 16) {
@@ -27,11 +28,12 @@ struct StatusHeaderCard: View {
                         .foregroundColor(.blue)
                 }
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("ClickIt")
                         .font(.title2)
                         .fontWeight(.bold)
                     
+                    // App Status
                     HStack(spacing: 6) {
                         Circle()
                             .fill(viewModel.appStatus.color)
@@ -40,6 +42,34 @@ struct StatusHeaderCard: View {
                         Text(viewModel.appStatus.displayText)
                             .font(.subheadline)
                             .foregroundColor(viewModel.appStatus.color)
+                    }
+                    
+                    // Emergency Stop Status
+                    if hotkeyManager.emergencyStopActivated {
+                        HStack(spacing: 6) {
+                            Image(systemName: "stop.fill")
+                                .foregroundColor(.red)
+                                .font(.system(size: 12))
+                            
+                            Text("EMERGENCY STOP ACTIVE")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.red)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(4)
+                    } else if viewModel.emergencyStopEnabled {
+                        HStack(spacing: 6) {
+                            Image(systemName: "shield.checkered")
+                                .foregroundColor(.green)
+                                .font(.system(size: 12))
+                            
+                            Text("Emergency Stop: \(viewModel.selectedEmergencyStopKey.description)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
                 

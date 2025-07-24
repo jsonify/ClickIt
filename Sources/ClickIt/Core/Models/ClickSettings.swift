@@ -105,6 +105,38 @@ class ClickSettings: ObservableObject {
             saveSettings()
         }
     }
+    
+    // MARK: - CPS Randomization Properties
+    
+    /// Whether to enable CPS timing randomization
+    @Published var randomizeTiming: Bool = false {
+        didSet {
+            saveSettings()
+        }
+    }
+    
+    /// Timing variance as percentage (0.0-1.0, representing 0%-100%)
+    @Published var timingVariancePercentage: Double = 0.1 {
+        didSet {
+            // Clamp between 0-100%
+            timingVariancePercentage = max(0.0, min(1.0, timingVariancePercentage))
+            saveSettings()
+        }
+    }
+    
+    /// Statistical distribution pattern for randomization
+    @Published var distributionPattern: CPSRandomizer.DistributionPattern = .normal {
+        didSet {
+            saveSettings()
+        }
+    }
+    
+    /// Anti-detection humanness level
+    @Published var humannessLevel: CPSRandomizer.HumannessLevel = .medium {
+        didSet {
+            saveSettings()
+        }
+    }
 
     // MARK: - Computed Properties
 
@@ -156,7 +188,11 @@ class ClickSettings: ObservableObject {
             locationVariance: locationVariance,
             stopOnError: stopOnError,
             showVisualFeedback: showVisualFeedback,
-            playSoundFeedback: playSoundFeedback
+            playSoundFeedback: playSoundFeedback,
+            randomizeTiming: randomizeTiming,
+            timingVariancePercentage: timingVariancePercentage,
+            distributionPattern: distributionPattern,
+            humannessLevel: humannessLevel
         )
 
         do {
@@ -188,6 +224,10 @@ class ClickSettings: ObservableObject {
             stopOnError = settings.stopOnError
             showVisualFeedback = settings.showVisualFeedback
             playSoundFeedback = settings.playSoundFeedback
+            randomizeTiming = settings.randomizeTiming
+            timingVariancePercentage = settings.timingVariancePercentage
+            distributionPattern = settings.distributionPattern
+            humannessLevel = settings.humannessLevel
         } catch {
             print("ClickSettings: Failed to load settings - \(error.localizedDescription). Using defaults.")
         }
@@ -207,7 +247,23 @@ class ClickSettings: ObservableObject {
         stopOnError = false
         showVisualFeedback = true
         playSoundFeedback = false
+        randomizeTiming = false
+        timingVariancePercentage = 0.1
+        distributionPattern = .normal
+        humannessLevel = .medium
         saveSettings()
+    }
+    
+    /// Create CPS randomizer configuration from current settings
+    func createCPSRandomizerConfiguration() -> CPSRandomizer.Configuration {
+        return CPSRandomizer.Configuration(
+            enabled: randomizeTiming,
+            variancePercentage: timingVariancePercentage,
+            distributionPattern: distributionPattern,
+            humannessLevel: humannessLevel,
+            minimumInterval: AppConstants.minClickInterval,
+            maximumInterval: 10.0 // 10 second maximum
+        )
     }
 
     /// Create automation configuration from current settings
@@ -227,7 +283,7 @@ class ClickSettings: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(locationVariance),
-            showVisualFeedback: showVisualFeedback
+            cpsRandomizerConfig: createCPSRandomizerConfiguration()
         )
     }
 }
@@ -277,6 +333,10 @@ private struct SettingsData: Codable {
     let stopOnError: Bool
     let showVisualFeedback: Bool
     let playSoundFeedback: Bool
+    let randomizeTiming: Bool
+    let timingVariancePercentage: Double
+    let distributionPattern: CPSRandomizer.DistributionPattern
+    let humannessLevel: CPSRandomizer.HumannessLevel
 }
 
 // MARK: - Extensions

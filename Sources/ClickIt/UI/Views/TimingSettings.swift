@@ -10,6 +10,8 @@ import SwiftUI
 struct TimingSettings: View {
     @ObservedObject
     var viewModel: ClickItViewModel
+    
+    @StateObject private var clickSettings = ClickSettings()
 
     var body: some View {
         VStack(spacing: 20) {
@@ -130,6 +132,9 @@ struct TimingSettings: View {
                     }
                 }
             }
+            
+            // CPS Randomization Settings
+            RandomizationSettings(clickSettings: clickSettings)
         }
     }
 

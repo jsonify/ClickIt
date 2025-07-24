@@ -118,6 +118,54 @@ class VisualFeedbackOverlay: ObservableObject {
         }
     }
     
+    /// Shows emergency stop visual confirmation overlay
+    func showEmergencyStopConfirmation() {
+        print("VisualFeedbackOverlay: Showing emergency stop confirmation")
+        
+        // Create emergency stop notification window
+        if let screen = NSScreen.main {
+            let screenFrame = screen.visibleFrame
+            let centerX = screenFrame.midX
+            let centerY = screenFrame.midY
+            
+            showEmergencyStopAlert(at: CGPoint(x: centerX, y: centerY))
+        }
+    }
+    
+    /// Shows emergency stop alert at specific location
+    /// - Parameter location: Screen coordinates for the alert
+    private func showEmergencyStopAlert(at location: CGPoint) {
+        // Create emergency stop window
+        let alertRect = NSRect(x: location.x - 100, y: location.y - 25, width: 200, height: 50)
+        let alertWindow = NSWindow(
+            contentRect: alertRect,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        
+        // Configure window properties for emergency alert
+        alertWindow.level = NSWindow.Level.floating
+        alertWindow.isOpaque = false
+        alertWindow.backgroundColor = NSColor.clear
+        alertWindow.hasShadow = true
+        alertWindow.ignoresMouseEvents = true
+        
+        // Create emergency stop view
+        let emergencyView = EmergencyStopAlertView()
+        let hostingController = NSHostingController(rootView: emergencyView)
+        alertWindow.contentViewController = hostingController
+        
+        // Show the alert
+        alertWindow.makeKeyAndOrderFront(nil)
+        
+        // Auto-hide after 1 second
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            alertWindow.orderOut(nil)
+            alertWindow.close()
+        }
+    }
+    
     /// Completely cleans up the overlay (only call when app is terminating)
     func cleanup() {
         print("VisualFeedbackOverlay: cleanup() called - destroying window")
@@ -253,6 +301,38 @@ class VisualFeedbackOverlay: ObservableObject {
         
         print("VisualFeedbackOverlay: Window isVisible after: \(window.isVisible)")
         print("VisualFeedbackOverlay: showOverlayWindow completed")
+    }
+}
+
+// MARK: - Emergency Stop Alert View
+
+struct EmergencyStopAlertView: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "stop.fill")
+                .foregroundColor(.white)
+                .font(.title2)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("EMERGENCY STOP")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                
+                Text("Automation Stopped")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.9))
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.red)
+                .shadow(radius: 8)
+        )
+        .scaleEffect(1.0)
+        .animation(.easeInOut(duration: 0.2), value: true)
     }
 }
 

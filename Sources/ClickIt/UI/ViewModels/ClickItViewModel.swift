@@ -36,13 +36,17 @@ class ClickItViewModel: ObservableObject {
     @Published var showVisualFeedback = true
     @Published var playSoundFeedback = false
     
+    // Emergency Stop Settings
+    @Published var selectedEmergencyStopKey: HotkeyConfiguration = .default
+    @Published var emergencyStopEnabled = true
+    
     // Statistics
     @Published var statistics: SessionStatistics?
     
     // MARK: - Timer Mode Properties
     @Published var timerMode: TimerMode = .off
     @Published var timerDurationMinutes: Int = 0
-    @Published var timerDurationSeconds: Int = 10
+    @Published var timerDurationSeconds: Int = 5
     @Published var isCountingDown: Bool = false
     @Published var remainingTime: TimeInterval = 0
     @Published var timerIsActive: Bool = false
@@ -84,6 +88,7 @@ class ClickItViewModel: ObservableObject {
     // MARK: - Initialization
     init() {
         setupBindings()
+        loadEmergencyStopSettings()
     }
     
     // MARK: - Public Methods
@@ -110,7 +115,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false // Normal automation uses fixed position
         )
         
@@ -143,7 +147,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: false, // Disable stopOnError for timer mode to avoid timing constraint issues
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: true // Enable dynamic mouse tracking for timer mode
         )
         
@@ -199,7 +202,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false
         )
         
@@ -228,7 +230,6 @@ class ClickItViewModel: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            showVisualFeedback: false, // Disable visual feedback for tests
             useDynamicMouseTracking: false
         )
         
@@ -318,6 +319,75 @@ class ClickItViewModel: ObservableObject {
         let fallbackPosition = CGPoint(x: appKitPosition.x, y: mainScreenHeight - appKitPosition.y)
         print("[Timer Debug] Fallback conversion: AppKit \(appKitPosition) → CoreGraphics \(fallbackPosition)")
         return fallbackPosition
+    }
+    
+    // MARK: - Emergency Stop Configuration Methods
+    
+    func setEmergencyStopKey(_ config: HotkeyConfiguration) {
+        selectedEmergencyStopKey = config
+        
+        // Update the hotkey manager with new configuration
+        if emergencyStopEnabled {
+            let success = HotkeyManager.shared.setEmergencyStopKey(config)
+            if !success {
+                appStatus = .error("Failed to register emergency stop key: \(config.description)")
+            }
+        }
+        
+        // Save to UserDefaults
+        UserDefaults.standard.set(config.keyCode, forKey: "EmergencyStopKeyCode")
+        UserDefaults.standard.set(config.modifiers, forKey: "EmergencyStopModifiers")
+        UserDefaults.standard.set(config.description, forKey: "EmergencyStopDescription")
+    }
+    
+    func toggleEmergencyStop(_ enabled: Bool) {
+        emergencyStopEnabled = enabled
+        
+        if enabled {
+            let success = HotkeyManager.shared.setEmergencyStopKey(selectedEmergencyStopKey)
+            if !success {
+                appStatus = .error("Failed to enable emergency stop")
+                emergencyStopEnabled = false
+            }
+        } else {
+            HotkeyManager.shared.unregisterGlobalHotkey()
+        }
+        
+        // Save to UserDefaults
+        UserDefaults.standard.set(enabled, forKey: "EmergencyStopEnabled")
+    }
+    
+    func getAvailableEmergencyStopKeys() -> [HotkeyConfiguration] {
+        return HotkeyManager.shared.getAvailableEmergencyStopKeys()
+    }
+    
+    private func loadEmergencyStopSettings() {
+        // Load saved emergency stop settings
+        emergencyStopEnabled = UserDefaults.standard.bool(forKey: "EmergencyStopEnabled") 
+        
+        // Load saved hotkey configuration
+        let savedKeyCode = UserDefaults.standard.object(forKey: "EmergencyStopKeyCode") as? UInt16
+        let savedModifiers = UserDefaults.standard.object(forKey: "EmergencyStopModifiers") as? UInt32
+        let savedDescription = UserDefaults.standard.string(forKey: "EmergencyStopDescription")
+        
+        if let keyCode = savedKeyCode, let modifiers = savedModifiers, let description = savedDescription {
+            selectedEmergencyStopKey = HotkeyConfiguration(
+                keyCode: keyCode,
+                modifiers: modifiers,
+                description: description
+            )
+        } else {
+            // Default to first available emergency stop key if no saved setting
+            if let defaultKey = HotkeyConfiguration.allEmergencyStopKeys.first {
+                selectedEmergencyStopKey = defaultKey
+                emergencyStopEnabled = true // Enable by default
+            }
+        }
+        
+        // Initialize hotkey manager with saved settings
+        if emergencyStopEnabled {
+            let _ = HotkeyManager.shared.setEmergencyStopKey(selectedEmergencyStopKey)
+        }
     }
     
     // MARK: - Timer Mode Methods
