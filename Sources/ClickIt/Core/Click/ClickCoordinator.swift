@@ -79,8 +79,10 @@ class ClickCoordinator: ObservableObject {
             performanceMonitor.startMonitoring()
         }
         
-        // Use high-precision timer for better CPU efficiency
-        startOptimizedAutomationLoop(configuration: configuration)
+        // SIMPLE WORKING APPROACH: Use basic Task with Task.sleep()
+        automationTask = Task {
+            await runAutomationLoop(configuration: configuration)
+        }
     }
     
     /// Stops the current automation session
@@ -168,16 +170,33 @@ class ClickCoordinator: ObservableObject {
     /// - Parameter configuration: Click configuration
     /// - Returns: Result of the click operation
     func performSingleClick(configuration: ClickConfiguration) async -> ClickResult {
+        print("🎯 [ClickCoordinator] performSingleClick() - MainActor: \(Thread.isMainThread)")
+        print("   Location: \(configuration.location), Type: \(configuration.type)")
+        
         let startTime = CFAbsoluteTimeGetCurrent()
         
-        let result = await ClickEngine.shared.performClick(configuration: configuration)
-        
-        let endTime = CFAbsoluteTimeGetCurrent()
-        let clickTime = endTime - startTime
-        
-        await updateStatistics(result: result, clickTime: clickTime)
-        
-        return result
+        do {
+            print("📞 [ClickCoordinator] Calling ClickEngine.performClick()...")
+            let result = await ClickEngine.shared.performClick(configuration: configuration)
+            print("✅ [ClickCoordinator] ClickEngine returned - Success: \(result.success)")
+            
+            let endTime = CFAbsoluteTimeGetCurrent()
+            let clickTime = endTime - startTime
+            
+            print("📊 [ClickCoordinator] Updating statistics...")
+            await updateStatistics(result: result, clickTime: clickTime)
+            print("✅ [ClickCoordinator] Statistics updated successfully")
+            
+            return result
+        } catch {
+            print("❌ [ClickCoordinator] performSingleClick failed with error: \(error)")
+            return ClickResult(
+                success: false,
+                actualLocation: configuration.location,
+                timestamp: startTime,
+                error: .eventPostingFailed
+            )
+        }
     }
     
     /// Performs a sequence of clicks with specified timing
@@ -295,7 +314,71 @@ class ClickCoordinator: ObservableObject {
         print("[ClickCoordinator] Performance optimization completed")
     }
     
-    // MARK: - Private Methods
+    // MARK: - Private Methods - Simple Working Automation Loop
+    
+    /// Simple automation loop from working version (6b0b525)
+    private func runAutomationLoop(configuration: AutomationConfiguration) async {
+        while isActive && !Task.isCancelled {
+            let result = await executeAutomationStep(configuration: configuration)
+            
+            if !result.success {
+                // Handle failed click based on configuration
+                if configuration.stopOnError {
+                    await MainActor.run {
+                        stopAutomation()
+                    }
+                    break
+                }
+            }
+            
+            // Apply click interval using simple Task.sleep - NO TIMER CALLBACKS!
+            if configuration.clickInterval > 0 {
+                try? await Task.sleep(nanoseconds: UInt64(configuration.clickInterval * 1_000_000_000))
+            }
+            
+            // Check for maximum clicks limit
+            if let maxClicks = configuration.maxClicks, totalClicks >= maxClicks {
+                await MainActor.run {
+                    stopAutomation()
+                }
+                break
+            }
+            
+            // Check for maximum duration limit
+            if let maxDuration = configuration.maxDuration {
+                let elapsedTime = CFAbsoluteTimeGetCurrent() - sessionStartTime
+                if elapsedTime >= maxDuration {
+                    await MainActor.run {
+                        stopAutomation()
+                    }
+                    break
+                }
+            }
+        }
+    }
+    
+    /// Simple automation step execution from working version
+    private func executeAutomationStep(configuration: AutomationConfiguration) async -> ClickResult {
+        print("ClickCoordinator: executeAutomationStep() - Simple working approach")
+        
+        // Use the working performSingleClick method
+        let result = await performSingleClick(
+            configuration: ClickConfiguration(
+                type: configuration.clickType,
+                location: configuration.location,
+                targetPID: nil
+            )
+        )
+        
+        // Update visual feedback if enabled
+        if configuration.showVisualFeedback {
+            VisualFeedbackOverlay.shared.updateOverlay(at: configuration.location, isActive: true)
+        }
+        
+        return result
+    }
+    
+    // MARK: - Private Methods - Complex Methods (Unused)
     
     /// Starts optimized automation loop using HighPrecisionTimer for better CPU efficiency
     /// - Parameter configuration: Automation configuration
@@ -367,45 +450,6 @@ class ClickCoordinator: ObservableObject {
         scheduleNextAutomationStep(configuration: configuration)
     }
     
-    /// Executes a single automation step with error recovery
-    /// - Parameter configuration: Automation configuration
-    /// - Returns: Result of the automation step
-    private func executeAutomationStep(configuration: AutomationConfiguration) async -> ClickResult {
-        let baseLocation: CGPoint
-        
-        if configuration.useDynamicMouseTracking {
-            // Get current mouse position dynamically and convert coordinate systems
-            baseLocation = await MainActor.run {
-                let appKitPosition = NSEvent.mouseLocation
-                print("[Dynamic Debug] Current mouse position (AppKit): \(appKitPosition)")
-                
-                // Convert from AppKit coordinates to CoreGraphics coordinates with multi-monitor support
-                let cgPosition = convertAppKitToCoreGraphicsMultiMonitor(appKitPosition)
-                print("[Dynamic Debug] Converted to CoreGraphics coordinates: \(cgPosition)")
-                return cgPosition
-            }
-        } else {
-            // Use the fixed configured location
-            baseLocation = configuration.location
-        }
-        
-        let location = configuration.randomizeLocation ? 
-            randomizeLocation(base: baseLocation, variance: configuration.locationVariance) :
-            baseLocation
-        
-        print("ClickCoordinator: Executing automation step at \(location) (dynamic: \(configuration.useDynamicMouseTracking))")
-        
-        // Perform the actual click with error recovery
-        print("ClickCoordinator: Performing actual click at \(location)")
-        let result = await executeClickWithRecovery(
-            location: location,
-            configuration: configuration
-        )
-        
-        print("ClickCoordinator: Click result: success=\(result.success)")
-        
-        return result
-    }
     
     /// Executes a click with integrated error recovery
     /// - Parameters:
@@ -570,10 +614,15 @@ class ClickCoordinator: ObservableObject {
         // Find which screen contains this point
         for screen in NSScreen.screens {
             if screen.frame.contains(appKitPosition) {
-                // Convert using the specific screen's coordinate system
-                let cgY = screen.frame.maxY - appKitPosition.y
+                // FIXED: Proper multi-monitor coordinate conversion
+                // AppKit Y increases upward from screen bottom
+                // CoreGraphics Y increases downward from screen top  
+                // Formula: CG_Y = screen.origin.Y + (screen.height - (AppKit_Y - screen.origin.Y))
+                let relativeY = appKitPosition.y - screen.frame.origin.y  // Y relative to screen bottom
+                let cgY = screen.frame.origin.y + (screen.frame.height - relativeY)  // Convert to CG coordinates
                 let cgPosition = CGPoint(x: appKitPosition.x, y: cgY)
                 print("[Multi-Monitor Debug] AppKit \(appKitPosition) → CoreGraphics \(cgPosition) on screen \(screen.frame)")
+                print("[Multi-Monitor Debug] Calculation: relativeY=\(relativeY), cgY=\(screen.frame.origin.y) + (\(screen.frame.height) - \(relativeY)) = \(cgY)")
                 return cgPosition
             }
         }
@@ -590,12 +639,17 @@ class ClickCoordinator: ObservableObject {
         // Find which screen this CoreGraphics position would map to
         // This is a reverse lookup - we need to find the screen that would contain the original AppKit position
         for screen in NSScreen.screens {
-            // Check if this position could have come from this screen
-            let potentialAppKitY = screen.frame.maxY - cgPosition.y
-            let potentialAppKitPosition = CGPoint(x: cgPosition.x, y: potentialAppKitY)
+            // FIXED: Use proper reverse conversion
+            // CoreGraphics Y increases downward from screen top
+            // AppKit Y increases upward from screen bottom  
+            // Formula: AppKit_Y = screen.origin.Y + (screen.height - (CG_Y - screen.origin.Y))
+            let relativeCgY = cgPosition.y - screen.frame.origin.y  // Y relative to screen top in CG
+            let appKitY = screen.frame.origin.y + (screen.frame.height - relativeCgY)  // Convert to AppKit coordinates
+            let potentialAppKitPosition = CGPoint(x: cgPosition.x, y: appKitY)
             
             if screen.frame.contains(potentialAppKitPosition) {
                 print("[Multi-Monitor Debug] CoreGraphics \(cgPosition) → AppKit \(potentialAppKitPosition) on screen \(screen.frame)")
+                print("[Multi-Monitor Debug] Reverse calculation: relativeCgY=\(relativeCgY), appKitY=\(screen.frame.origin.y) + (\(screen.frame.height) - \(relativeCgY)) = \(appKitY)")
                 return potentialAppKitPosition
             }
         }
@@ -622,6 +676,7 @@ struct AutomationConfiguration {
     let randomizeLocation: Bool
     let locationVariance: CGFloat
     let useDynamicMouseTracking: Bool
+    let showVisualFeedback: Bool
     let cpsRandomizerConfig: CPSRandomizer.Configuration
     
     init(
@@ -635,6 +690,7 @@ struct AutomationConfiguration {
         randomizeLocation: Bool = false,
         locationVariance: CGFloat = 0,
         useDynamicMouseTracking: Bool = false,
+        showVisualFeedback: Bool = true,
         cpsRandomizerConfig: CPSRandomizer.Configuration = CPSRandomizer.Configuration()
     ) {
         self.location = location
@@ -647,6 +703,7 @@ struct AutomationConfiguration {
         self.randomizeLocation = randomizeLocation
         self.locationVariance = locationVariance
         self.useDynamicMouseTracking = useDynamicMouseTracking
+        self.showVisualFeedback = showVisualFeedback
         self.cpsRandomizerConfig = cpsRandomizerConfig
     }
 }

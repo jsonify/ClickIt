@@ -186,11 +186,10 @@ class PermissionManager: ObservableObject {
         // Avoid multiple timers
         stopPermissionMonitoring()
         
-        // Since we're already on @MainActor, no need for DispatchQueue.main.async
+        // Since we're already on @MainActor, create timer on main RunLoop directly
         monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.updatePermissionStatus()
-            }
+            // We're already on MainActor via timer on main RunLoop, so call directly
+            self?.updatePermissionStatus()
         }
     }
     

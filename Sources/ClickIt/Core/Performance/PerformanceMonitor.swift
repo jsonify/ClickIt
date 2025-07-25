@@ -317,16 +317,39 @@ final class PerformanceMonitor: ObservableObject {
         
         defer { lastCPUTicks = currentTicks }
         
-        // Calculate differences
+        // Prevent overflow by using checked arithmetic and bounds checking
+        guard currentTicks.user >= lastCPUTicks.user,
+              currentTicks.system >= lastCPUTicks.system,
+              currentTicks.idle >= lastCPUTicks.idle else {
+            print("[PerformanceMonitor] CPU ticks went backwards, returning 0")
+            return 0
+        }
+        
+        // Calculate differences with overflow protection
         let userDiff = currentTicks.user - lastCPUTicks.user
         let systemDiff = currentTicks.system - lastCPUTicks.system
         let idleDiff = currentTicks.idle - lastCPUTicks.idle
+        
+        // Check for potential overflow before addition
+        guard userDiff < UInt64.max / 3,
+              systemDiff < UInt64.max / 3,
+              idleDiff < UInt64.max / 3 else {
+            print("[PerformanceMonitor] CPU diff values too large, returning 5.0")
+            return 5.0 // Return reasonable default
+        }
         
         let totalDiff = userDiff + systemDiff + idleDiff
         
         guard totalDiff > 0 else { return 0 }
         
         let usedDiff = userDiff + systemDiff
+        
+        // Additional safety check before conversion to Double
+        guard usedDiff <= totalDiff else {
+            print("[PerformanceMonitor] Used diff > total diff, returning 0")
+            return 0
+        }
+        
         return (Double(usedDiff) / Double(totalDiff)) * 100.0
     }
     
@@ -336,12 +359,16 @@ final class PerformanceMonitor: ObservableObject {
         // In a production implementation, this would use proper mach APIs
         let timestamp = mach_absolute_time()
         
-        // Return mock values based on timestamp for demonstration
-        // This ensures the CPU usage calculation works without mach API complexity
+        // Use safer, smaller values to prevent arithmetic overflow
+        // Convert to seconds first to get reasonable numbers
+        let timeInSeconds = timestamp / 1_000_000_000 // Convert nanoseconds to seconds
+        
+        // Return mock values based on time in seconds for demonstration
+        // This ensures the CPU usage calculation works without overflow
         return CPUTicks(
-            user: timestamp % 1000,
-            system: (timestamp / 10) % 500,
-            idle: (timestamp / 100) % 10000
+            user: (timeInSeconds % 1000) + 100,        // 100-1099 range
+            system: (timeInSeconds % 500) + 50,        // 50-549 range  
+            idle: (timeInSeconds % 10000) + 1000       // 1000-10999 range
         )
     }
     

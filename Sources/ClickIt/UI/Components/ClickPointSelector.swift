@@ -171,19 +171,22 @@ struct ClickPointSelector: View {
     }
     
     private func validateCoordinates(_ point: CGPoint) -> Bool {
-        // Get main screen bounds
-        let screenFrame = NSScreen.main?.frame ?? CGRect.zero
+        // FIXED: Check all screens, not just main screen
+        print("🔍 [ClickPointSelector] Validating coordinates: \(point)")
         
-        // Check if point is within screen bounds
-        if point.x < 0 || point.x > screenFrame.width || 
-           point.y < 0 || point.y > screenFrame.height {
-            let maxX = Int(screenFrame.width)
-            let maxY = Int(screenFrame.height)
-            validationError = "Coordinates must be within screen bounds (0,0) to (\(maxX),\(maxY))"
-            return false
+        for (index, screen) in NSScreen.screens.enumerated() {
+            if screen.frame.contains(point) {
+                print("✅ [ClickPointSelector] Point is valid on screen \(index): \(screen.frame)")
+                return true
+            }
+            print("   Screen \(index): \(screen.frame) - contains: false")
         }
         
-        return true
+        // If not found on any screen, show error with all screen bounds
+        let allScreens = NSScreen.screens.enumerated().map { "Screen \($0): \($1.frame)" }.joined(separator: ", ")
+        validationError = "Coordinates (\(Int(point.x)),\(Int(point.y))) are not within any screen bounds. Available screens: \(allScreens)"
+        print("❌ [ClickPointSelector] Validation failed: \(validationError ?? "unknown error")")
+        return false
     }
     
     private func clearValidationError() {
@@ -199,17 +202,12 @@ struct ClickCoordinateCapture {
         var eventMonitor: Any?
         
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { _ in
-            let screenPoint = NSEvent.mouseLocation
+            let appKitPoint = NSEvent.mouseLocation
+            print("ClickCoordinateCapture: Raw mouse location (AppKit): \(appKitPoint)")
             
-            // NSEvent.mouseLocation already gives us the correct coordinates
-            // No conversion needed - use them directly
-            let convertedPoint = CGPoint(
-                x: screenPoint.x,
-                y: screenPoint.y
-            )
-            
-            print("ClickCoordinateCapture: Raw mouse location: \(screenPoint)")
-            print("ClickCoordinateCapture: Converted point: \(convertedPoint)")
+            // FIXED: Convert AppKit coordinates to CoreGraphics coordinates for multi-monitor setups
+            let convertedPoint = convertAppKitToCoreGraphics(appKitPoint)
+            print("ClickCoordinateCapture: Converted to CoreGraphics: \(convertedPoint)")
             
             // Clean up monitor
             if let monitor = eventMonitor {
@@ -221,6 +219,31 @@ struct ClickCoordinateCapture {
                 completion(convertedPoint)
             }
         }
+    }
+    
+    /// Converts AppKit coordinates to CoreGraphics coordinates for multi-monitor setups
+    private static func convertAppKitToCoreGraphics(_ appKitPosition: CGPoint) -> CGPoint {
+        // Find which screen contains this point
+        for screen in NSScreen.screens {
+            if screen.frame.contains(appKitPosition) {
+                // FIXED: Proper multi-monitor coordinate conversion
+                // AppKit Y increases upward from screen bottom
+                // CoreGraphics Y increases downward from screen top  
+                // Formula: CG_Y = screen.origin.Y + (screen.height - (AppKit_Y - screen.origin.Y))
+                let relativeY = appKitPosition.y - screen.frame.origin.y  // Y relative to screen bottom
+                let cgY = screen.frame.origin.y + (screen.frame.height - relativeY)  // Convert to CG coordinates
+                let cgPosition = CGPoint(x: appKitPosition.x, y: cgY)
+                print("ClickCoordinateCapture: Multi-monitor conversion on screen \(screen.frame)")
+                print("ClickCoordinateCapture: Calculation: relativeY=\(relativeY), cgY=\(screen.frame.origin.y) + (\(screen.frame.height) - \(relativeY)) = \(cgY)")
+                return cgPosition
+            }
+        }
+        
+        // Fallback to main screen if no screen contains the point
+        let mainScreenHeight = NSScreen.main?.frame.height ?? 0
+        let fallbackPosition = CGPoint(x: appKitPosition.x, y: mainScreenHeight - appKitPosition.y)
+        print("ClickCoordinateCapture: Fallback conversion: AppKit \(appKitPosition) → CoreGraphics \(fallbackPosition)")
+        return fallbackPosition
     }
 }
 

@@ -8,29 +8,8 @@ struct ClickItApp: App {
     @StateObject private var viewModel = ClickItViewModel()
     
     init() {
-        // Force app to appear in foreground when launched from command line
-        DispatchQueue.main.async {
-            NSApp.setActivationPolicy(.regular)
-            NSApp.activate(ignoringOtherApps: true)
-        }
-        
-        // Initialize hotkey manager
-        Task { @MainActor in
-            HotkeyManager.shared.initialize()
-        }
-        
-        // Register app termination handler for cleanup
-        NotificationCenter.default.addObserver(
-            forName: NSApplication.willTerminateNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
-            // Cleanup visual feedback overlay when app terminates
-            Task { @MainActor in
-                VisualFeedbackOverlay.shared.cleanup()
-                HotkeyManager.shared.cleanup()
-            }
-        }
+        // All initialization moved to onAppear to avoid concurrency issues during App init
+        print("ClickItApp: Initialized App structure")
     }
     
     var body: some Scene {
@@ -47,14 +26,8 @@ struct ClickItApp: App {
                 }
             }
             .onAppear {
-                // Additional window activation
-                if let window = NSApp.windows.first {
-                    window.makeKeyAndOrderFront(nil)
-                    window.orderFrontRegardless()
-                }
-                
-                // Start permission monitoring
-                permissionManager.startPermissionMonitoring()
+                // Initialize app safely on MainActor
+                initializeApp()
             }
         }
         .windowResizability(.contentSize)
@@ -71,5 +44,40 @@ struct ClickItApp: App {
                 }
             }
         }
+    }
+    
+    // MARK: - Safe Initialization
+    
+    private func initializeApp() {
+        print("ClickItApp: Starting safe app initialization")
+        
+        // Force app to appear in foreground when launched from command line
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        
+        // Additional window activation
+        if let window = NSApp.windows.first {
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+        }
+        
+        // Initialize hotkey manager safely
+        HotkeyManager.shared.initialize()
+        
+        // Start permission monitoring
+        permissionManager.startPermissionMonitoring()
+        
+        // Register app termination handler for cleanup
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Cleanup visual feedback overlay when app terminates
+            VisualFeedbackOverlay.shared.cleanup()
+            HotkeyManager.shared.cleanup()
+        }
+        
+        print("ClickItApp: Safe app initialization completed")
     }
 }
