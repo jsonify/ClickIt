@@ -614,10 +614,15 @@ class ClickCoordinator: ObservableObject {
         // Find which screen contains this point
         for screen in NSScreen.screens {
             if screen.frame.contains(appKitPosition) {
-                // Convert using the specific screen's coordinate system
-                let cgY = screen.frame.maxY - appKitPosition.y
+                // FIXED: Proper multi-monitor coordinate conversion
+                // AppKit Y increases upward from screen bottom
+                // CoreGraphics Y increases downward from screen top  
+                // Formula: CG_Y = screen.origin.Y + (screen.height - (AppKit_Y - screen.origin.Y))
+                let relativeY = appKitPosition.y - screen.frame.origin.y  // Y relative to screen bottom
+                let cgY = screen.frame.origin.y + (screen.frame.height - relativeY)  // Convert to CG coordinates
                 let cgPosition = CGPoint(x: appKitPosition.x, y: cgY)
                 print("[Multi-Monitor Debug] AppKit \(appKitPosition) → CoreGraphics \(cgPosition) on screen \(screen.frame)")
+                print("[Multi-Monitor Debug] Calculation: relativeY=\(relativeY), cgY=\(screen.frame.origin.y) + (\(screen.frame.height) - \(relativeY)) = \(cgY)")
                 return cgPosition
             }
         }
@@ -634,12 +639,17 @@ class ClickCoordinator: ObservableObject {
         // Find which screen this CoreGraphics position would map to
         // This is a reverse lookup - we need to find the screen that would contain the original AppKit position
         for screen in NSScreen.screens {
-            // Check if this position could have come from this screen
-            let potentialAppKitY = screen.frame.maxY - cgPosition.y
-            let potentialAppKitPosition = CGPoint(x: cgPosition.x, y: potentialAppKitY)
+            // FIXED: Use proper reverse conversion
+            // CoreGraphics Y increases downward from screen top
+            // AppKit Y increases upward from screen bottom  
+            // Formula: AppKit_Y = screen.origin.Y + (screen.height - (CG_Y - screen.origin.Y))
+            let relativeCgY = cgPosition.y - screen.frame.origin.y  // Y relative to screen top in CG
+            let appKitY = screen.frame.origin.y + (screen.frame.height - relativeCgY)  // Convert to AppKit coordinates
+            let potentialAppKitPosition = CGPoint(x: cgPosition.x, y: appKitY)
             
             if screen.frame.contains(potentialAppKitPosition) {
                 print("[Multi-Monitor Debug] CoreGraphics \(cgPosition) → AppKit \(potentialAppKitPosition) on screen \(screen.frame)")
+                print("[Multi-Monitor Debug] Reverse calculation: relativeCgY=\(relativeCgY), appKitY=\(screen.frame.origin.y) + (\(screen.frame.height) - \(relativeCgY)) = \(appKitY)")
                 return potentialAppKitPosition
             }
         }

@@ -309,10 +309,15 @@ class ClickItViewModel: ObservableObject {
         // Find which screen contains this point
         for screen in NSScreen.screens {
             if screen.frame.contains(appKitPosition) {
-                // Convert using the specific screen's coordinate system
-                let cgY = screen.frame.maxY - appKitPosition.y
+                // FIXED: Proper multi-monitor coordinate conversion
+                // AppKit Y increases upward from screen bottom
+                // CoreGraphics Y increases downward from screen top  
+                // Formula: CG_Y = screen.origin.Y + (screen.height - (AppKit_Y - screen.origin.Y))
+                let relativeY = appKitPosition.y - screen.frame.origin.y  // Y relative to screen bottom
+                let cgY = screen.frame.origin.y + (screen.frame.height - relativeY)  // Convert to CG coordinates
                 let cgPosition = CGPoint(x: appKitPosition.x, y: cgY)
                 print("[Timer Debug] Multi-monitor conversion: AppKit \(appKitPosition) → CoreGraphics \(cgPosition) on screen \(screen.frame)")
+                print("[Timer Debug] Calculation: relativeY=\(relativeY), cgY=\(screen.frame.origin.y) + (\(screen.frame.height) - \(relativeY)) = \(cgY)")
                 return cgPosition
             }
         }

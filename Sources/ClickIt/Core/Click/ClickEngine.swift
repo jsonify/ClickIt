@@ -63,8 +63,21 @@ class ClickEngine: @unchecked Sendable {
     private func executeClick(configuration: ClickConfiguration) -> ClickResult {
         let startTime = CFAbsoluteTimeGetCurrent()
         
+        print("🔧 [ClickEngine] executeClick() starting")
+        print("   Configuration: \(configuration)")
+        print("   Location: \(configuration.location)")
+        print("   Type: \(configuration.type)")
+        print("   Target PID: \(String(describing: configuration.targetPID))")
+        
         // Validate location
-        guard isValidLocation(configuration.location) else {
+        let isLocationValid = isValidLocation(configuration.location)
+        print("🎯 [ClickEngine] Location validation: \(isLocationValid)")
+        
+        if !isLocationValid {
+            let screenBounds = CGDisplayBounds(CGMainDisplayID())
+            print("❌ [ClickEngine] INVALID LOCATION!")
+            print("   Requested: \(configuration.location)")
+            print("   Screen bounds: \(screenBounds)")
             return ClickResult(
                 success: false,
                 actualLocation: configuration.location,
@@ -74,11 +87,16 @@ class ClickEngine: @unchecked Sendable {
         }
         
         // Create mouse down event
+        print("🖱️ [ClickEngine] Creating mouse down event...")
+        print("   Event type: \(configuration.type.mouseDownEventType)")
+        print("   Button: \(configuration.type.mouseButton)")
+        
         guard let mouseDownEvent = createMouseEvent(
             type: configuration.type.mouseDownEventType,
             location: configuration.location,
             button: configuration.type.mouseButton
         ) else {
+            print("❌ [ClickEngine] MOUSE DOWN EVENT CREATION FAILED!")
             return ClickResult(
                 success: false,
                 actualLocation: configuration.location,
@@ -86,13 +104,18 @@ class ClickEngine: @unchecked Sendable {
                 error: .eventCreationFailed
             )
         }
+        print("✅ [ClickEngine] Mouse down event created successfully")
         
         // Create mouse up event
+        print("🖱️ [ClickEngine] Creating mouse up event...")
+        print("   Event type: \(configuration.type.mouseUpEventType)")
+        
         guard let mouseUpEvent = createMouseEvent(
             type: configuration.type.mouseUpEventType,
             location: configuration.location,
             button: configuration.type.mouseButton
         ) else {
+            print("❌ [ClickEngine] MOUSE UP EVENT CREATION FAILED!")
             return ClickResult(
                 success: false,
                 actualLocation: configuration.location,
@@ -100,8 +123,13 @@ class ClickEngine: @unchecked Sendable {
                 error: .eventCreationFailed
             )
         }
+        print("✅ [ClickEngine] Mouse up event created successfully")
         
         // Post events
+        print("📤 [ClickEngine] About to post events...")
+        print("   Target PID: \(String(describing: configuration.targetPID))")
+        print("   Delay between down/up: \(configuration.delayBetweenDownUp)")
+        
         let postResult = postMouseEvents(
             downEvent: mouseDownEvent,
             upEvent: mouseUpEvent,
@@ -109,7 +137,11 @@ class ClickEngine: @unchecked Sendable {
             delay: configuration.delayBetweenDownUp
         )
         
-        _ = CFAbsoluteTimeGetCurrent()
+        print("📊 [ClickEngine] Post result: success=\(postResult.success), error=\(String(describing: postResult.error))")
+        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        let totalTime = (endTime - startTime) * 1000 // Convert to milliseconds
+        print("⏱️ [ClickEngine] Total execution time: \(totalTime)ms")
         
         return ClickResult(
             success: postResult.success,
@@ -225,7 +257,35 @@ class ClickEngine: @unchecked Sendable {
     /// - Returns: True if location is valid, false otherwise
     private func isValidLocation(_ location: CGPoint) -> Bool {
         let screenBounds = CGDisplayBounds(CGMainDisplayID())
-        return screenBounds.contains(location)
+        let isValid = screenBounds.contains(location)
+        
+        print("🔍 [ClickEngine] Location validation details:")
+        print("   Location: \(location)")
+        print("   Screen bounds: \(screenBounds)")
+        print("   Is valid: \(isValid)")
+        
+        // Additional check for multi-monitor setups
+        if !isValid {
+            print("🖥️ [ClickEngine] Checking all displays...")
+            let maxDisplays: UInt32 = 16
+            var displayIDs = Array<CGDirectDisplayID>(repeating: 0, count: Int(maxDisplays))
+            var displayCount: UInt32 = 0
+            
+            let result = CGGetActiveDisplayList(maxDisplays, &displayIDs, &displayCount)
+            if result == .success {
+                for i in 0..<Int(displayCount) {
+                    let displayBounds = CGDisplayBounds(displayIDs[i])
+                    let containsPoint = displayBounds.contains(location)
+                    print("   Display \(i): bounds=\(displayBounds), contains=\(containsPoint)")
+                    if containsPoint {
+                        print("   ✅ Location found on display \(i)!")
+                        return true
+                    }
+                }
+            }
+        }
+        
+        return isValid
     }
 }
 
