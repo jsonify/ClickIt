@@ -159,8 +159,9 @@ class HotkeyManager: ObservableObject {
         }
         
         // Reset emergency stop state after brief visual feedback period
-        // Use async dispatch since this is not time-critical
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // Use Task for MainActor-safe async execution
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
             self.emergencyStopActivated = false
             self.responseTimeTracker = nil
         }
