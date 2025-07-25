@@ -103,12 +103,14 @@ class TimerAutomationEngine: ObservableObject {
     /// Starts automation with the specified configuration
     /// - Parameter configuration: Automation configuration parameters
     func startAutomation(with configuration: AutomationConfiguration) {
+        print("🚀 [TimerAutomationEngine] startAutomation() called - MainActor: \(Thread.isMainThread)")
+        
         guard automationState == .idle else {
-            print("[TimerAutomationEngine] Cannot start automation - current state: \(automationState)")
+            print("❌ [TimerAutomationEngine] Cannot start automation - current state: \(automationState)")
             return
         }
         
-        print("[TimerAutomationEngine] Starting automation with configuration")
+        print("✅ [TimerAutomationEngine] Starting automation with configuration: \(configuration.location)")
         
         // Store configuration and create session
         automationConfiguration = configuration
@@ -284,10 +286,14 @@ class TimerAutomationEngine: ObservableObject {
         // Create high-precision timer for automation
         highPrecisionTimer = HighPrecisionTimerFactory.createClickTimer(interval: configuration.clickInterval)
         
-        // Start repeating timer with automation callback
+        // Start repeating timer with automation callback - FIXED CONCURRENCY ISSUE
         highPrecisionTimer?.startRepeatingTimer(interval: configuration.clickInterval) { [weak self] in
-            Task { @MainActor in
-                await self?.executeAutomationStep()
+            // Use DispatchQueue.main.async to safely get to MainActor context
+            DispatchQueue.main.async {
+                print("⏰ [TimerAutomationEngine] Timer callback executing - MainActor: \(Thread.isMainThread)")
+                Task {
+                    await self?.executeAutomationStep()
+                }
             }
         }
         
@@ -296,11 +302,16 @@ class TimerAutomationEngine: ObservableObject {
     
     /// Executes a single automation step
     private func executeAutomationStep() async {
+        print("🔄 [TimerAutomationEngine] executeAutomationStep() - MainActor: \(Thread.isMainThread)")
+        
         // Quick state checks for efficiency
         guard automationState == .running,
               let config = automationConfiguration else {
+            print("⚠️ [TimerAutomationEngine] Skipping step - state: \(automationState), config: \(automationConfiguration != nil)")
             return
         }
+        
+        print("✅ [TimerAutomationEngine] Executing automation step at: \(config.location)")
         
         // Check session limits before execution
         if shouldStopDueToLimits(config: config) {
@@ -326,14 +337,30 @@ class TimerAutomationEngine: ObservableObject {
     /// - Parameter config: Automation configuration
     /// - Returns: Click result
     private func performAutomationClick(config: AutomationConfiguration) async -> ClickResult {
-        // Delegate to click coordinator for actual execution
-        return await clickCoordinator.performSingleClick(
-            configuration: ClickConfiguration(
-                type: config.clickType,
-                location: config.location,
-                targetPID: nil
+        print("🖱️ [TimerAutomationEngine] performAutomationClick() - About to call clickCoordinator")
+        print("   Location: \(config.location), Type: \(config.clickType)")
+        
+        do {
+            // Delegate to click coordinator for actual execution
+            let result = await clickCoordinator.performSingleClick(
+                configuration: ClickConfiguration(
+                    type: config.clickType,
+                    location: config.location,
+                    targetPID: nil
+                )
             )
-        )
+            
+            print("✅ [TimerAutomationEngine] Click completed - Success: \(result.success)")
+            return result
+        } catch {
+            print("❌ [TimerAutomationEngine] Click failed with error: \(error)")
+            return ClickResult(
+                success: false,
+                actualLocation: config.location,
+                timestamp: CFAbsoluteTimeGetCurrent(),
+                error: .eventPostingFailed
+            )
+        }
     }
     
     /// Checks if automation should stop due to configured limits
@@ -387,7 +414,7 @@ class TimerAutomationEngine: ObservableObject {
     /// Starts the status update timer for real-time UI updates
     private func startStatusUpdateTimer() {
         statusUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.updateAutomationStatus()
             }
         }
