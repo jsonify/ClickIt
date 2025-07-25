@@ -249,7 +249,7 @@ class ClickCoordinator: ObservableObject {
                 print("[Dynamic Debug] Current mouse position (AppKit): \(appKitPosition)")
                 
                 // Convert from AppKit coordinates to CoreGraphics coordinates with multi-monitor support
-                let cgPosition = convertAppKitToCoreGraphicsMultiMonitor(appKitPosition)
+                let cgPosition = CoordinateUtils.convertAppKitToCoreGraphics(appKitPosition)
                 print("[Dynamic Debug] Converted to CoreGraphics coordinates: \(cgPosition)")
                 return cgPosition
             }
@@ -269,7 +269,7 @@ class ClickCoordinator: ObservableObject {
             await MainActor.run {
                 if configuration.useDynamicMouseTracking {
                     // Convert back to AppKit coordinates for overlay positioning
-                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
+                    let appKitLocation = CoordinateUtils.convertCoreGraphicsToAppKit(location)
                     print("[Dynamic Debug] Overlay position (AppKit): \(appKitLocation)")
                     VisualFeedbackOverlay.shared.updateOverlay(at: appKitLocation, isActive: true)
                 } else {
@@ -304,7 +304,7 @@ class ClickCoordinator: ObservableObject {
             await MainActor.run {
                 if configuration.useDynamicMouseTracking {
                     // Convert back to AppKit coordinates for pulse positioning
-                    let appKitLocation = convertCoreGraphicsToAppKitMultiMonitor(location)
+                    let appKitLocation = CoordinateUtils.convertCoreGraphicsToAppKit(location)
                     VisualFeedbackOverlay.shared.showClickPulse(at: appKitLocation)
                 } else {
                     VisualFeedbackOverlay.shared.showClickPulse(at: location)
@@ -360,47 +360,8 @@ class ClickCoordinator: ObservableObject {
         averageClickTime = 0
     }
     
-    /// Converts AppKit coordinates to CoreGraphics coordinates for multi-monitor setups
-    private func convertAppKitToCoreGraphicsMultiMonitor(_ appKitPosition: CGPoint) -> CGPoint {
-        // Find which screen contains this point
-        for screen in NSScreen.screens {
-            if screen.frame.contains(appKitPosition) {
-                // Convert using the specific screen's coordinate system
-                let cgY = screen.frame.maxY - appKitPosition.y
-                let cgPosition = CGPoint(x: appKitPosition.x, y: cgY)
-                print("[Multi-Monitor Debug] AppKit \(appKitPosition) → CoreGraphics \(cgPosition) on screen \(screen.frame)")
-                return cgPosition
-            }
-        }
-        
-        // Fallback to main screen if no screen contains the point
-        let mainScreenHeight = NSScreen.main?.frame.height ?? 0
-        let fallbackPosition = CGPoint(x: appKitPosition.x, y: mainScreenHeight - appKitPosition.y)
-        print("[Multi-Monitor Debug] Fallback conversion: AppKit \(appKitPosition) → CoreGraphics \(fallbackPosition)")
-        return fallbackPosition
-    }
-    
-    /// Converts CoreGraphics coordinates back to AppKit coordinates for multi-monitor setups
-    private func convertCoreGraphicsToAppKitMultiMonitor(_ cgPosition: CGPoint) -> CGPoint {
-        // Find which screen this CoreGraphics position would map to
-        // This is a reverse lookup - we need to find the screen that would contain the original AppKit position
-        for screen in NSScreen.screens {
-            // Check if this position could have come from this screen
-            let potentialAppKitY = screen.frame.maxY - cgPosition.y
-            let potentialAppKitPosition = CGPoint(x: cgPosition.x, y: potentialAppKitY)
-            
-            if screen.frame.contains(potentialAppKitPosition) {
-                print("[Multi-Monitor Debug] CoreGraphics \(cgPosition) → AppKit \(potentialAppKitPosition) on screen \(screen.frame)")
-                return potentialAppKitPosition
-            }
-        }
-        
-        // Fallback to main screen conversion
-        let mainScreenHeight = NSScreen.main?.frame.height ?? 0
-        let fallbackPosition = CGPoint(x: cgPosition.x, y: mainScreenHeight - cgPosition.y)
-        print("[Multi-Monitor Debug] Fallback reverse conversion: CoreGraphics \(cgPosition) → AppKit \(fallbackPosition)")
-        return fallbackPosition
-    }
+    // MARK: - Coordinate conversion methods removed
+    // These have been consolidated into CoordinateUtils for reuse across the codebase
 }
 
 // MARK: - Supporting Types

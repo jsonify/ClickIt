@@ -294,39 +294,12 @@ class ClickItViewModel: ObservableObject {
     
     /// Checks if a position is within any available screen bounds (supports multiple monitors)
     private func isPositionWithinAnyScreen(_ position: CGPoint) -> Bool {
-        for screen in NSScreen.screens {
-            if screen.frame.contains(position) {
-                print("[Timer Debug] Position \(position) is valid on screen: \(screen.frame)")
-                return true
-            }
-        }
-        print("[Timer Debug] Position \(position) is not within any screen bounds")
-        return false
+        return CoordinateUtils.isPositionWithinAnyScreen(position)
     }
     
     /// Converts AppKit coordinates to CoreGraphics coordinates for multi-monitor setups
     private func convertAppKitToCoreGraphics(_ appKitPosition: CGPoint) -> CGPoint {
-        // Find which screen contains this point
-        for screen in NSScreen.screens {
-            if screen.frame.contains(appKitPosition) {
-                // FIXED: Proper multi-monitor coordinate conversion
-                // AppKit Y increases upward from screen bottom
-                // CoreGraphics Y increases downward from screen top  
-                // Formula: CG_Y = screen.origin.Y + (screen.height - (AppKit_Y - screen.origin.Y))
-                let relativeY = appKitPosition.y - screen.frame.origin.y  // Y relative to screen bottom
-                let cgY = screen.frame.origin.y + (screen.frame.height - relativeY)  // Convert to CG coordinates
-                let cgPosition = CGPoint(x: appKitPosition.x, y: cgY)
-                print("[Timer Debug] Multi-monitor conversion: AppKit \(appKitPosition) → CoreGraphics \(cgPosition) on screen \(screen.frame)")
-                print("[Timer Debug] Calculation: relativeY=\(relativeY), cgY=\(screen.frame.origin.y) + (\(screen.frame.height) - \(relativeY)) = \(cgY)")
-                return cgPosition
-            }
-        }
-        
-        // Fallback to main screen if no screen contains the point
-        let mainScreenHeight = NSScreen.main?.frame.height ?? 0
-        let fallbackPosition = CGPoint(x: appKitPosition.x, y: mainScreenHeight - appKitPosition.y)
-        print("[Timer Debug] Fallback conversion: AppKit \(appKitPosition) → CoreGraphics \(fallbackPosition)")
-        return fallbackPosition
+        return CoordinateUtils.convertAppKitToCoreGraphics(appKitPosition)
     }
     
     // MARK: - Emergency Stop Configuration Methods
@@ -434,7 +407,7 @@ class ClickItViewModel: ObservableObject {
         
         // Validate cursor position is within any available screen bounds
         guard isPositionWithinAnyScreen(appKitPosition) else {
-            let allScreens = NSScreen.screens.map { $0.frame }
+            let allScreens = CoordinateUtils.getAllScreenFrames()
             print("[Timer Debug] Error: cursor position \(appKitPosition) is outside all screen bounds \(allScreens)")
             appStatus = .error("Invalid cursor position when timer expired")
             return
