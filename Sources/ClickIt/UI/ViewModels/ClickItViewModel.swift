@@ -8,6 +8,7 @@
 
 import SwiftUI
 import CoreGraphics
+import AppKit
 import Combine
 
 @MainActor
@@ -242,6 +243,106 @@ class ClickItViewModel: ObservableObject {
         timerDurationMinutes = 0
         timerDurationSeconds = 10
         timerMode = .off
+    }
+    
+    // MARK: - Settings Export/Import
+    
+    /// Exports all current settings to a file
+    func exportSettings() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "ClickIt-Settings-\(DateFormatter.filenameSafe.string(from: Date())).json"
+        panel.title = "Export ClickIt Settings"
+        
+        panel.begin { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            
+            let clickSettings = ClickSettings()
+            
+            // Update clickSettings with current viewModel values
+            clickSettings.clickIntervalMs = Double((self?.totalMilliseconds ?? 1000))
+            clickSettings.clickType = self?.clickType ?? .left
+            clickSettings.durationMode = self?.durationMode ?? .unlimited
+            clickSettings.durationSeconds = self?.durationSeconds ?? 60
+            clickSettings.maxClicks = self?.maxClicks ?? 100
+            if let targetPoint = self?.targetPoint {
+                clickSettings.clickLocation = targetPoint
+            }
+            clickSettings.randomizeLocation = self?.randomizeLocation ?? false
+            clickSettings.locationVariance = self?.locationVariance ?? 0
+            clickSettings.stopOnError = self?.stopOnError ?? true
+            clickSettings.showVisualFeedback = self?.showVisualFeedback ?? true
+            clickSettings.playSoundFeedback = self?.playSoundFeedback ?? false
+            
+            guard let exportData = clickSettings.exportAllSettings() else {
+                print("ViewModel: Failed to export settings")
+                return
+            }
+            
+            do {
+                try exportData.write(to: url)
+                print("ViewModel: Successfully exported settings to \(url.path)")
+            } catch {
+                print("ViewModel: Failed to write export file: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    /// Imports settings from a file
+    func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.title = "Import ClickIt Settings"
+        panel.allowsMultipleSelection = false
+        
+        panel.begin { [weak self] response in
+            guard response == .OK, let url = panel.urls.first else { return }
+            
+            do {
+                let importData = try Data(contentsOf: url)
+                let clickSettings = ClickSettings()
+                
+                guard clickSettings.importSettings(from: importData) else {
+                    print("ViewModel: Failed to import settings")
+                    return
+                }
+                
+                // Update viewModel with imported settings
+                DispatchQueue.main.async {
+                    self?.loadFromClickSettings(clickSettings)
+                    print("ViewModel: Successfully imported settings from \(url.path)")
+                }
+                
+            } catch {
+                print("ViewModel: Failed to read import file: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    /// Updates viewModel properties from ClickSettings instance
+    private func loadFromClickSettings(_ settings: ClickSettings) {
+        // Convert milliseconds back to time components
+        let totalMs = Int(settings.clickIntervalMs)
+        intervalMilliseconds = totalMs % 1000
+        let totalSeconds = totalMs / 1000
+        intervalSeconds = totalSeconds % 60
+        let totalMinutes = totalSeconds / 60
+        intervalMinutes = totalMinutes % 60
+        intervalHours = totalMinutes / 60
+        
+        // Update other settings
+        clickType = settings.clickType
+        durationMode = settings.durationMode
+        durationSeconds = settings.durationSeconds
+        maxClicks = settings.maxClicks
+        if settings.clickLocation != .zero {
+            targetPoint = settings.clickLocation
+        }
+        randomizeLocation = settings.randomizeLocation
+        locationVariance = settings.locationVariance
+        stopOnError = settings.stopOnError
+        showVisualFeedback = settings.showVisualFeedback
+        playSoundFeedback = settings.playSoundFeedback
     }
     
     // MARK: - Private Methods
