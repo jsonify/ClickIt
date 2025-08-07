@@ -14,10 +14,19 @@ struct ContentView: View {
     @EnvironmentObject private var viewModel: ClickItViewModel
     @State private var showingPermissionSetup = false
     
+    // Feature flag for new tabbed UI (default to true for new experience)
+    private var useNewTabbedUI: Bool {
+        UserDefaults.standard.object(forKey: "UseNewTabbedUI") as? Bool ?? true
+    }
+    
     var body: some View {
         if permissionManager.allPermissionsGranted {
             // Modern UI when permissions are granted
-            modernUIView
+            if useNewTabbedUI {
+                TabbedMainView()
+            } else {
+                modernUIView
+            }
         } else {
             // Permission setup view
             permissionSetupView
@@ -47,7 +56,7 @@ struct ContentView: View {
             }
             .padding(16)
         }
-        .frame(width: 400, height: 800)
+        .frame(width: 400)
         .background(Color(NSColor.controlBackgroundColor))
         .onAppear {
             permissionManager.updatePermissionStatus()
