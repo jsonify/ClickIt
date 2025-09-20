@@ -97,7 +97,7 @@ struct AdvancedTechnicalSettings: View {
 
             SettingCard(
                 title: "Configuration Management",
-                description: "Reset settings and configuration tools"
+                description: "Backup, restore, and manage your settings"
             ) {
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
@@ -114,7 +114,7 @@ struct AdvancedTechnicalSettings: View {
                         .controlSize(.regular)
 
                         Button(action: {
-                            // TODO: Implement export
+                            viewModel.exportSettings()
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "square.and.arrow.up")
@@ -124,12 +124,33 @@ struct AdvancedTechnicalSettings: View {
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.regular)
-                        .disabled(true)
+                    }
+                    
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            viewModel.importSettings()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "square.and.arrow.down")
+                                Text("Import Settings")
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.regular)
+                        
+                        Spacer()
+                            .frame(maxWidth: .infinity)
                     }
 
-                    Text("Reset will restore all settings to their default values")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    VStack(spacing: 4) {
+                        Text("Export saves all your current settings to a JSON file")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("Import restores settings from a previously exported file")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }

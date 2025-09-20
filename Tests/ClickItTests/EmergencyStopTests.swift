@@ -23,7 +23,7 @@ final class EmergencyStopTests: XCTestCase {
         
         // Test initial state
         XCTAssertNotNil(hotkeyManager.currentHotkey, "Should have default hotkey configuration")
-        XCTAssertEqual(hotkeyManager.currentHotkey.description, "Shift + F1", "Default should be Shift + F1 key")
+        XCTAssertEqual(hotkeyManager.currentHotkey.description, "Shift + Cmd + 1", "Default should be Shift + Cmd + 1 key")
     }
     
     @MainActor
@@ -31,19 +31,19 @@ final class EmergencyStopTests: XCTestCase {
         let hotkeyManager = HotkeyManager.shared
         let defaultConfig = hotkeyManager.currentHotkey
         
-        XCTAssertEqual(defaultConfig.keyCode, 122, "Default emergency stop should be F1 key (keyCode 122)")
-        XCTAssertEqual(defaultConfig.modifiers, UInt32(NSEvent.ModifierFlags.shift.rawValue), "Default should have Shift modifier")
-        XCTAssertEqual(defaultConfig.description, "Shift + F1", "Default description should match")
+        XCTAssertEqual(defaultConfig.keyCode, 18, "Default emergency stop should be '1' key (keyCode 18)")
+        XCTAssertEqual(defaultConfig.modifiers, UInt32(NSEvent.ModifierFlags.shift.rawValue | NSEvent.ModifierFlags.command.rawValue), "Default should have Shift + Cmd modifiers")
+        XCTAssertEqual(defaultConfig.description, "Shift + Cmd + 1", "Default description should match")
     }
     
     @MainActor
     func testHotkeyRegistrationSuccess() {
         let hotkeyManager = HotkeyManager.shared
-        let testConfig = HotkeyConfiguration.shiftF1Key
+        let testConfig = HotkeyConfiguration.shiftCmd1Key
         
         let success = hotkeyManager.registerGlobalHotkey(testConfig)
         
-        XCTAssertTrue(success, "Shift+F1 key registration should succeed")
+        XCTAssertTrue(success, "Shift+Cmd+1 key registration should succeed")
         XCTAssertTrue(hotkeyManager.isRegistered, "Manager should report as registered")
         XCTAssertNil(hotkeyManager.lastError, "Should have no error on successful registration")
         
@@ -388,9 +388,9 @@ final class EmergencyStopTests: XCTestCase {
         let escConfig = allConfigs.first { $0.keyCode == 53 }
         XCTAssertNotNil(escConfig, "ESC key should be in available keys")
         
-        // Verify F1 key is present
-        let f1Config = allConfigs.first { $0.keyCode == 122 }
-        XCTAssertNotNil(f1Config, "F1 key should be in available keys")
+        // Verify Shift+Cmd+1 key is present
+        let shiftCmd1Config = allConfigs.first { $0.keyCode == 18 }
+        XCTAssertNotNil(shiftCmd1Config, "Shift+Cmd+1 key should be in available keys")
         
         // Verify Space key is present
         let spaceConfig = allConfigs.first { $0.keyCode == 49 }

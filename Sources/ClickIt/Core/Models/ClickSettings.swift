@@ -286,6 +286,124 @@ class ClickSettings: ObservableObject {
             cpsRandomizerConfig: createCPSRandomizerConfiguration()
         )
     }
+    
+    // MARK: - Settings Export/Import
+    
+    /// Exports all application settings to JSON data
+    /// - Returns: JSON data containing all settings, or nil if export failed
+    func exportAllSettings() -> Data? {
+        let exportData = SettingsExportData(
+            clickIntervalMs: clickIntervalMs,
+            clickType: clickType,
+            durationMode: durationMode,
+            durationSeconds: durationSeconds,
+            maxClicks: maxClicks,
+            clickLocation: clickLocation,
+            targetApplication: targetApplication,
+            randomizeLocation: randomizeLocation,
+            locationVariance: locationVariance,
+            stopOnError: stopOnError,
+            showVisualFeedback: showVisualFeedback,
+            playSoundFeedback: playSoundFeedback,
+            randomizeTiming: randomizeTiming,
+            timingVariancePercentage: timingVariancePercentage,
+            distributionPattern: distributionPattern,
+            humannessLevel: humannessLevel,
+            exportVersion: "1.0",
+            exportDate: Date(),
+            appVersion: AppConstants.appVersion
+        )
+        
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            encoder.dateEncodingStrategy = .iso8601
+            return try encoder.encode(exportData)
+        } catch {
+            print("ClickSettings: Failed to export settings - \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    /// Imports settings from JSON data
+    /// - Parameter data: JSON data containing settings
+    /// - Returns: True if import was successful, false otherwise
+    func importSettings(from data: Data) -> Bool {
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let importData = try decoder.decode(SettingsExportData.self, from: data)
+            
+            // Validate import compatibility
+            guard isImportDataValid(importData) else {
+                print("ClickSettings: Import data validation failed")
+                return false
+            }
+            
+            // Apply imported settings
+            clickIntervalMs = importData.clickIntervalMs
+            clickType = importData.clickType
+            durationMode = importData.durationMode
+            durationSeconds = importData.durationSeconds
+            maxClicks = importData.maxClicks
+            clickLocation = importData.clickLocation
+            targetApplication = importData.targetApplication
+            randomizeLocation = importData.randomizeLocation
+            locationVariance = importData.locationVariance
+            stopOnError = importData.stopOnError
+            showVisualFeedback = importData.showVisualFeedback
+            playSoundFeedback = importData.playSoundFeedback
+            randomizeTiming = importData.randomizeTiming
+            timingVariancePercentage = importData.timingVariancePercentage
+            distributionPattern = importData.distributionPattern
+            humannessLevel = importData.humannessLevel
+            
+            // Settings are automatically saved via property observers
+            print("ClickSettings: Successfully imported settings from export version \(importData.exportVersion)")
+            return true
+            
+        } catch {
+            print("ClickSettings: Failed to import settings - \(error.localizedDescription)")
+            return false
+        }
+    }
+    
+    /// Validates imported settings data for compatibility and safety
+    /// - Parameter importData: The imported settings data
+    /// - Returns: True if data is valid and safe to import
+    private func isImportDataValid(_ importData: SettingsExportData) -> Bool {
+        // Check minimum click interval safety limit
+        if importData.clickIntervalMs < (AppConstants.minClickInterval * 1000) {
+            print("ClickSettings: Import validation failed - click interval too low")
+            return false
+        }
+        
+        // Validate timing variance is within bounds
+        if importData.timingVariancePercentage < 0 || importData.timingVariancePercentage > 1 {
+            print("ClickSettings: Import validation failed - invalid timing variance")
+            return false
+        }
+        
+        // Validate duration settings
+        if importData.durationMode == .timeLimit && importData.durationSeconds <= 0 {
+            print("ClickSettings: Import validation failed - invalid time limit")
+            return false
+        }
+        
+        if importData.durationMode == .clickCount && importData.maxClicks <= 0 {
+            print("ClickSettings: Import validation failed - invalid click count")
+            return false
+        }
+        
+        // Validate location variance
+        if importData.locationVariance < 0 {
+            print("ClickSettings: Import validation failed - invalid location variance")
+            return false
+        }
+        
+        print("ClickSettings: Import validation passed")
+        return true
+    }
 }
 
 // MARK: - Supporting Types
@@ -337,6 +455,32 @@ private struct SettingsData: Codable {
     let timingVariancePercentage: Double
     let distributionPattern: CPSRandomizer.DistributionPattern
     let humannessLevel: CPSRandomizer.HumannessLevel
+}
+
+/// Export data structure for settings with metadata
+struct SettingsExportData: Codable {
+    // Core Settings
+    let clickIntervalMs: Double
+    let clickType: ClickType
+    let durationMode: DurationMode
+    let durationSeconds: Double
+    let maxClicks: Int
+    let clickLocation: CGPoint
+    let targetApplication: String?
+    let randomizeLocation: Bool
+    let locationVariance: Double
+    let stopOnError: Bool
+    let showVisualFeedback: Bool
+    let playSoundFeedback: Bool
+    let randomizeTiming: Bool
+    let timingVariancePercentage: Double
+    let distributionPattern: CPSRandomizer.DistributionPattern
+    let humannessLevel: CPSRandomizer.HumannessLevel
+    
+    // Export Metadata
+    let exportVersion: String
+    let exportDate: Date
+    let appVersion: String
 }
 
 // MARK: - Extensions
