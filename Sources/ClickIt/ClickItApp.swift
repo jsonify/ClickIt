@@ -31,7 +31,7 @@ struct ClickItApp: App {
             }
         }
         .windowResizability(.contentSize)
-        .defaultSize(width: 500, height: 800)
+        .defaultSize(width: 500, height: 900)
         .windowToolbarStyle(.unified)
         .commands {
             CommandGroup(replacing: .help) {

@@ -39,7 +39,7 @@ struct AutomationSettings: View {
                     HStack {
                         Image(systemName: "keyboard")
                             .foregroundColor(.blue)
-                        Text("ESC Key")
+                        Text("Shift+Cmd+1")
                             .font(.subheadline)
                             .fontWeight(.medium)
                         Spacer()
@@ -48,7 +48,7 @@ struct AutomationSettings: View {
                             .foregroundColor(.secondary)
                     }
 
-                    Text("Press ESC at any time to start or stop automation, even when ClickIt is not the active application")
+                    Text("Press Shift+Cmd+1 at any time to start or stop automation, even when ClickIt is not the active application")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

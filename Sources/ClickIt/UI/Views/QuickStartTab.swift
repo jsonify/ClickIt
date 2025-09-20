@@ -14,23 +14,37 @@ struct QuickStartTab: View {
     @ObservedObject private var hotkeyManager = HotkeyManager.shared
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Statistics Row (moved to top)
+        VStack(spacing: 0) {
+            // Statistics Row (fixed at top)
             statisticsRow
-            
-            // Target Point Selector (with Timer Support)
-            TargetPointSelectionCard(viewModel: viewModel)
-            
-            // Inline Timing Controls
-            InlineTimingControls()
-            
-            // Quick Preset Selection
-            QuickPresetDropdown()
-            
-            // Main Control Button
-            mainControlButton
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
+            // Emergency Stop Information (fixed at top for safety)
+            emergencyStopInfo
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+
+            // Scrollable content area
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Target Point Selector (with Timer Support)
+                    TargetPointSelectionCard(viewModel: viewModel)
+
+                    // Inline Timing Controls
+                    InlineTimingControls()
+
+                    // Quick Preset Selection
+                    QuickPresetDropdown()
+
+                    // Main Control Button
+                    mainControlButton
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 20) // Extra bottom padding for better scroll feel
+            }
         }
-        .padding(.vertical, 8)
     }
     
     @ViewBuilder
@@ -125,6 +139,80 @@ struct QuickStartTab: View {
         }
     }
     
+    @ViewBuilder
+    private var emergencyStopInfo: some View {
+        HStack(spacing: 12) {
+            // Emergency icon and primary key
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.red)
+
+                Text("⇧⌘1")
+                    .font(.system(.title3, design: .monospaced))
+                    .fontWeight(.black)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.red)
+                    .cornerRadius(6)
+
+                Text("EMERGENCY STOP")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.red)
+            }
+
+            Spacer()
+
+            // Alternative keys in compact format
+            HStack(spacing: 6) {
+                Text("or")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                HStack(spacing: 4) {
+                    Text("ESC")
+                        .font(.system(.caption, design: .monospaced))
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color.orange)
+                        .cornerRadius(4)
+
+                    Text("F1")
+                        .font(.system(.caption, design: .monospaced))
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color.orange)
+                        .cornerRadius(4)
+
+                    Text("SPC")
+                        .font(.system(.caption, design: .monospaced))
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color.orange)
+                        .cornerRadius(4)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.red.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.red.opacity(0.3), lineWidth: 1.5)
+                )
+        )
+    }
+
     @ViewBuilder
     private var statisticsRow: some View {
         HStack(spacing: 16) {

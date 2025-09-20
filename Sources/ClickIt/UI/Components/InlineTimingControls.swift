@@ -10,68 +10,72 @@ import SwiftUI
 
 struct InlineTimingControls: View {
     @EnvironmentObject private var viewModel: ClickItViewModel
-    
+    @State private var isExpanded = false
+
     var body: some View {
-        VStack(spacing: 12) {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            VStack(spacing: 12) {
+                // Single row time input
+                HStack(spacing: 8) {
+                    CompactTimeField(label: "H", value: $viewModel.intervalHours, range: 0...23, width: 35)
+                    Text(":")
+                        .foregroundColor(.secondary)
+                    CompactTimeField(label: "M", value: $viewModel.intervalMinutes, range: 0...59, width: 35)
+                    Text(":")
+                        .foregroundColor(.secondary)
+                    CompactTimeField(label: "S", value: $viewModel.intervalSeconds, range: 0...59, width: 35)
+                    Text(".")
+                        .foregroundColor(.secondary)
+                    CompactTimeField(label: "MS", value: $viewModel.intervalMilliseconds, range: 0...999, width: 45)
+
+                    Spacer()
+
+                    // Total time display
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(formatTotalTime(viewModel.totalMilliseconds))
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundColor(.blue)
+                            .fontWeight(.semibold)
+
+                        Text("Total")
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                // Validation message
+                if viewModel.totalMilliseconds <= 0 {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundColor(.orange)
+                            .font(.system(size: 10))
+
+                        Text("Interval must be greater than 0")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+
+                        Spacer()
+                    }
+                }
+            }
+            .padding(.top, 8)
+        } label: {
             HStack {
                 Image(systemName: "timer")
                     .foregroundColor(.blue)
                     .font(.system(size: 14))
-                
+
                 Text("Click Interval")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
+
                 Spacer()
-                
+
                 // Quick CPS display
                 Text(String(format: "~%.1f CPS", viewModel.estimatedCPS))
                     .font(.system(.caption, design: .monospaced))
                     .foregroundColor(.green)
                     .fontWeight(.semibold)
-            }
-            
-            // Single row time input
-            HStack(spacing: 8) {
-                CompactTimeField(label: "H", value: $viewModel.intervalHours, range: 0...23, width: 35)
-                Text(":")
-                    .foregroundColor(.secondary)
-                CompactTimeField(label: "M", value: $viewModel.intervalMinutes, range: 0...59, width: 35)
-                Text(":")
-                    .foregroundColor(.secondary)
-                CompactTimeField(label: "S", value: $viewModel.intervalSeconds, range: 0...59, width: 35)
-                Text(".")
-                    .foregroundColor(.secondary)
-                CompactTimeField(label: "MS", value: $viewModel.intervalMilliseconds, range: 0...999, width: 45)
-                
-                Spacer()
-                
-                // Total time display
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(formatTotalTime(viewModel.totalMilliseconds))
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.blue)
-                        .fontWeight(.semibold)
-                    
-                    Text("Total")
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            // Validation message
-            if viewModel.totalMilliseconds <= 0 {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(.orange)
-                        .font(.system(size: 10))
-                    
-                    Text("Interval must be greater than 0")
-                        .font(.system(size: 10))
-                        .foregroundColor(.orange)
-                    
-                    Spacer()
-                }
             }
         }
         .padding(12)

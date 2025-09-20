@@ -11,7 +11,7 @@ struct FooterInfoCard: View {
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                 
-                Text("ESC to start or stop")
+                Text("Shift+Cmd+1 to start or stop")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 

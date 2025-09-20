@@ -22,7 +22,7 @@ class ClickItViewModel: ObservableObject {
     // Configuration Properties
     @Published var intervalHours = 0
     @Published var intervalMinutes = 0
-    @Published var intervalSeconds = 1
+    @Published var intervalSeconds = 10
     @Published var intervalMilliseconds = 0
     
     @Published var clickType: ClickType = .left

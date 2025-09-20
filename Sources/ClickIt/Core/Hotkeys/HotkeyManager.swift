@@ -396,9 +396,9 @@ struct HotkeyConfiguration {
     let description: String
     
     static let `default` = HotkeyConfiguration(
-        keyCode: 122, // F1 key
-        modifiers: UInt32(NSEvent.ModifierFlags.shift.rawValue), // Shift modifier
-        description: "Shift + F1"
+        keyCode: 18, // "1" key
+        modifiers: UInt32(NSEvent.ModifierFlags.shift.rawValue | NSEvent.ModifierFlags.command.rawValue), // Shift + Cmd modifiers
+        description: "Shift + Cmd + 1"
     )
 }
 
@@ -443,6 +443,12 @@ extension HotkeyConfiguration {
         description: "Cmd + Period"
     )
     
+    static let shiftCmd1Key = HotkeyConfiguration(
+        keyCode: 18, // "1" key
+        modifiers: UInt32(NSEvent.ModifierFlags.shift.rawValue | NSEvent.ModifierFlags.command.rawValue),
+        description: "Shift + Cmd + 1"
+    )
+    
     // MARK: - Extended Modifier Combinations
     
     static let cmdDelete = HotkeyConfiguration(
@@ -458,9 +464,14 @@ extension HotkeyConfiguration {
     )
     
     // MARK: - All Available Emergency Stop Keys
-    
+
     static let allEmergencyStopKeys: [HotkeyConfiguration] = [
-        .shiftF1Key      // Shift + F1 - Single emergency stop key
+        .escapeKey,      // ESC key - Most intuitive emergency stop
+        .deleteKey,      // DELETE key - Common emergency stop
+        .f1Key,          // F1 key - Function key emergency stop
+        .spaceKey,       // Space key - Easy to reach emergency stop
+        .cmdPeriod,      // Cmd + Period - Standard macOS interrupt
+        .shiftCmd1Key    // Shift + Cmd + 1 - Primary emergency stop key
     ]
     
     // MARK: - Key Code Constants
@@ -471,6 +482,7 @@ extension HotkeyConfiguration {
         static let f1: UInt16 = 122
         static let space: UInt16 = 49
         static let period: UInt16 = 47
+        static let one: UInt16 = 18
         
         private init() {}
     }

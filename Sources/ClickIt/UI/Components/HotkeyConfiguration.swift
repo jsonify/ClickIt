@@ -41,30 +41,51 @@ struct HotkeyConfigurationPanel: View {
                 }
                 
                 if viewModel.emergencyStopEnabled {
-                    // Current hotkey display
-                    HStack {
-                        Text("Hotkey:")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                        
-                        Spacer()
-                        
-                        Text("ESC (Default)")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                            .fontWeight(.medium)
+                    // Available emergency stop keys
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Available Emergency Stop Keys:")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            Spacer()
+                        }
+
+                        // Display all available keys in a compact grid
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
+                            ForEach(hotkeyManager.availableHotkeys, id: \.description) { config in
+                                HStack(spacing: 4) {
+                                    Text(config.description)
+                                        .font(.system(.caption, design: .monospaced))
+                                        .fontWeight(.medium)
+                                        .foregroundColor(.primary)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color(NSColor.controlBackgroundColor))
+                                        .cornerRadius(4)
+
+                                    if config.keyCode == hotkeyManager.currentHotkey.keyCode {
+                                        Image(systemName: "star.fill")
+                                            .font(.system(size: 8))
+                                            .foregroundColor(.orange)
+                                    }
+
+                                    Spacer()
+                                }
+                            }
+                        }
                     }
-                    
+
                     // Status display
                     HStack {
                         Image(systemName: "keyboard")
                             .foregroundColor(.blue)
                             .font(.system(size: 14))
-                        
-                        Text("Press ESC to immediately stop all automation")
+
+                        Text("Press any key above to immediately stop all automation")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Spacer()
                     }
                     
