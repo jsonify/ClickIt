@@ -35,7 +35,10 @@ struct ContentView: View {
             
             // Configuration Panel Card
             ConfigurationPanelCard(viewModel: viewModel)
-            
+
+            // Scheduling Card
+            SchedulingCard(viewModel: viewModel)
+
             // Advanced Settings Button
             AdvancedSettingsButton(viewModel: viewModel)
             

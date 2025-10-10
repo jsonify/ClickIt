@@ -116,13 +116,13 @@ class ClickSettings: ObservableObject {
     }
     
     /// Timing variance as percentage (0.0-1.0, representing 0%-100%)
-    @Published var timingVariancePercentage: Double = 0.1 {
-        didSet {
-            // Clamp between 0-100%
-            timingVariancePercentage = max(0.0, min(1.0, timingVariancePercentage))
-            saveSettings()
-        }
-    }
+    @Published var timingVariancePercentage: Double = 0.1
+    // Temporarily disabled didSet to fix crash
+    // {
+    //     didSet {
+    //         saveSettings()
+    //     }
+    // }
     
     /// Statistical distribution pattern for randomization
     @Published var distributionPattern: CPSRandomizer.DistributionPattern = .normal {
@@ -138,6 +138,43 @@ class ClickSettings: ObservableObject {
         }
     }
 
+    // MARK: - Scheduling Properties
+
+    /// Scheduling mode for execution timing
+    @Published var schedulingMode: SchedulingMode = .immediate {
+        didSet {
+            saveSettings()
+        }
+    }
+
+    /// Scheduled date and time for execution (when schedulingMode is .scheduled)
+    @Published var scheduledDateTime: Date = Date().addingTimeInterval(3600) { // Default to 1 hour from now
+        didSet {
+            saveSettings()
+        }
+    }
+
+    /// Whether scheduling is currently enabled
+    var isSchedulingEnabled: Bool {
+        schedulingMode != .immediate
+    }
+
+    /// Whether the scheduled time is in the future (compared to current GMT time)
+    var isScheduledTimeValid: Bool {
+        // If not in scheduled mode, always valid
+        guard schedulingMode == .scheduled else { return true }
+
+        // Check if scheduled time is in the future (with 2 second tolerance for UI delays)
+        let tolerance: TimeInterval = 2.0
+        let isValid = scheduledDateTime.timeIntervalSinceNow > -tolerance
+
+        #if DEBUG
+        print("ClickSettings: Scheduled time validation - scheduledDateTime: \(scheduledDateTime), now: \(Date()), diff: \(scheduledDateTime.timeIntervalSinceNow)s, valid: \(isValid)")
+        #endif
+
+        return isValid
+    }
+
     // MARK: - Computed Properties
 
     /// Click interval in seconds
@@ -147,7 +184,9 @@ class ClickSettings: ObservableObject {
 
     /// Whether the current settings are valid
     var isValid: Bool {
-        clickLocation != .zero && clickIntervalMs >= (AppConstants.minClickInterval * 1000)
+        clickLocation != .zero &&
+        clickIntervalMs >= (AppConstants.minClickInterval * 1000) &&
+        isScheduledTimeValid
     }
 
     /// Validation message for current settings
@@ -157,6 +196,9 @@ class ClickSettings: ObservableObject {
         }
         if clickIntervalMs < (AppConstants.minClickInterval * 1000) {
             return "Click interval must be at least \(Int(AppConstants.minClickInterval * 1000))ms"
+        }
+        if !isScheduledTimeValid {
+            return "Scheduled time must be in the future"
         }
         return nil
     }
@@ -192,7 +234,9 @@ class ClickSettings: ObservableObject {
             randomizeTiming: randomizeTiming,
             timingVariancePercentage: timingVariancePercentage,
             distributionPattern: distributionPattern,
-            humannessLevel: humannessLevel
+            humannessLevel: humannessLevel,
+            schedulingMode: schedulingMode,
+            scheduledDateTime: scheduledDateTime
         )
 
         do {
@@ -228,6 +272,8 @@ class ClickSettings: ObservableObject {
             timingVariancePercentage = settings.timingVariancePercentage
             distributionPattern = settings.distributionPattern
             humannessLevel = settings.humannessLevel
+            schedulingMode = settings.schedulingMode ?? .immediate  // Default for backward compatibility
+            scheduledDateTime = settings.scheduledDateTime ?? Date().addingTimeInterval(3600)
         } catch {
             print("ClickSettings: Failed to load settings - \(error.localizedDescription). Using defaults.")
         }
@@ -251,6 +297,8 @@ class ClickSettings: ObservableObject {
         timingVariancePercentage = 0.1
         distributionPattern = .normal
         humannessLevel = .medium
+        schedulingMode = .immediate
+        scheduledDateTime = Date().addingTimeInterval(3600)
         saveSettings()
     }
     
@@ -309,7 +357,9 @@ class ClickSettings: ObservableObject {
             timingVariancePercentage: timingVariancePercentage,
             distributionPattern: distributionPattern,
             humannessLevel: humannessLevel,
-            exportVersion: "1.0",
+            schedulingMode: schedulingMode,
+            scheduledDateTime: scheduledDateTime,
+            exportVersion: "1.1",
             exportDate: Date(),
             appVersion: AppConstants.appVersion
         )
@@ -357,7 +407,9 @@ class ClickSettings: ObservableObject {
             timingVariancePercentage = importData.timingVariancePercentage
             distributionPattern = importData.distributionPattern
             humannessLevel = importData.humannessLevel
-            
+            schedulingMode = importData.schedulingMode ?? .immediate  // Default for backward compatibility
+            scheduledDateTime = importData.scheduledDateTime ?? Date().addingTimeInterval(3600)
+
             // Settings are automatically saved via property observers
             print("ClickSettings: Successfully imported settings from export version \(importData.exportVersion)")
             return true
@@ -408,6 +460,30 @@ class ClickSettings: ObservableObject {
 
 // MARK: - Supporting Types
 
+/// Scheduling mode for execution timing
+enum SchedulingMode: String, CaseIterable, Codable {
+    case immediate = "immediate"     // Start immediately when start button is pressed
+    case scheduled = "scheduled"     // Start at specific date/time
+
+    var displayName: String {
+        switch self {
+        case .immediate:
+            return "Start Immediately"
+        case .scheduled:
+            return "Schedule for Later"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .immediate:
+            return "Begin automation immediately when start is pressed"
+        case .scheduled:
+            return "Wait until scheduled date/time to begin automation"
+        }
+    }
+}
+
 /// Duration mode for automation stopping
 enum DurationMode: String, CaseIterable, Codable {
     case unlimited = "unlimited"
@@ -455,6 +531,8 @@ private struct SettingsData: Codable {
     let timingVariancePercentage: Double
     let distributionPattern: CPSRandomizer.DistributionPattern
     let humannessLevel: CPSRandomizer.HumannessLevel
+    let schedulingMode: SchedulingMode?  // Optional for backward compatibility
+    let scheduledDateTime: Date?  // Optional for backward compatibility
 }
 
 /// Export data structure for settings with metadata
@@ -476,7 +554,9 @@ struct SettingsExportData: Codable {
     let timingVariancePercentage: Double
     let distributionPattern: CPSRandomizer.DistributionPattern
     let humannessLevel: CPSRandomizer.HumannessLevel
-    
+    let schedulingMode: SchedulingMode?  // Optional for backward compatibility
+    let scheduledDateTime: Date?  // Optional for backward compatibility
+
     // Export Metadata
     let exportVersion: String
     let exportDate: Date

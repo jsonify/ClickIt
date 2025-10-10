@@ -18,12 +18,31 @@ class ClickItViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var isPaused = false
     @Published var appStatus: AppStatus = .ready
+
+    // Settings
+    @Published var clickSettings = ClickSettings()
     
     // Configuration Properties
-    @Published var intervalHours = 0
-    @Published var intervalMinutes = 0
-    @Published var intervalSeconds = 10
-    @Published var intervalMilliseconds = 0
+    @Published var intervalHours = 0 {
+        didSet {
+            if isInitialized { syncSettingsFromViewModel() }
+        }
+    }
+    @Published var intervalMinutes = 0 {
+        didSet {
+            if isInitialized { syncSettingsFromViewModel() }
+        }
+    }
+    @Published var intervalSeconds = 10 {
+        didSet {
+            if isInitialized { syncSettingsFromViewModel() }
+        }
+    }
+    @Published var intervalMilliseconds = 0 {
+        didSet {
+            if isInitialized { syncSettingsFromViewModel() }
+        }
+    }
     
     @Published var clickType: ClickType = .left
     @Published var durationMode: DurationMode = .unlimited
@@ -51,6 +70,9 @@ class ClickItViewModel: ObservableObject {
     @Published var isCountingDown: Bool = false
     @Published var remainingTime: TimeInterval = 0
     @Published var timerIsActive: Bool = false
+
+    // MARK: - Initialization State
+    private var isInitialized = false
     
     // MARK: - Computed Properties
     var totalMilliseconds: Int {
@@ -63,7 +85,11 @@ class ClickItViewModel: ObservableObject {
     }
     
     var canStartAutomation: Bool {
-        targetPoint != nil && totalMilliseconds > 0 && !isRunning && !timerIsActive
+        targetPoint != nil &&
+        totalMilliseconds > 0 &&
+        !isRunning &&
+        !timerIsActive &&
+        clickSettings.isValid
     }
     
     var totalTimerSeconds: Int {
@@ -85,16 +111,39 @@ class ClickItViewModel: ObservableObject {
     
     // MARK: - Dependencies
     private let clickCoordinator = ClickCoordinator.shared
+    private let schedulingManager = SchedulingManager.shared
     
     // MARK: - Initialization
     init() {
         setupBindings()
         loadEmergencyStopSettings()
+
+        // Initial sync without guard
+        clickSettings.clickIntervalMs = Double(totalMilliseconds)
+        if let point = targetPoint {
+            clickSettings.clickLocation = point
+        }
+
+        isInitialized = true
     }
     
     // MARK: - Public Methods
     func setTargetPoint(_ point: CGPoint) {
         targetPoint = point
+        clickSettings.clickLocation = point  // Sync with ClickSettings
+    }
+
+    private func syncSettingsFromViewModel() {
+        // Guard against calling during initialization
+        guard isInitialized else { return }
+
+        // Sync timing settings
+        clickSettings.clickIntervalMs = Double(totalMilliseconds)
+
+        // Sync target point if set
+        if let point = targetPoint {
+            clickSettings.clickLocation = point
+        }
     }
     
     func startAutomation() {
@@ -103,10 +152,61 @@ class ClickItViewModel: ObservableObject {
             startTimerMode(durationMinutes: timerDurationMinutes, durationSeconds: timerDurationSeconds)
             return
         }
-        
-        guard let point = targetPoint, canStartAutomation else { return }
-        
-        let config = AutomationConfiguration(
+
+        guard let point = targetPoint, canStartAutomation else {
+            print("ClickItViewModel: Cannot start automation - missing prerequisites")
+            return
+        }
+
+        // Handle scheduling modes
+        switch clickSettings.schedulingMode {
+        case .immediate:
+            // Start automation immediately
+            executeAutomation(at: point)
+
+        case .scheduled:
+            // Schedule automation for later
+            scheduleAutomation(at: point)
+        }
+    }
+
+    private func executeAutomation(at point: CGPoint) {
+        print("ClickItViewModel: Executing automation immediately")
+
+        let config = createAutomationConfiguration(at: point)
+        clickCoordinator.startAutomation(with: config)
+        isRunning = true
+        appStatus = .running
+    }
+
+    private func scheduleAutomation(at point: CGPoint) {
+        let scheduledTime = clickSettings.scheduledDateTime
+        print("ClickItViewModel: Scheduling automation for \(scheduledTime)")
+
+        let success = schedulingManager.scheduleTask(for: scheduledTime) { [weak self] in
+            guard let self = self else { return }
+
+            let actualTime = Date()
+            let timingError = actualTime.timeIntervalSince(scheduledTime)
+
+            print("ClickItViewModel: 🎯 SCHEDULED AUTOMATION EXECUTING")
+            print("  Scheduled: \(scheduledTime)")
+            print("  Actual: \(actualTime)")
+            print("  Error: \(timingError)s")
+
+            // Execute automation without alert popup
+            self.executeAutomation(at: point)
+        }
+
+        if success {
+            appStatus = .scheduled(scheduledTime)
+        } else {
+            appStatus = .error("Invalid scheduled time")
+        }
+    }
+
+    private func createAutomationConfiguration(at point: CGPoint) -> AutomationConfiguration {
+        return AutomationConfiguration(
             location: point,
             clickType: clickType,
             clickInterval: Double(totalMilliseconds) / 1000.0,
@@ -119,13 +219,6 @@ class ClickItViewModel: ObservableObject {
             useDynamicMouseTracking: false, // Normal automation uses fixed position
             showVisualFeedback: showVisualFeedback
         )
-        
-        // REVERTED TO WORKING APPROACH: Use ClickCoordinator directly
-        clickCoordinator.startAutomation(with: config)
-        isRunning = true
-        appStatus = .running
-        
-        print("ClickItViewModel: Started automation with direct ClickCoordinator (reverted to working approach)")
     }
     
     private func startDynamicAutomation() {
@@ -171,12 +264,20 @@ class ClickItViewModel: ObservableObject {
         // SIMPLE WORKING APPROACH: Direct ClickCoordinator call
         clickCoordinator.stopAutomation()
         cancelTimer() // Also cancel any active timer
+        schedulingManager.cancelScheduledTask() // Cancel any scheduled tasks
         isRunning = false
         appStatus = .ready
-        
+
         print("ClickItViewModel: Stopped automation with direct ClickCoordinator")
     }
     
+    func cancelScheduledTask() {
+        schedulingManager.cancelScheduledTask()
+        if case .scheduled = appStatus {
+            appStatus = .ready
+        }
+    }
+
     func pauseAutomation() {
         guard isRunning && !isPaused else { return }
         
@@ -585,8 +686,9 @@ enum AppStatus {
     case ready
     case running
     case paused
+    case scheduled(Date)
     case error(String)
-    
+
     var displayText: String {
         switch self {
         case .ready:
@@ -595,11 +697,16 @@ enum AppStatus {
             return "Running"
         case .paused:
             return "Paused"
+        case .scheduled(let date):
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            formatter.timeZone = TimeZone(identifier: "GMT")
+            return "Scheduled for \(formatter.string(from: date)) GMT"
         case .error(let message):
             return "Error: \(message)"
         }
     }
-    
+
     var color: Color {
         switch self {
         case .ready:
@@ -608,6 +715,8 @@ enum AppStatus {
             return .blue
         case .paused:
             return .orange
+        case .scheduled:
+            return .purple
         case .error:
             return .red
         }

@@ -16,6 +16,9 @@ class ClickItViewModel: ObservableObject {
     @Published var targetPoint: CGPoint?
     @Published var isRunning = false
     @Published var appStatus: AppStatus = .ready
+
+    // Settings
+    @StateObject var clickSettings = ClickSettings()
     
     // Configuration Properties
     @Published var intervalHours = 0
@@ -57,7 +60,11 @@ class ClickItViewModel: ObservableObject {
     }
     
     var canStartAutomation: Bool {
-        targetPoint != nil && totalMilliseconds > 0 && !isRunning && !timerIsActive
+        targetPoint != nil &&
+        totalMilliseconds > 0 &&
+        !isRunning &&
+        !timerIsActive &&
+        clickSettings.isValid
     }
     
     var totalTimerSeconds: Int {
@@ -71,6 +78,7 @@ class ClickItViewModel: ObservableObject {
     
     // MARK: - Dependencies
     private let clickCoordinator = ClickCoordinator.shared
+    private let schedulingManager = SchedulingManager.shared
     
     // MARK: - Initialization
     init() {
@@ -88,10 +96,51 @@ class ClickItViewModel: ObservableObject {
             startTimerMode(durationMinutes: timerDurationMinutes, durationSeconds: timerDurationSeconds)
             return
         }
-        
-        guard let point = targetPoint, canStartAutomation else { return }
-        
-        let config = AutomationConfiguration(
+
+        guard let point = targetPoint, canStartAutomation else {
+            print("ClickItViewModel: Cannot start automation - missing prerequisites")
+            return
+        }
+
+        // Handle scheduling modes
+        switch clickSettings.schedulingMode {
+        case .immediate:
+            // Start automation immediately
+            executeAutomation(at: point)
+
+        case .scheduled:
+            // Schedule automation for later
+            scheduleAutomation(at: point)
+        }
+    }
+
+    private func executeAutomation(at point: CGPoint) {
+        print("ClickItViewModel: Executing automation immediately")
+
+        let config = createAutomationConfiguration(at: point)
+        clickCoordinator.startAutomation(with: config)
+        isRunning = true
+        appStatus = .running
+    }
+
+    private func scheduleAutomation(at point: CGPoint) {
+        print("ClickItViewModel: Scheduling automation for \(clickSettings.scheduledDateTime)")
+
+        let success = schedulingManager.scheduleTask(for: clickSettings.scheduledDateTime) { [weak self] in
+            guard let self = self else { return }
+            print("ClickItViewModel: Executing scheduled automation")
+            self.executeAutomation(at: point)
+        }
+
+        if success {
+            appStatus = .scheduled(clickSettings.scheduledDateTime)
+        } else {
+            appStatus = .error("Invalid scheduled time")
+        }
+    }
+
+    private func createAutomationConfiguration(at point: CGPoint) -> AutomationConfiguration {
+        return AutomationConfiguration(
             location: point,
             clickType: clickType,
             clickInterval: Double(totalMilliseconds) / 1000.0,
@@ -104,10 +153,6 @@ class ClickItViewModel: ObservableObject {
             showVisualFeedback: showVisualFeedback,
             useDynamicMouseTracking: false // Normal automation uses fixed position
         )
-        
-        clickCoordinator.startAutomation(with: config)
-        isRunning = true
-        appStatus = .running
     }
     
     private func startDynamicAutomation() {
@@ -150,6 +195,7 @@ class ClickItViewModel: ObservableObject {
     func stopAutomation() {
         clickCoordinator.stopAutomation()
         cancelTimer() // Also cancel any active timer
+        schedulingManager.cancelScheduledTask() // Cancel any scheduled tasks
         isRunning = false
         appStatus = .ready
     }
@@ -259,6 +305,17 @@ class ClickItViewModel: ObservableObject {
         countdownTimer = nil
         resetTimerState()
     }
+
+    func cancelScheduledTask() {
+        schedulingManager.cancelScheduledTask()
+        if case .scheduled = appStatus {
+            appStatus = .ready
+        }
+    }
+
+    func isScheduledTimeValid() -> Bool {
+        return clickSettings.isScheduledTimeValid
+    }
     
     private func onTimerExpired() {
         defer { resetTimerState() }
@@ -298,8 +355,12 @@ class ClickItViewModel: ObservableObject {
         timerIsActive = false
         remainingTime = 0
         timerMode = .off
-        if appStatus.displayText.contains("timer") || appStatus.displayText.contains("countdown") {
+        // Reset app status if it's related to timing or scheduling
+        switch appStatus {
+        case .scheduled, .error:
             appStatus = .ready
+        case .ready, .running:
+            break  // Keep current state
         }
     }
     
@@ -349,25 +410,32 @@ enum TimerMode {
 enum AppStatus {
     case ready
     case running
+    case scheduled(Date)
     case error(String)
-    
+
     var displayText: String {
         switch self {
         case .ready:
             return "Ready"
         case .running:
             return "Running"
+        case .scheduled(let date):
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            return "Scheduled for \(formatter.string(from: date))"
         case .error(let message):
             return "Error: \(message)"
         }
     }
-    
+
     var color: Color {
         switch self {
         case .ready:
             return .green
         case .running:
             return .blue
+        case .scheduled:
+            return .purple
         case .error:
             return .red
         }

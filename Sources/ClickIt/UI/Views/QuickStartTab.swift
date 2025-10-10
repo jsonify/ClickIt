@@ -34,6 +34,9 @@ struct QuickStartTab: View {
                     // Inline Timing Controls
                     InlineTimingControls()
 
+                    // Inline Scheduling Controls
+                    InlineSchedulingControls()
+
                     // Quick Preset Selection
                     QuickPresetDropdown()
 
