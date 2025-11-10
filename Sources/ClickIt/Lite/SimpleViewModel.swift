@@ -73,9 +73,8 @@ final class SimpleViewModel: ObservableObject {
 
     /// Set click location from mouse position
     func setClickLocationFromMouse() {
-        if let mouseLocation = NSEvent.mouseLocation.asCGPoint() {
-            clickLocation = mouseLocation
-        }
+        let mouseLocation = NSEvent.mouseLocation.asCGPoint()
+        clickLocation = mouseLocation
     }
 
     /// Update click location
