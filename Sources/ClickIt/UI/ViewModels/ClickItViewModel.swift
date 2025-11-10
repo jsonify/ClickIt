@@ -228,7 +228,7 @@ class ClickItViewModel: ObservableObject {
             targetApplication: nil,
             maxClicks: durationMode == .clickCount ? maxClicks : nil,
             maxDuration: durationMode == .timeLimit ? durationSeconds : nil,
-            stopOnError: stopOnError,
+            stopOnError: clickSettings.isActiveTargetMode ? false : stopOnError, // Disable stopOnError for active target mode
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
             useDynamicMouseTracking: clickSettings.isActiveTargetMode, // Use active target mode setting
