@@ -33,7 +33,7 @@ let package = Package(
             name: "ClickItLite",
             dependencies: [],
             path: "Sources/ClickIt/Lite",
-            resources: []
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "ClickItTests",

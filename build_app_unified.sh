@@ -279,11 +279,35 @@ EOF
 
     # Make executable
     chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
-    
+
+    # Copy SPM resource bundles to app bundle
+    echo "📦 Copying resource bundles..."
+    # For ClickItLite: ClickIt_ClickItLite.bundle
+    # For ClickIt: ClickIt_ClickIt.bundle
+    RESOURCE_BUNDLE_NAME="ClickIt_${SPM_TARGET}.bundle"
+
+    # Find the resource bundle in the build output
+    for arch in "${ARCH_LIST[@]}"; do
+        BUILD_PATH=$(swift build -c "$BUILD_MODE" --arch "$arch" --product "$SPM_TARGET" --show-bin-path)
+        RESOURCE_BUNDLE_PATH="$BUILD_PATH/$RESOURCE_BUNDLE_NAME"
+
+        if [ -d "$RESOURCE_BUNDLE_PATH" ]; then
+            echo "✅ Found resource bundle at: $RESOURCE_BUNDLE_PATH"
+            cp -R "$RESOURCE_BUNDLE_PATH" "$APP_BUNDLE/Contents/Resources/"
+            echo "✅ Copied $RESOURCE_BUNDLE_NAME to app bundle"
+            break
+        fi
+    done
+
+    if [ ! -d "$APP_BUNDLE/Contents/Resources/$RESOURCE_BUNDLE_NAME" ]; then
+        echo "⚠️  Warning: Resource bundle $RESOURCE_BUNDLE_NAME not found"
+        echo "   App may not be able to load custom resources"
+    fi
+
     # Fix rpath for bundled frameworks (SPM builds)
     echo "🔧 Adding Frameworks directory to rpath..."
     install_name_tool -add_rpath "@loader_path/../Frameworks" "$APP_BUNDLE/Contents/MacOS/$APP_NAME" 2>/dev/null || echo "  rpath already exists or modification failed"
-    
+
     echo "✅ SPM build completed successfully!"
 fi
 

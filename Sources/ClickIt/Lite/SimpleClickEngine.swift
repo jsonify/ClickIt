@@ -104,6 +104,9 @@ final class SimpleClickEngine {
             mouseButton = .right
         }
 
+        // Debug logging
+        print("🖱️ Performing \(type) click at (\(Int(point.x)), \(Int(point.y)))")
+
         // Create and post mouse down event
         if let mouseDown = CGEvent(
             mouseEventSource: nil,
