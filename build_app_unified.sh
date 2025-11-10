@@ -8,19 +8,21 @@ BUILD_MODE="${1:-release}"   # Default to release, allow override
 BUILD_SYSTEM="${2:-auto}"    # auto, spm, xcode
 APP_VERSION="${3:-pro}"      # pro or lite, default to pro
 DIST_DIR="dist"
-EXECUTABLE_NAME="ClickIt"    # This is the binary name from Package.swift (never changes)
-APP_NAME="ClickIt"           # This is the .app bundle name (changes for Lite)
 BUNDLE_ID="com.jsonify.clickit"
 
-# Toggle between Pro and Lite versions if specified
+# Configure target and names based on version
 if [ "$APP_VERSION" = "lite" ]; then
     echo "🔄 Configuring for ClickIt Lite build..."
-    ./toggle_version.sh lite
-    APP_NAME="ClickIt Lite"  # Change only the app bundle name
+    SPM_TARGET="ClickItLite"      # SPM target name
+    EXECUTABLE_NAME="ClickItLite" # Binary name from Package.swift
+    APP_NAME="ClickIt Lite"       # .app bundle display name
     BUNDLE_ID="com.jsonify.clickit.lite"
-elif [ "$APP_VERSION" = "pro" ]; then
+else
     echo "🔄 Configuring for ClickIt Pro build..."
-    ./toggle_version.sh pro
+    SPM_TARGET="ClickIt"          # SPM target name
+    EXECUTABLE_NAME="ClickIt"     # Binary name from Package.swift
+    APP_NAME="ClickIt"            # .app bundle display name
+    BUNDLE_ID="com.jsonify.clickit"
 fi
 # Get version from Info.plist (synced with GitHub releases)
 get_version_from_plist() {
@@ -150,10 +152,10 @@ else
     # Detect available architectures (original SPM logic)
     echo "🔍 Detecting available architectures..."
     ARCH_LIST=()
-    if swift build -c "$BUILD_MODE" --arch x86_64 --show-bin-path > /dev/null 2>&1; then
+    if swift build -c "$BUILD_MODE" --arch x86_64 --product "$SPM_TARGET" --show-bin-path > /dev/null 2>&1; then
         ARCH_LIST+=("x86_64")
     fi
-    if swift build -c "$BUILD_MODE" --arch arm64 --show-bin-path > /dev/null 2>&1; then
+    if swift build -c "$BUILD_MODE" --arch arm64 --product "$SPM_TARGET" --show-bin-path > /dev/null 2>&1; then
         ARCH_LIST+=("arm64")
     fi
 
@@ -163,18 +165,19 @@ else
     fi
 
     echo "📱 Building for architectures: ${ARCH_LIST[*]}"
+    echo "🎯 Building target: $SPM_TARGET"
 
     # Build for each architecture
     BINARY_PATHS=()
     for arch in "${ARCH_LIST[@]}"; do
-        echo "⚙️  Building for $arch..."
-        if ! swift build -c "$BUILD_MODE" --arch "$arch"; then
+        echo "⚙️  Building $SPM_TARGET for $arch..."
+        if ! swift build -c "$BUILD_MODE" --arch "$arch" --product "$SPM_TARGET"; then
             echo "❌ Build failed for $arch"
             exit 1
         fi
-        
+
         # Get the actual build path
-        BUILD_PATH=$(swift build -c "$BUILD_MODE" --arch "$arch" --show-bin-path)
+        BUILD_PATH=$(swift build -c "$BUILD_MODE" --arch "$arch" --product "$SPM_TARGET" --show-bin-path)
         BINARY_PATH="$BUILD_PATH/$EXECUTABLE_NAME"  # Use executable name, not app name
         
         if [ ! -f "$BINARY_PATH" ]; then

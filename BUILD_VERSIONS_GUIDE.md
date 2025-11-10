@@ -32,11 +32,15 @@ fastlane launch_lite
 
 ## How It Works
 
-### 1. Toggle Script
+### 1. Separate SPM Targets
 
-The `toggle_version.sh` script automatically switches between Pro and Lite by:
-- Commenting/uncommenting `@main` in `ClickItApp.swift` (Pro)
-- Uncommenting/commenting `@main` in `ClickItLiteApp.swift` (Lite)
+The build system now uses **separate Swift Package Manager targets** for Pro and Lite:
+- **ClickIt** target builds from `ClickItApp.swift` (Pro entry point)
+- **ClickItLite** target builds from `ClickItLiteApp.swift` (Lite entry point)
+- Both entry points have `@main` permanently enabled
+- No file modification needed - each target excludes the other's entry point
+
+This eliminates the need to modify source files during builds, keeping your git working directory clean.
 
 ### 2. Build Script
 
@@ -92,17 +96,20 @@ New lanes have been added:
 - **Features**: 7 source files, single window, core features only
 - **Output**: `dist/ClickIt Lite.app`
 
-## Manual Switching (Advanced)
+## Package.swift Configuration
 
-If you need to manually switch without using the build system:
+The `Package.swift` defines two separate executable products:
 
-```bash
-# Switch to Lite
-./toggle_version.sh lite
-
-# Switch to Pro
-./toggle_version.sh pro
+```swift
+products: [
+    .executable(name: "ClickIt", targets: ["ClickIt"]),
+    .executable(name: "ClickItLite", targets: ["ClickItLite"])
+]
 ```
+
+Each target excludes the other's entry point:
+- **ClickIt** target excludes `Lite/ClickItLiteApp.swift`
+- **ClickItLite** target excludes `ClickItApp.swift`
 
 ## Build Output
 
@@ -168,31 +175,23 @@ For automated builds, you can specify which version to build:
 
 ## Troubleshooting
 
-### Build fails with "duplicate @main"
+### Build fails with target errors
 
-The toggle script should handle this automatically, but if it fails:
+If you encounter build errors related to targets:
 
 ```bash
-# Manually fix by running:
-./toggle_version.sh pro   # or lite
+# Clean all build artifacts
+fastlane clean
 
 # Then rebuild
-fastlane build_debug
+fastlane build_debug  # or build_lite_debug
 ```
 
 ### Wrong version being built
 
-Check which `@main` is active:
-
-```bash
-# Check ClickItApp.swift (Pro)
-grep "@main" Sources/ClickIt/ClickItApp.swift
-
-# Check ClickItLiteApp.swift (Lite)
-grep "@main" Sources/ClickIt/Lite/ClickItLiteApp.swift
-```
-
-Only ONE should be uncommented at a time.
+The build system automatically selects the correct SPM target based on the fastlane command:
+- `fastlane build_debug` / `fastlane launch` → builds **ClickIt** target (Pro)
+- `fastlane build_lite_debug` / `fastlane launch_lite` → builds **ClickItLite** target (Lite)
 
 ### Clean and rebuild
 
@@ -214,4 +213,4 @@ fastlane build_lite_debug  # or build_debug for Pro
 
 ---
 
-**Note**: The toggle script runs automatically during the build process, so you don't need to manually run it when using fastlane.
+**Note**: The build system automatically selects the correct SPM target based on which fastlane command you use. No manual file modification is required - source files remain unchanged during builds.
