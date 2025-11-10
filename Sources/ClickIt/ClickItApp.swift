@@ -76,6 +76,8 @@ struct ClickItApp: App {
             // Cleanup visual feedback overlay when app terminates
             VisualFeedbackOverlay.shared.cleanup()
             HotkeyManager.shared.cleanup()
+            // Restore cursor to normal
+            CursorManager.shared.forceRestoreNormalCursor()
         }
         
         print("ClickItApp: Safe app initialization completed")

@@ -181,6 +181,13 @@ class ClickItViewModel: ObservableObject {
     private func executeAutomation(at point: CGPoint) {
         print("ClickItViewModel: Executing automation immediately")
 
+        // Disable mouse monitoring while automation is running to prevent
+        // automated clicks from triggering the click handler
+        if clickSettings.isActiveTargetMode {
+            HotkeyManager.shared.unregisterMouseMonitor()
+            print("ClickItViewModel: Disabled mouse monitoring during automation")
+        }
+
         let config = createAutomationConfiguration(at: point)
         clickCoordinator.startAutomation(with: config)
         isRunning = true
@@ -275,6 +282,12 @@ class ClickItViewModel: ObservableObject {
         schedulingManager.cancelScheduledTask() // Cancel any scheduled tasks
         isRunning = false
         appStatus = .ready
+
+        // Re-enable mouse monitoring if active target mode is still enabled
+        if clickSettings.isActiveTargetMode {
+            HotkeyManager.shared.registerMouseMonitor()
+            print("ClickItViewModel: Re-enabled mouse monitoring after automation stopped")
+        }
 
         print("ClickItViewModel: Stopped automation with direct ClickCoordinator")
     }
@@ -577,15 +590,21 @@ class ClickItViewModel: ObservableObject {
     func emergencyStopAutomation() {
         // SIMPLE WORKING APPROACH: Direct ClickCoordinator call
         clickCoordinator.emergencyStopAutomation()
-        
+
         // Cancel any active timer
         cancelTimer()
-        
+
         // Update UI state immediately
         isRunning = false
         isPaused = false
         appStatus = .ready
-        
+
+        // Re-enable mouse monitoring if active target mode is still enabled
+        if clickSettings.isActiveTargetMode {
+            HotkeyManager.shared.registerMouseMonitor()
+            print("ClickItViewModel: Re-enabled mouse monitoring after emergency stop")
+        }
+
         print("ClickItViewModel: Emergency stop executed with direct ClickCoordinator")
     }
     
