@@ -127,28 +127,22 @@ final class SimpleViewModel: ObservableObject {
 
 private extension NSPoint {
     func asCGPoint() -> CGPoint {
-        // Convert from AppKit coordinates (bottom-left origin) to CG coordinates (top-left origin)
-        // Find the screen containing this point
-        let screens = NSScreen.screens
+        // Convert from AppKit coordinates (bottom-left origin) to CG coordinates (top-left origin).
+        // This must account for the entire virtual screen space in multi-monitor setups.
 
-        // Find which screen contains this point
-        for screen in screens {
-            let frame = screen.frame
-            if frame.contains(self) {
-                // Convert using this screen's frame
-                let screenY = frame.origin.y
-                let screenHeight = frame.height
-                return CGPoint(x: x, y: screenY + screenHeight - y)
-            }
+        // The total height of the virtual screen space is the max Y coordinate across all screens.
+        // The conversion is then to subtract the AppKit Y from this total height.
+        if let globalMaxY = NSScreen.screens.map({ $0.frame.maxY }).max() {
+            return CGPoint(x: x, y: globalMaxY - y)
         }
 
-        // Fallback: use the screen with the highest Y (topmost screen)
-        // This handles the full desktop coordinate space
-        if let maxY = screens.map({ $0.frame.maxY }).max() {
-            return CGPoint(x: x, y: maxY - y)
+        // As a fallback, use the main screen's height, which works for single-monitor setups.
+        if let mainScreen = NSScreen.main {
+            let screenHeight = mainScreen.frame.height
+            return CGPoint(x: x, y: screenHeight - y)
         }
 
-        // Ultimate fallback
+        // Ultimate fallback if no screen information is available.
         return CGPoint(x: x, y: y)
     }
 }

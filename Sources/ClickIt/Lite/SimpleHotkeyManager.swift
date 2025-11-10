@@ -15,12 +15,12 @@ final class SimpleHotkeyManager {
 
     // MARK: - Properties
 
-    nonisolated(unsafe) private var globalMonitor: Any?
-    nonisolated(unsafe) private var localMonitor: Any?
+    private var globalMonitor: Any?
+    private var localMonitor: Any?
     private var onEmergencyStop: (() -> Void)?
 
-    nonisolated(unsafe) private var globalMouseMonitor: Any?
-    nonisolated(unsafe) private var localMouseMonitor: Any?
+    private var globalMouseMonitor: Any?
+    private var localMouseMonitor: Any?
     private var onRightMouseClick: (() -> Void)?
     private var lastClickTime: TimeInterval = 0
     private let clickDebounceInterval: TimeInterval = 0.1
@@ -60,13 +60,16 @@ final class SimpleHotkeyManager {
     }
 
     /// Stop monitoring
-    nonisolated func stopMonitoring() {
+    func stopMonitoring() {
         if let monitor = globalMonitor {
             NSEvent.removeMonitor(monitor)
+            globalMonitor = nil
         }
         if let monitor = localMonitor {
             NSEvent.removeMonitor(monitor)
+            localMonitor = nil
         }
+        onEmergencyStop = nil
     }
 
     /// Start monitoring for right mouse clicks (Live Mouse Mode)
@@ -91,11 +94,17 @@ final class SimpleHotkeyManager {
 
     /// Stop mouse monitoring
     nonisolated func stopMouseMonitoring() {
-        if let monitor = globalMouseMonitor {
-            NSEvent.removeMonitor(monitor)
-        }
-        if let monitor = localMouseMonitor {
-            NSEvent.removeMonitor(monitor)
+        // Dispatch cleanup to the main actor to safely access and nil out properties.
+        Task { @MainActor in
+            if let monitor = self.globalMouseMonitor {
+                NSEvent.removeMonitor(monitor)
+                self.globalMouseMonitor = nil
+            }
+            if let monitor = self.localMouseMonitor {
+                NSEvent.removeMonitor(monitor)
+                self.localMouseMonitor = nil
+            }
+            self.onRightMouseClick = nil
         }
     }
 
