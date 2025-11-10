@@ -25,16 +25,15 @@ let package = Package(
             name: "ClickIt",
             dependencies: [],
             path: "Sources/ClickIt",
-            exclude: ["Lite/ClickItLiteApp.swift"],
+            exclude: ["Lite"],
             resources: [.process("Resources")]
         ),
         // ClickIt Lite - Simplified version
         .executableTarget(
             name: "ClickItLite",
             dependencies: [],
-            path: "Sources/ClickIt",
-            exclude: ["ClickItApp.swift"],
-            resources: [.process("Resources")]
+            path: "Sources/ClickIt/Lite",
+            resources: []
         ),
         .testTarget(
             name: "ClickItTests",
