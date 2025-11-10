@@ -34,6 +34,21 @@ final class SimpleClickEngine {
         clickType: ClickType,
         onUpdate: @escaping (Int) -> Void
     ) {
+        startClicking(
+            pointProvider: { point },
+            interval: interval,
+            clickType: clickType,
+            onUpdate: onUpdate
+        )
+    }
+
+    /// Start clicking with dynamic point generation
+    func startClicking(
+        pointProvider: @escaping () -> CGPoint,
+        interval: TimeInterval,
+        clickType: ClickType,
+        onUpdate: @escaping (Int) -> Void
+    ) {
         guard !isRunning else { return }
 
         isRunning = true
@@ -43,6 +58,9 @@ final class SimpleClickEngine {
             guard let self = self else { return }
 
             while !Task.isCancelled && self.isRunning {
+                // Get current point (can be static or dynamic)
+                let point = pointProvider()
+
                 // Perform click
                 await self.performClick(at: point, type: clickType)
                 self.clickCount += 1
