@@ -12,6 +12,14 @@ import SwiftUI
 @MainActor
 final class SimpleViewModel: ObservableObject {
 
+    // MARK: - Types
+
+    /// Coordinate mode for clicking
+    enum CoordinateMode {
+        case screenCoordinates  // Static position
+        case liveMouse          // Follow cursor
+    }
+
     // MARK: - Published Properties
 
     @Published var clickLocation: CGPoint = CGPoint(x: 500, y: 300)
@@ -20,6 +28,7 @@ final class SimpleViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var clickCount = 0
     @Published var statusMessage = "Stopped"
+    @Published var coordinateMode: CoordinateMode = .screenCoordinates
 
     // MARK: - Private Properties
 
@@ -36,7 +45,28 @@ final class SimpleViewModel: ObservableObject {
         }
     }
 
+    deinit {
+        hotkeyManager.stopMouseMonitoring()
+    }
+
     // MARK: - Public Methods
+
+    /// Set coordinate mode
+    func setCoordinateMode(_ mode: CoordinateMode) {
+        coordinateMode = mode
+
+        // Set up or tear down mouse monitoring based on mode
+        switch mode {
+        case .screenCoordinates:
+            hotkeyManager.stopMouseMonitoring()
+            statusMessage = "Screen Coordinates Mode"
+        case .liveMouse:
+            hotkeyManager.startMouseMonitoring { [weak self] in
+                self?.startClicking()
+            }
+            statusMessage = "Live Mouse Mode - Right-click to trigger"
+        }
+    }
 
     /// Start clicking
     func startClicking() {
@@ -50,8 +80,21 @@ final class SimpleViewModel: ObservableObject {
         clickCount = 0
         statusMessage = "Running: 0 clicks"
 
+        // Use appropriate point provider based on mode
+        let pointProvider: () -> CGPoint
+        switch coordinateMode {
+        case .screenCoordinates:
+            pointProvider = { [weak self] in
+                self?.clickLocation ?? CGPoint(x: 500, y: 300)
+            }
+        case .liveMouse:
+            pointProvider = {
+                NSEvent.mouseLocation.asCGPoint()
+            }
+        }
+
         clickEngine.startClicking(
-            at: clickLocation,
+            pointProvider: pointProvider,
             interval: clickInterval,
             clickType: clickType
         ) { [weak self] count in
@@ -84,9 +127,22 @@ final class SimpleViewModel: ObservableObject {
 
 private extension NSPoint {
     func asCGPoint() -> CGPoint {
-        // Convert from AppKit coordinates (bottom-left origin) to CG coordinates (top-left origin)
-        guard let screen = NSScreen.main else { return CGPoint(x: x, y: y) }
-        let screenHeight = screen.frame.height
-        return CGPoint(x: x, y: screenHeight - y)
+        // Convert from AppKit coordinates (bottom-left origin) to CG coordinates (top-left origin).
+        // This must account for the entire virtual screen space in multi-monitor setups.
+
+        // The total height of the virtual screen space is the max Y coordinate across all screens.
+        // The conversion is then to subtract the AppKit Y from this total height.
+        if let globalMaxY = NSScreen.screens.map({ $0.frame.maxY }).max() {
+            return CGPoint(x: x, y: globalMaxY - y)
+        }
+
+        // As a fallback, use the main screen's height, which works for single-monitor setups.
+        if let mainScreen = NSScreen.main {
+            let screenHeight = mainScreen.frame.height
+            return CGPoint(x: x, y: screenHeight - y)
+        }
+
+        // Ultimate fallback if no screen information is available.
+        return CGPoint(x: x, y: y)
     }
 }

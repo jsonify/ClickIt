@@ -30,6 +30,9 @@ struct SimplifiedMainView: View {
                 permissionSection
             }
 
+            // Coordinate Mode
+            coordinateModeSection
+
             // Click Location
             clickLocationSection
 
@@ -50,7 +53,7 @@ struct SimplifiedMainView: View {
             Spacer()
         }
         .padding(30)
-        .frame(width: 400, height: 550)
+        .frame(width: 400, height: 600)
         .onAppear {
             permissionManager.checkPermissions()
         }
@@ -82,32 +85,79 @@ struct SimplifiedMainView: View {
         .cornerRadius(8)
     }
 
+    private var coordinateModeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Coordinate Mode")
+                .font(.headline)
+
+            Picker("", selection: Binding(
+                get: { viewModel.coordinateMode },
+                set: { viewModel.setCoordinateMode($0) }
+            )) {
+                Text("Screen Coordinates").tag(SimpleViewModel.CoordinateMode.screenCoordinates)
+                Text("Live Mouse Mode").tag(SimpleViewModel.CoordinateMode.liveMouse)
+            }
+            .pickerStyle(.segmented)
+            .disabled(viewModel.isRunning)
+
+            if viewModel.coordinateMode == .liveMouse {
+                HStack {
+                    Image(systemName: "hand.tap.fill")
+                        .foregroundColor(.blue)
+                    Text("Right-click to trigger autoclicking")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 4)
+            }
+        }
+    }
+
     private var clickLocationSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Click Location")
                 .font(.headline)
 
-            HStack(spacing: 15) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("X: \(Int(viewModel.clickLocation.x))")
-                        .font(.system(.body, design: .monospaced))
-                    Text("Y: \(Int(viewModel.clickLocation.y))")
-                        .font(.system(.body, design: .monospaced))
-                }
-                .frame(width: 100, alignment: .leading)
+            if viewModel.coordinateMode == .screenCoordinates {
+                // Screen Coordinates Mode UI
+                HStack(spacing: 15) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("X: \(Int(viewModel.clickLocation.x))")
+                            .font(.system(.body, design: .monospaced))
+                        Text("Y: \(Int(viewModel.clickLocation.y))")
+                            .font(.system(.body, design: .monospaced))
+                    }
+                    .frame(width: 100, alignment: .leading)
 
-                Button("Set from Mouse") {
-                    viewModel.setClickLocationFromMouse()
+                    Button("Set from Mouse") {
+                        viewModel.setClickLocationFromMouse()
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(8)
+
+                Text("Click 'Set from Mouse' to capture current mouse position")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } else {
+                // Live Mouse Mode UI
+                HStack(spacing: 10) {
+                    Image(systemName: "location.fill")
+                        .foregroundColor(.green)
+                    Text("Clicks will follow cursor position")
+                        .font(.body)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(8)
+
+                Text("Move mouse to desired location before right-clicking")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
-
-            Text("Click 'Set from Mouse' to capture current mouse position")
-                .font(.caption)
-                .foregroundColor(.secondary)
         }
     }
 
@@ -152,23 +202,64 @@ struct SimplifiedMainView: View {
     }
 
     private var startStopButton: some View {
-        Button(action: {
-            if viewModel.isRunning {
-                viewModel.stopClicking()
+        Group {
+            if viewModel.coordinateMode == .screenCoordinates {
+                // Screen Coordinates Mode: Show Start/Stop button
+                Button(action: {
+                    if viewModel.isRunning {
+                        viewModel.stopClicking()
+                    } else {
+                        viewModel.startClicking()
+                    }
+                }) {
+                    Text(viewModel.isRunning ? "STOP CLICKING" : "START CLICKING")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(viewModel.isRunning ? Color.red : Color.green)
+                        .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+                .disabled(!permissionManager.hasAccessibilityPermission)
             } else {
-                viewModel.startClicking()
+                // Live Mouse Mode: Show stop button only if running
+                if viewModel.isRunning {
+                    Button(action: {
+                        viewModel.stopClicking()
+                    }) {
+                        Text("STOP CLICKING")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red)
+                            .cornerRadius(10)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    // Show instruction instead of button
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "cursorarrow.click.2")
+                                .font(.title2)
+                                .foregroundColor(.blue)
+                            Text("Right-click to start")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.blue, lineWidth: 2)
+                        )
+                    }
+                }
             }
-        }) {
-            Text(viewModel.isRunning ? "STOP CLICKING" : "START CLICKING")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(viewModel.isRunning ? Color.red : Color.green)
-                .cornerRadius(10)
         }
-        .buttonStyle(.plain)
-        .disabled(!permissionManager.hasAccessibilityPermission)
     }
 
     private var statusSection: some View {

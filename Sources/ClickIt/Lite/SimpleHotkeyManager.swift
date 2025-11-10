@@ -19,6 +19,12 @@ final class SimpleHotkeyManager {
     private var localMonitor: Any?
     private var onEmergencyStop: (() -> Void)?
 
+    private var globalMouseMonitor: Any?
+    private var localMouseMonitor: Any?
+    private var onRightMouseClick: (() -> Void)?
+    private var lastClickTime: TimeInterval = 0
+    private let clickDebounceInterval: TimeInterval = 0.1
+
     // MARK: - Singleton
 
     static let shared = SimpleHotkeyManager()
@@ -66,6 +72,42 @@ final class SimpleHotkeyManager {
         onEmergencyStop = nil
     }
 
+    /// Start monitoring for right mouse clicks (Live Mouse Mode)
+    func startMouseMonitoring(onRightClick: @escaping () -> Void) {
+        self.onRightMouseClick = onRightClick
+
+        // Monitor globally (when app is inactive)
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            // Dispatch to MainActor since global monitor runs on background thread
+            Task { @MainActor in
+                self?.handleRightMouseClick()
+            }
+        }
+
+        // Monitor locally (when app is active)
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            // Already on MainActor
+            self?.handleRightMouseClick()
+            return event // Pass through the event
+        }
+    }
+
+    /// Stop mouse monitoring
+    nonisolated func stopMouseMonitoring() {
+        // Dispatch cleanup to the main actor to safely access and nil out properties.
+        Task { @MainActor in
+            if let monitor = self.globalMouseMonitor {
+                NSEvent.removeMonitor(monitor)
+                self.globalMouseMonitor = nil
+            }
+            if let monitor = self.localMouseMonitor {
+                NSEvent.removeMonitor(monitor)
+                self.localMouseMonitor = nil
+            }
+            self.onRightMouseClick = nil
+        }
+    }
+
     // MARK: - Private Methods
 
     /// Check if the event is an emergency stop key (ESC or SPACEBAR)
@@ -75,5 +117,15 @@ final class SimpleHotkeyManager {
 
     private func handleEmergencyStop() {
         onEmergencyStop?()
+    }
+
+    /// Handle right mouse click with debouncing
+    private func handleRightMouseClick() {
+        let currentTime = CFAbsoluteTimeGetCurrent()
+        if currentTime - lastClickTime < clickDebounceInterval {
+            return
+        }
+        lastClickTime = currentTime
+        onRightMouseClick?()
     }
 }
