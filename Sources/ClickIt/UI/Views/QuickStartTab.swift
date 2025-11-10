@@ -308,7 +308,7 @@ private struct ActiveTargetModeCard: View {
                         .foregroundColor(.purple)
                         .font(.system(size: 10))
 
-                    Text("Cursor becomes crosshair. Left-click to start/stop clicking at cursor position.")
+                    Text("Cursor becomes crosshair. Right-click to start/stop clicking at cursor position.")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

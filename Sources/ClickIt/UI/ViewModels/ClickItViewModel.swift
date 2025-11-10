@@ -161,8 +161,15 @@ class ClickItViewModel: ObservableObject {
             return
         }
 
-        guard let point = targetPoint, canStartAutomation else {
+        // In active target mode, only require targetPoint and interval
+        // In normal mode, require full canStartAutomation checks
+        let hasMinimumRequirements = targetPoint != nil && totalMilliseconds > 0 && !isRunning
+        let canStart = clickSettings.isActiveTargetMode ? hasMinimumRequirements : canStartAutomation
+
+        guard let point = targetPoint, canStart else {
             print("ClickItViewModel: Cannot start automation - missing prerequisites")
+            print("  targetPoint: \(targetPoint != nil), totalMs: \(totalMilliseconds), isRunning: \(isRunning)")
+            print("  activeTargetMode: \(clickSettings.isActiveTargetMode), canStartAutomation: \(canStartAutomation)")
             return
         }
 
