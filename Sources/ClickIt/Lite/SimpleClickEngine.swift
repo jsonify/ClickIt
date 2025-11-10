@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreGraphics
+import os.log
 
 /// Simple click engine for basic auto-clicking
 @MainActor
@@ -21,6 +22,7 @@ final class SimpleClickEngine {
 
     // MARK: - Properties
 
+    private let logger = Logger(subsystem: "com.jsonify.clickit.lite", category: "SimpleClickEngine")
     private var isRunning = false
     private var clickTask: Task<Void, Never>?
     private var clickCount = 0
@@ -105,7 +107,7 @@ final class SimpleClickEngine {
         }
 
         // Debug logging
-        print("🖱️ Performing \(type) click at (\(Int(point.x)), \(Int(point.y)))")
+        logger.debug("🖱️ Performing \(type) click at (\(Int(point.x)), \(Int(point.y)))")
 
         // Create and post mouse down event
         if let mouseDown = CGEvent(

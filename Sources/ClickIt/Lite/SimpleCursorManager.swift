@@ -7,6 +7,7 @@
 
 import AppKit
 import SwiftUI
+import os.log
 
 class SimpleCursorManager {
 
@@ -16,6 +17,7 @@ class SimpleCursorManager {
 
     // MARK: - Properties
 
+    private let logger = Logger(subsystem: "com.jsonify.clickit.lite", category: "SimpleCursorManager")
     private var customCursor: NSCursor?
     private var originalCursor: NSCursor?
     private var cursorUpdateTimer: Timer?
@@ -32,14 +34,14 @@ class SimpleCursorManager {
     /// Activates the custom target cursor system-wide
     func activateCustomCursor() {
         guard let customCursor = customCursor else {
-            print("❌ Custom cursor not available")
+            logger.error("❌ Custom cursor not available")
             showDebugAlert("Cursor Failed", "Custom cursor could not be loaded. Check console for details.")
             return
         }
 
         // Prevent double activation
         if isCursorActive {
-            print("ℹ️ Custom cursor already active")
+            logger.info("ℹ️ Custom cursor already active")
             return
         }
 
@@ -58,7 +60,7 @@ class SimpleCursorManager {
             self.customCursor?.set()
         }
 
-        print("✅ Custom target cursor activated with continuous refresh")
+        logger.info("✅ Custom target cursor activated with continuous refresh")
         // Optional: Uncomment to show success alert
         // showDebugAlert("Cursor Active", "Custom target cursor has been activated")
     }
@@ -86,81 +88,61 @@ class SimpleCursorManager {
         // Restore arrow cursor
         NSCursor.arrow.set()
 
-        print("✅ Default cursor restored")
+        logger.info("✅ Default cursor restored")
     }
 
     // MARK: - Private Methods
 
     /// Finds the correct resource bundle for Swift Package Manager
     private func findResourceBundle() -> Bundle {
-        // Strategy 1: Look for SPM resource bundle (swift run / debug builds)
-        if let bundleURL = Bundle.main.url(forResource: "ClickIt_ClickItLite", withExtension: "bundle"),
-           let resourceBundle = Bundle(url: bundleURL) {
-            print("✅ Found SPM resource bundle at: \(bundleURL.path)")
-            return resourceBundle
-        }
-
-        // Strategy 2: Look in Contents/Resources for packaged .app builds
-        if let resourcePath = Bundle.main.resourcePath,
-           let bundlePath = Bundle(path: resourcePath + "/ClickIt_ClickItLite.bundle") {
-            print("✅ Found resource bundle in app Resources: \(resourcePath)/ClickIt_ClickItLite.bundle")
-            return bundlePath
-        }
-
-        // Strategy 3: Try Module.bundle (for Xcode builds)
-        if let bundleURL = Bundle.main.url(forResource: "ClickItLite_ClickItLite", withExtension: "bundle"),
-           let resourceBundle = Bundle(url: bundleURL) {
-            print("✅ Found module resource bundle at: \(bundleURL.path)")
-            return resourceBundle
-        }
-
-        // Fallback to Bundle.main (resources might be directly in app bundle)
-        print("⚠️ Using Bundle.main as fallback")
-        return Bundle.main
+        // For Swift 5.3+, Swift Package Manager automatically synthesizes a `Bundle.module` static property
+        // for any target that includes resources. This is the modern and recommended way to access them.
+        return Bundle.module
     }
 
     private func setupCustomCursor() {
-        // Debug: Print bundle path
-        print("🔍 Bundle path: \(Bundle.main.bundlePath)")
-        print("🔍 Resource path: \(Bundle.main.resourcePath ?? "nil")")
+        // Debug: Log bundle path
+        logger.debug("🔍 Bundle path: \(Bundle.main.bundlePath)")
+        logger.debug("🔍 Resource path: \(Bundle.main.resourcePath ?? "nil")")
 
         // Find the correct resource bundle for Swift Package Manager
         let bundle = findResourceBundle()
-        print("🔍 Using bundle: \(bundle.bundlePath)")
+        logger.debug("🔍 Using bundle: \(bundle.bundlePath)")
 
         // Try to load the target image from resources
         guard let imageURL = bundle.url(forResource: "target-64", withExtension: "png") else {
-            print("❌ Failed to find target-64.png in bundle")
-            print("🔍 Searched in: \(bundle.bundleURL)")
+            logger.error("❌ Failed to find target-64.png in bundle")
+            logger.error("🔍 Searched in: \(bundle.bundleURL)")
 
             // Try to list all resources
             if let resourcePath = bundle.resourcePath {
                 do {
                     let items = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
-                    print("📁 Available resources in bundle: \(items)")
+                    logger.debug("📁 Available resources in bundle: \(items)")
                 } catch {
-                    print("❌ Could not list resources: \(error)")
+                    logger.error("❌ Could not list resources: \(error)")
                 }
             }
             return
         }
 
-        print("✅ Found image at: \(imageURL.path)")
+        logger.debug("✅ Found image at: \(imageURL.path)")
 
         guard let image = NSImage(contentsOf: imageURL) else {
-            print("❌ Failed to load NSImage from: \(imageURL.path)")
+            logger.error("❌ Failed to load NSImage from: \(imageURL.path)")
             return
         }
 
-        print("✅ NSImage loaded, original size: \(image.size)")
+        logger.debug("✅ NSImage loaded, original size: \(image.size)")
 
-        // Set the cursor size (64x64 pixels)
-        image.size = NSSize(width: 64, height: 64)
+        // Set the cursor size
+        let cursorDimension: CGFloat = 64
+        image.size = NSSize(width: cursorDimension, height: cursorDimension)
 
-        // Create cursor with hotspot at center (32, 32)
-        let hotspot = NSPoint(x: 32, y: 32)
+        // Create cursor with hotspot at center
+        let hotspot = NSPoint(x: cursorDimension / 2, y: cursorDimension / 2)
         customCursor = NSCursor(image: image, hotSpot: hotspot)
 
-        print("✅ Custom cursor created successfully")
+        logger.info("✅ Custom cursor created successfully")
     }
 }
