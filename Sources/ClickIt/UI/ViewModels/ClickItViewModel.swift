@@ -494,6 +494,12 @@ class ClickItViewModel: ObservableObject {
                 self.appStatus = .ready
                 // Also cancel any active timer when automation stops
                 self.cancelTimer()
+
+                // Re-enable mouse monitoring if active target mode is still enabled
+                if self.clickSettings.isActiveTargetMode {
+                    HotkeyManager.shared.registerMouseMonitor()
+                    print("ClickItViewModel: Re-enabled mouse monitoring after external stop")
+                }
             }
         }
         .store(in: &cancellables)
