@@ -521,14 +521,7 @@ class ClickItViewModel: ObservableObject {
     }
 
     private func setupMouseClickHandler() {
-        // Set up the LEFT click handler for active target mode (START)
-        HotkeyManager.shared.onLeftMouseClick = { [weak self] in
-            Task { @MainActor in
-                self?.handleActiveTargetLeftClick()
-            }
-        }
-
-        // Set up the RIGHT click handler for active target mode (STOP)
+        // Set up the RIGHT click handler for active target mode (TOGGLE start/stop)
         HotkeyManager.shared.onRightMouseClick = { [weak self] in
             Task { @MainActor in
                 self?.handleActiveTargetRightClick()
@@ -537,23 +530,22 @@ class ClickItViewModel: ObservableObject {
 
         // Register mouse monitoring
         HotkeyManager.shared.registerMouseMonitor()
-        print("ClickItViewModel: Mouse click handlers registered (left=START, right=STOP)")
+        print("ClickItViewModel: Right-click handler registered (TOGGLE start/stop)")
     }
 
     private func removeMouseClickHandler() {
-        // Remove the click handlers
-        HotkeyManager.shared.onLeftMouseClick = nil
+        // Remove the click handler
         HotkeyManager.shared.onRightMouseClick = nil
 
         // Unregister mouse monitoring
         HotkeyManager.shared.unregisterMouseMonitor()
-        print("ClickItViewModel: Mouse click handlers removed")
+        print("ClickItViewModel: Right-click handler removed")
     }
 
-    private func handleActiveTargetLeftClick() {
+    private func handleActiveTargetRightClick() {
         // Prevent re-entrancy from rapid clicks or automated clicks
         guard !isProcessingActiveTargetClick else {
-            print("ClickItViewModel: Ignoring left-click - already processing")
+            print("ClickItViewModel: Ignoring right-click - already processing")
             return
         }
 
@@ -565,11 +557,13 @@ class ClickItViewModel: ObservableObject {
             }
         }
 
-        print("ClickItViewModel: Active target LEFT-CLICK detected, isRunning: \(isRunning)")
+        print("ClickItViewModel: Active target RIGHT-CLICK detected, isRunning: \(isRunning)")
 
-        // Left-click: START automation only
+        // Right-click: TOGGLE automation (start if stopped, stop if running)
         if isRunning {
-            print("ClickItViewModel: Automation already running - ignoring left-click (use right-click or ESC to stop)")
+            // Stop automation
+            stopAutomation()
+            print("ClickItViewModel: Stopped automation via right-click")
         } else {
             // Start automation - but only if other prerequisites are met
             if canStartAutomation || clickSettings.isActiveTargetMode {
@@ -583,36 +577,10 @@ class ClickItViewModel: ObservableObject {
                 }
 
                 startAutomation()
-                print("ClickItViewModel: Started automation via left-click")
+                print("ClickItViewModel: Started automation via right-click")
             } else {
                 print("ClickItViewModel: Cannot start automation - prerequisites not met")
             }
-        }
-    }
-
-    private func handleActiveTargetRightClick() {
-        // Prevent re-entrancy
-        guard !isProcessingActiveTargetClick else {
-            print("ClickItViewModel: Ignoring right-click - already processing")
-            return
-        }
-
-        isProcessingActiveTargetClick = true
-        defer {
-            // Reset the flag after a short delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                self?.isProcessingActiveTargetClick = false
-            }
-        }
-
-        print("ClickItViewModel: Active target RIGHT-CLICK detected, isRunning: \(isRunning)")
-
-        // Right-click: STOP automation only
-        if isRunning {
-            stopAutomation()
-            print("ClickItViewModel: Stopped automation via right-click")
-        } else {
-            print("ClickItViewModel: Automation not running - ignoring right-click")
         }
     }
 

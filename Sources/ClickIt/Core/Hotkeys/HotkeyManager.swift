@@ -28,10 +28,7 @@ class HotkeyManager: ObservableObject {
 
     // MARK: - Mouse Click Handling
 
-    /// Callback invoked when left mouse button is clicked (for active target mode - START)
-    var onLeftMouseClick: (() -> Void)?
-
-    /// Callback invoked when right mouse button is clicked (for active target mode - STOP)
+    /// Callback invoked when right mouse button is clicked (for active target mode - TOGGLE)
     var onRightMouseClick: (() -> Void)?
 
     private var lastMouseClickTime: TimeInterval = 0
@@ -99,18 +96,18 @@ class HotkeyManager: ObservableObject {
         // Unregister existing monitors first
         unregisterMouseMonitor()
 
-        // Monitor both left and right mouse clicks globally (when app is in background)
-        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+        // Monitor right mouse clicks globally (when app is in background)
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
             self?.handleMouseClick(event)
         }
 
-        // Monitor both left and right mouse clicks locally (when app is in foreground)
-        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+        // Monitor right mouse clicks locally (when app is in foreground)
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
             self?.handleMouseClick(event)
             return event // Pass through the event
         }
 
-        print("HotkeyManager: Successfully registered mouse click monitoring (left + right)")
+        print("HotkeyManager: Successfully registered right-click monitoring (toggle start/stop)")
     }
 
     /// Unregister mouse click monitoring
@@ -163,22 +160,12 @@ class HotkeyManager: ObservableObject {
 
         lastMouseClickTime = currentTime
 
-        // Differentiate between left and right clicks
-        switch event.type {
-        case .leftMouseDown:
-            print("HotkeyManager: Left mouse click detected for active target mode (START)")
-            Task { @MainActor in
-                self.onLeftMouseClick?()
-            }
-
-        case .rightMouseDown:
-            print("HotkeyManager: Right mouse click detected for active target mode (STOP)")
+        // Handle right-click for toggle (start/stop)
+        if event.type == .rightMouseDown {
+            print("HotkeyManager: Right-click detected for active target mode (TOGGLE)")
             Task { @MainActor in
                 self.onRightMouseClick?()
             }
-
-        default:
-            break
         }
     }
     
