@@ -8,14 +8,15 @@ BUILD_MODE="${1:-release}"   # Default to release, allow override
 BUILD_SYSTEM="${2:-auto}"    # auto, spm, xcode
 APP_VERSION="${3:-pro}"      # pro or lite, default to pro
 DIST_DIR="dist"
-APP_NAME="ClickIt"
+EXECUTABLE_NAME="ClickIt"    # This is the binary name from Package.swift (never changes)
+APP_NAME="ClickIt"           # This is the .app bundle name (changes for Lite)
 BUNDLE_ID="com.jsonify.clickit"
 
 # Toggle between Pro and Lite versions if specified
 if [ "$APP_VERSION" = "lite" ]; then
     echo "🔄 Configuring for ClickIt Lite build..."
     ./toggle_version.sh lite
-    APP_NAME="ClickIt Lite"
+    APP_NAME="ClickIt Lite"  # Change only the app bundle name
     BUNDLE_ID="com.jsonify.clickit.lite"
 elif [ "$APP_VERSION" = "pro" ]; then
     echo "🔄 Configuring for ClickIt Pro build..."
@@ -174,7 +175,7 @@ else
         
         # Get the actual build path
         BUILD_PATH=$(swift build -c "$BUILD_MODE" --arch "$arch" --show-bin-path)
-        BINARY_PATH="$BUILD_PATH/$APP_NAME"
+        BINARY_PATH="$BUILD_PATH/$EXECUTABLE_NAME"  # Use executable name, not app name
         
         if [ ! -f "$BINARY_PATH" ]; then
             echo "❌ Binary not found at $BINARY_PATH"
