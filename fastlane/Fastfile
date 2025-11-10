@@ -14,11 +14,11 @@ BUNDLE_ID = "com.jsonify.clickit"
 DIST_DIR = "dist"
 
 platform :mac do
-  desc "Build ClickIt app (Debug)"
+  desc "Build ClickIt Pro app (Debug)"
   lane :build_debug do
     Dir.chdir("..") do
-      sh("./build_app_unified.sh debug spm")
-      
+      sh("./build_app_unified.sh debug spm pro")
+
       # Apply adhoc signature if no certificate was found
       app_path = "dist/ClickIt.app"
       if File.exist?(app_path)
@@ -37,11 +37,11 @@ platform :mac do
     UI.message("App location: dist/ClickIt.app")
   end
 
-  desc "Build ClickIt app (Release)"
+  desc "Build ClickIt Pro app (Release)"
   lane :build_release do
     Dir.chdir("..") do
-      sh("./build_app_unified.sh release spm")
-      
+      sh("./build_app_unified.sh release spm pro")
+
       # Apply adhoc signature if no certificate was found
       app_path = "dist/ClickIt.app"
       if File.exist?(app_path)
@@ -60,13 +60,68 @@ platform :mac do
     UI.message("App location: dist/ClickIt.app")
   end
 
-  desc "Build and run ClickIt app"
+  desc "Build ClickIt Lite app (Debug)"
+  lane :build_lite_debug do
+    Dir.chdir("..") do
+      sh("./build_app_unified.sh debug spm lite")
+
+      # Apply adhoc signature if no certificate was found
+      app_path = "dist/ClickIt Lite.app"
+      if File.exist?(app_path)
+        begin
+          # Check if app is already properly signed
+          sh("codesign -v '#{app_path}' 2>/dev/null")
+          UI.message("✅ App already properly signed")
+        rescue
+          UI.message("🔐 Applying adhoc signature for local development...")
+          sh("codesign --force --deep --sign - --timestamp=none --options=runtime '#{app_path}'")
+          UI.success("✅ Adhoc signature applied successfully")
+        end
+      end
+    end
+    UI.success("ClickIt Lite debug build completed! 🎉")
+    UI.message("App location: dist/ClickIt Lite.app")
+  end
+
+  desc "Build ClickIt Lite app (Release)"
+  lane :build_lite_release do
+    Dir.chdir("..") do
+      sh("./build_app_unified.sh release spm lite")
+
+      # Apply adhoc signature if no certificate was found
+      app_path = "dist/ClickIt Lite.app"
+      if File.exist?(app_path)
+        begin
+          # Check if app is already properly signed
+          sh("codesign -v '#{app_path}' 2>/dev/null")
+          UI.message("✅ App already properly signed")
+        rescue
+          UI.message("🔐 Applying adhoc signature for local development...")
+          sh("codesign --force --deep --sign - --timestamp=none --options=runtime '#{app_path}'")
+          UI.success("✅ Adhoc signature applied successfully")
+        end
+      end
+    end
+    UI.success("ClickIt Lite release build completed! 🚀")
+    UI.message("App location: dist/ClickIt Lite.app")
+  end
+
+  desc "Build and run ClickIt Pro app"
   lane :launch do
     build_debug
     Dir.chdir("..") do
       sh("./run_clickit_unified.sh app")
     end
-    UI.success("ClickIt launched! 🖱️")
+    UI.success("ClickIt Pro launched! 🖱️")
+  end
+
+  desc "Build and run ClickIt Lite app"
+  lane :launch_lite do
+    build_lite_debug
+    Dir.chdir("..") do
+      sh("open 'dist/ClickIt Lite.app'")
+    end
+    UI.success("ClickIt Lite launched! 🖱️")
   end
 
   desc "Clean build artifacts"

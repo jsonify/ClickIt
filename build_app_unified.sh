@@ -4,11 +4,23 @@ set -e  # Exit on any error
 
 # Unified ClickIt build script supporting both SPM and Xcode workflows
 
-BUILD_MODE="${1:-release}"  # Default to release, allow override
+BUILD_MODE="${1:-release}"   # Default to release, allow override
 BUILD_SYSTEM="${2:-auto}"    # auto, spm, xcode
+APP_VERSION="${3:-pro}"      # pro or lite, default to pro
 DIST_DIR="dist"
 APP_NAME="ClickIt"
 BUNDLE_ID="com.jsonify.clickit"
+
+# Toggle between Pro and Lite versions if specified
+if [ "$APP_VERSION" = "lite" ]; then
+    echo "🔄 Configuring for ClickIt Lite build..."
+    ./toggle_version.sh lite
+    APP_NAME="ClickIt Lite"
+    BUNDLE_ID="com.jsonify.clickit.lite"
+elif [ "$APP_VERSION" = "pro" ]; then
+    echo "🔄 Configuring for ClickIt Pro build..."
+    ./toggle_version.sh pro
+fi
 # Get version from Info.plist (synced with GitHub releases)
 get_version_from_plist() {
     /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" ClickIt/Info.plist 2>/dev/null || echo "1.0.0"
@@ -19,6 +31,7 @@ BUILD_NUMBER=$(date +%Y%m%d%H%M)
 
 echo "🔨 Building $APP_NAME app bundle ($BUILD_MODE mode)..."
 echo "📦 Version: $VERSION (from Info.plist, synced with GitHub releases)"
+echo "🏷️  Edition: $([ "$APP_VERSION" = "lite" ] && echo "Lite (Simplified)" || echo "Pro (Full Featured)")"
 
 # Validate version is synchronized with GitHub (optional validation)
 if command -v gh > /dev/null 2>&1; then
