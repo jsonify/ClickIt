@@ -30,11 +30,9 @@ final class SimpleViewModel: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        // Set up emergency stop handler
+        // Set up emergency stop handler (already on MainActor)
         hotkeyManager.startMonitoring { [weak self] in
-            Task { @MainActor in
-                self?.stopClicking()
-            }
+            self?.stopClicking()
         }
     }
 
@@ -57,10 +55,9 @@ final class SimpleViewModel: ObservableObject {
             interval: clickInterval,
             clickType: clickType
         ) { [weak self] count in
-            Task { @MainActor in
-                self?.clickCount = count
-                self?.statusMessage = "Running: \(count) clicks"
-            }
+            // Already on MainActor, no need to wrap
+            self?.clickCount = count
+            self?.statusMessage = "Running: \(count) clicks"
         }
     }
 

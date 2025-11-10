@@ -32,9 +32,12 @@ final class SimpleHotkeyManager {
 
         // Monitor ESC key globally
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            // Check for ESC key (keyCode 53)
-            if event.keyCode == 53 {
-                self?.handleEmergencyStop()
+            // Check for ESC key
+            if event.keyCode == kVK_Escape {
+                // Dispatch to MainActor since global monitor runs on background thread
+                Task { @MainActor in
+                    self?.handleEmergencyStop()
+                }
             }
         }
     }

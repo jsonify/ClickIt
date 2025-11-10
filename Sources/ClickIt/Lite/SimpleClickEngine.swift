@@ -44,13 +44,11 @@ final class SimpleClickEngine {
 
             while !Task.isCancelled && self.isRunning {
                 // Perform click
-                self.performClick(at: point, type: clickType)
+                await self.performClick(at: point, type: clickType)
                 self.clickCount += 1
 
-                // Update UI
-                await MainActor.run {
-                    onUpdate(self.clickCount)
-                }
+                // Update UI (already on MainActor, no need to wrap)
+                onUpdate(self.clickCount)
 
                 // Wait for interval
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
@@ -72,7 +70,7 @@ final class SimpleClickEngine {
 
     // MARK: - Private Methods
 
-    private func performClick(at point: CGPoint, type: ClickType) {
+    private func performClick(at point: CGPoint, type: ClickType) async {
         let mouseDownType: CGEventType
         let mouseUpType: CGEventType
         let mouseButton: CGMouseButton
@@ -98,8 +96,8 @@ final class SimpleClickEngine {
             mouseDown.post(tap: .cghidEventTap)
         }
 
-        // Small delay between down and up
-        Thread.sleep(forTimeInterval: 0.01)
+        // Small delay between down and up (async to avoid blocking UI)
+        try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
 
         // Create and post mouse up event
         if let mouseUp = CGEvent(

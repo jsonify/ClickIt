@@ -12,7 +12,7 @@ struct SimplifiedMainView: View {
     // MARK: - Properties
 
     @StateObject private var viewModel = SimpleViewModel()
-    @StateObject private var permissionManager = SimplePermissionManager.shared
+    @ObservedObject private var permissionManager = SimplePermissionManager.shared
 
     // MARK: - Body
 

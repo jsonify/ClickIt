@@ -33,14 +33,12 @@ final class SimplePermissionManager: ObservableObject {
 
     /// Request accessibility permission (opens System Settings)
     func requestAccessibilityPermission() {
-        // Request permission
+        // Request permission. This is a blocking call that shows the system prompt.
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         AXIsProcessTrustedWithOptions(options as CFDictionary)
 
-        // Check again after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.checkPermissions()
-        }
+        // After the user interacts with the dialog, check the permission status again
+        checkPermissions()
     }
 
     /// Open System Settings to Privacy & Security > Accessibility
