@@ -21,7 +21,12 @@ class ClickItViewModel: ObservableObject {
 
     // Settings
     @Published var clickSettings = ClickSettings()
-    
+
+    // Expose settings for UI binding
+    var settings: ClickSettings {
+        clickSettings
+    }
+
     // Configuration Properties
     @Published var intervalHours = 0 {
         didSet {
@@ -112,6 +117,9 @@ class ClickItViewModel: ObservableObject {
     // MARK: - Dependencies
     private let clickCoordinator = ClickCoordinator.shared
     private let schedulingManager = SchedulingManager.shared
+
+    // MARK: - Active Target Mode State
+    private var isProcessingActiveTargetClick = false
     
     // MARK: - Initialization
     init() {
@@ -453,11 +461,11 @@ class ClickItViewModel: ObservableObject {
             self?.updateStatistics()
         }
         .store(in: &cancellables)
-        
+
         // Monitor automation active state to sync UI state
         clickCoordinator.$isActive.sink { [weak self] isActive in
             guard let self = self else { return }
-            
+
             // Sync ViewModel state with ClickCoordinator state
             if !isActive && (self.isRunning || self.isPaused) {
                 print("ClickItViewModel: Automation stopped externally (e.g., DELETE key), updating UI state")
@@ -469,13 +477,100 @@ class ClickItViewModel: ObservableObject {
             }
         }
         .store(in: &cancellables)
+
+        // Monitor active target mode changes
+        clickSettings.$isActiveTargetMode.sink { [weak self] isEnabled in
+            guard let self = self else { return }
+            self.handleActiveTargetModeChange(isEnabled)
+        }
+        .store(in: &cancellables)
     }
     
     private func updateStatistics() {
         // SIMPLE WORKING APPROACH: Use ClickCoordinator statistics directly
         statistics = clickCoordinator.getSessionStatistics()
     }
-    
+
+    // MARK: - Active Target Mode Management
+
+    private func handleActiveTargetModeChange(_ isEnabled: Bool) {
+        print("ClickItViewModel: Active target mode changed to \(isEnabled)")
+
+        if isEnabled {
+            // Enable active target mode
+            CursorManager.shared.showTargetCursor()
+            setupMouseClickHandler()
+        } else {
+            // Disable active target mode
+            CursorManager.shared.restoreNormalCursor()
+            removeMouseClickHandler()
+        }
+    }
+
+    private func setupMouseClickHandler() {
+        // Set up the click handler for active target mode
+        HotkeyManager.shared.onLeftMouseClick = { [weak self] in
+            Task { @MainActor in
+                self?.handleActiveTargetClick()
+            }
+        }
+
+        // Register mouse monitoring
+        HotkeyManager.shared.registerMouseMonitor()
+        print("ClickItViewModel: Mouse click handler registered for active target mode")
+    }
+
+    private func removeMouseClickHandler() {
+        // Remove the click handler
+        HotkeyManager.shared.onLeftMouseClick = nil
+
+        // Unregister mouse monitoring
+        HotkeyManager.shared.unregisterMouseMonitor()
+        print("ClickItViewModel: Mouse click handler removed")
+    }
+
+    private func handleActiveTargetClick() {
+        // Prevent re-entrancy from rapid clicks or automated clicks
+        guard !isProcessingActiveTargetClick else {
+            print("ClickItViewModel: Ignoring click - already processing")
+            return
+        }
+
+        isProcessingActiveTargetClick = true
+        defer {
+            // Reset the flag after a short delay to allow next click
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.isProcessingActiveTargetClick = false
+            }
+        }
+
+        print("ClickItViewModel: Active target click detected, isRunning: \(isRunning)")
+
+        // Toggle automation on/off with left click
+        if isRunning {
+            // Stop automation
+            stopAutomation()
+            print("ClickItViewModel: Stopped automation via active target click")
+        } else {
+            // Start automation - but only if other prerequisites are met
+            if canStartAutomation || clickSettings.isActiveTargetMode {
+                // In active target mode, capture the current mouse position
+                // This is just for validation - the actual clicking will use live position
+                if clickSettings.isActiveTargetMode {
+                    let currentMousePosition = NSEvent.mouseLocation
+                    targetPoint = currentMousePosition
+                    clickSettings.clickLocation = currentMousePosition
+                    print("ClickItViewModel: Captured mouse position for active target mode: \(currentMousePosition)")
+                }
+
+                startAutomation()
+                print("ClickItViewModel: Started automation via active target click")
+            } else {
+                print("ClickItViewModel: Cannot start automation - prerequisites not met")
+            }
+        }
+    }
+
     // MARK: - Emergency Stop
     
     /// Performs emergency stop using ClickCoordinator directly

@@ -105,7 +105,14 @@ class ClickSettings: ObservableObject {
             saveSettings()
         }
     }
-    
+
+    /// Active target mode - clicks follow cursor position
+    @Published var isActiveTargetMode: Bool = false {
+        didSet {
+            saveSettings()
+        }
+    }
+
     // MARK: - CPS Randomization Properties
     
     /// Whether to enable CPS timing randomization
@@ -231,6 +238,7 @@ class ClickSettings: ObservableObject {
             stopOnError: stopOnError,
             showVisualFeedback: showVisualFeedback,
             playSoundFeedback: playSoundFeedback,
+            isActiveTargetMode: isActiveTargetMode,
             randomizeTiming: randomizeTiming,
             timingVariancePercentage: timingVariancePercentage,
             distributionPattern: distributionPattern,
@@ -268,6 +276,7 @@ class ClickSettings: ObservableObject {
             stopOnError = settings.stopOnError
             showVisualFeedback = settings.showVisualFeedback
             playSoundFeedback = settings.playSoundFeedback
+            isActiveTargetMode = settings.isActiveTargetMode ?? false  // Default for backward compatibility
             randomizeTiming = settings.randomizeTiming
             timingVariancePercentage = settings.timingVariancePercentage
             distributionPattern = settings.distributionPattern
@@ -293,6 +302,7 @@ class ClickSettings: ObservableObject {
         stopOnError = false
         showVisualFeedback = true
         playSoundFeedback = false
+        isActiveTargetMode = false
         randomizeTiming = false
         timingVariancePercentage = 0.1
         distributionPattern = .normal
@@ -318,8 +328,8 @@ class ClickSettings: ObservableObject {
     func createAutomationConfiguration() -> AutomationConfiguration {
         let maxClicksValue = durationMode == .clickCount ? maxClicks : nil
         let maxDurationValue = durationMode == .timeLimit ? durationSeconds : nil
-        
-        print("ClickSettings: Creating automation config with location \(clickLocation), showVisualFeedback: \(showVisualFeedback)")
+
+        print("ClickSettings: Creating automation config with location \(clickLocation), showVisualFeedback: \(showVisualFeedback), activeTargetMode: \(isActiveTargetMode)")
 
         return AutomationConfiguration(
             location: clickLocation,
@@ -331,6 +341,8 @@ class ClickSettings: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(locationVariance),
+            useDynamicMouseTracking: isActiveTargetMode,
+            showVisualFeedback: showVisualFeedback,
             cpsRandomizerConfig: createCPSRandomizerConfiguration()
         )
     }
@@ -353,13 +365,14 @@ class ClickSettings: ObservableObject {
             stopOnError: stopOnError,
             showVisualFeedback: showVisualFeedback,
             playSoundFeedback: playSoundFeedback,
+            isActiveTargetMode: isActiveTargetMode,
             randomizeTiming: randomizeTiming,
             timingVariancePercentage: timingVariancePercentage,
             distributionPattern: distributionPattern,
             humannessLevel: humannessLevel,
             schedulingMode: schedulingMode,
             scheduledDateTime: scheduledDateTime,
-            exportVersion: "1.1",
+            exportVersion: "1.2",
             exportDate: Date(),
             appVersion: AppConstants.appVersion
         )
@@ -403,6 +416,7 @@ class ClickSettings: ObservableObject {
             stopOnError = importData.stopOnError
             showVisualFeedback = importData.showVisualFeedback
             playSoundFeedback = importData.playSoundFeedback
+            isActiveTargetMode = importData.isActiveTargetMode ?? false  // Default for backward compatibility
             randomizeTiming = importData.randomizeTiming
             timingVariancePercentage = importData.timingVariancePercentage
             distributionPattern = importData.distributionPattern
@@ -527,6 +541,7 @@ private struct SettingsData: Codable {
     let stopOnError: Bool
     let showVisualFeedback: Bool
     let playSoundFeedback: Bool
+    let isActiveTargetMode: Bool?  // Optional for backward compatibility
     let randomizeTiming: Bool
     let timingVariancePercentage: Double
     let distributionPattern: CPSRandomizer.DistributionPattern
@@ -550,6 +565,7 @@ struct SettingsExportData: Codable {
     let stopOnError: Bool
     let showVisualFeedback: Bool
     let playSoundFeedback: Bool
+    let isActiveTargetMode: Bool?  // Optional for backward compatibility
     let randomizeTiming: Bool
     let timingVariancePercentage: Double
     let distributionPattern: CPSRandomizer.DistributionPattern
