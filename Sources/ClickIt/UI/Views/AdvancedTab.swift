@@ -11,8 +11,7 @@ import SwiftUI
 /// Advanced tab containing developer information and app details
 struct AdvancedTab: View {
     @EnvironmentObject private var viewModel: ClickItViewModel
-    @State private var showingClickTestWindow = false
-    @State private var showingWindowDetectionTest = false
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         ScrollView {
@@ -43,10 +42,7 @@ struct AdvancedTab: View {
 
                 VStack(spacing: 12) {
                     // Developer Tools
-                    DeveloperTools(
-                        showingClickTestWindow: $showingClickTestWindow,
-                        showingWindowDetectionTest: $showingWindowDetectionTest
-                    )
+                    DeveloperTools(openWindow: openWindow)
 
                     // App information
                     AppInformation()
@@ -63,20 +59,14 @@ struct AdvancedTab: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(NSColor.windowBackgroundColor))
-        .sheet(isPresented: $showingClickTestWindow) {
-            ClickTestWindow()
-        }
-        .sheet(isPresented: $showingWindowDetectionTest) {
-            WindowDetectionTestView()
-        }
     }
 }
 
 // MARK: - Developer Tools Component
 
 private struct DeveloperTools: View {
-    @Binding var showingClickTestWindow: Bool
-    @Binding var showingWindowDetectionTest: Bool
+    let openWindow: OpenWindowAction
+    @State private var showingWindowDetectionTest = false
     @State private var isExpanded = true
 
     var body: some View {
@@ -91,7 +81,7 @@ private struct DeveloperTools: View {
 
                 // Click Test Window Button
                 Button {
-                    showingClickTestWindow = true
+                    openWindow(id: "click-test-window")
                 } label: {
                     HStack {
                         Image(systemName: "hand.tap.fill")
@@ -104,7 +94,7 @@ private struct DeveloperTools: View {
                                 .font(.subheadline)
                                 .fontWeight(.medium)
 
-                            Text("Test auto-clicker with visual targets")
+                            Text("Test auto-clicker with visual targets (opens in separate window)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -157,6 +147,9 @@ private struct DeveloperTools: View {
         .padding(12)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(8)
+        .sheet(isPresented: $showingWindowDetectionTest) {
+            WindowDetectionTestView()
+        }
     }
 }
 

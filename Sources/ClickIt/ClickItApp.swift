@@ -44,6 +44,14 @@ struct ClickItApp: App {
                 }
             }
         }
+
+        // Separate window for click test - can be moved independently
+        WindowGroup(id: "click-test-window") {
+            ClickTestWindow()
+        }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 900, height: 750)
+        .windowToolbarStyle(.unified)
     }
     
     // MARK: - Safe Initialization
