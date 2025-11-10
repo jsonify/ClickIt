@@ -18,6 +18,8 @@ class SimpleCursorManager {
 
     private var customCursor: NSCursor?
     private var originalCursor: NSCursor?
+    private var cursorUpdateTimer: Timer?
+    private var isCursorActive = false
 
     // MARK: - Initialization
 
@@ -35,13 +37,28 @@ class SimpleCursorManager {
             return
         }
 
+        // Prevent double activation
+        if isCursorActive {
+            print("ℹ️ Custom cursor already active")
+            return
+        }
+
+        isCursorActive = true
+
         // Store original cursor for potential restoration
         originalCursor = NSCursor.current
 
-        // Set custom cursor
+        // Set custom cursor immediately
         customCursor.set()
 
-        print("✅ Custom target cursor activated")
+        // Keep re-setting the cursor on a timer to ensure it stays active
+        // This is needed because macOS resets cursor on window focus changes and other events
+        cursorUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self = self, self.isCursorActive else { return }
+            self.customCursor?.set()
+        }
+
+        print("✅ Custom target cursor activated with continuous refresh")
         // Optional: Uncomment to show success alert
         // showDebugAlert("Cursor Active", "Custom target cursor has been activated")
     }
@@ -60,7 +77,15 @@ class SimpleCursorManager {
 
     /// Restores the default system cursor
     func restoreDefaultCursor() {
+        isCursorActive = false
+
+        // Stop the cursor update timer
+        cursorUpdateTimer?.invalidate()
+        cursorUpdateTimer = nil
+
+        // Restore arrow cursor
         NSCursor.arrow.set()
+
         print("✅ Default cursor restored")
     }
 
