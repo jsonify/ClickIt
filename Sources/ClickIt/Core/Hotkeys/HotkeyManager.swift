@@ -28,8 +28,12 @@ class HotkeyManager: ObservableObject {
 
     // MARK: - Mouse Click Handling
 
-    /// Callback invoked when left mouse button is clicked (for active target mode)
+    /// Callback invoked when left mouse button is clicked (for active target mode - START)
     var onLeftMouseClick: (() -> Void)?
+
+    /// Callback invoked when right mouse button is clicked (for active target mode - STOP)
+    var onRightMouseClick: (() -> Void)?
+
     private var lastMouseClickTime: TimeInterval = 0
     private let mouseClickDebounceInterval: TimeInterval = 0.1 // 100ms debounce for mouse clicks
     
@@ -95,18 +99,18 @@ class HotkeyManager: ObservableObject {
         // Unregister existing monitors first
         unregisterMouseMonitor()
 
-        // Monitor left mouse clicks globally (when app is in background)
-        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+        // Monitor both left and right mouse clicks globally (when app is in background)
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             self?.handleMouseClick(event)
         }
 
-        // Monitor left mouse clicks locally (when app is in foreground)
-        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+        // Monitor both left and right mouse clicks locally (when app is in foreground)
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             self?.handleMouseClick(event)
             return event // Pass through the event
         }
 
-        print("HotkeyManager: Successfully registered mouse click monitoring")
+        print("HotkeyManager: Successfully registered mouse click monitoring (left + right)")
     }
 
     /// Unregister mouse click monitoring
@@ -158,11 +162,23 @@ class HotkeyManager: ObservableObject {
         }
 
         lastMouseClickTime = currentTime
-        print("HotkeyManager: Left mouse click detected for active target mode")
 
-        // Invoke callback on main thread
-        Task { @MainActor in
-            self.onLeftMouseClick?()
+        // Differentiate between left and right clicks
+        switch event.type {
+        case .leftMouseDown:
+            print("HotkeyManager: Left mouse click detected for active target mode (START)")
+            Task { @MainActor in
+                self.onLeftMouseClick?()
+            }
+
+        case .rightMouseDown:
+            print("HotkeyManager: Right mouse click detected for active target mode (STOP)")
+            Task { @MainActor in
+                self.onRightMouseClick?()
+            }
+
+        default:
+            break
         }
     }
     

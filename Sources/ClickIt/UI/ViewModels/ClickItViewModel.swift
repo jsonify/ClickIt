@@ -521,31 +521,39 @@ class ClickItViewModel: ObservableObject {
     }
 
     private func setupMouseClickHandler() {
-        // Set up the click handler for active target mode
+        // Set up the LEFT click handler for active target mode (START)
         HotkeyManager.shared.onLeftMouseClick = { [weak self] in
             Task { @MainActor in
-                self?.handleActiveTargetClick()
+                self?.handleActiveTargetLeftClick()
+            }
+        }
+
+        // Set up the RIGHT click handler for active target mode (STOP)
+        HotkeyManager.shared.onRightMouseClick = { [weak self] in
+            Task { @MainActor in
+                self?.handleActiveTargetRightClick()
             }
         }
 
         // Register mouse monitoring
         HotkeyManager.shared.registerMouseMonitor()
-        print("ClickItViewModel: Mouse click handler registered for active target mode")
+        print("ClickItViewModel: Mouse click handlers registered (left=START, right=STOP)")
     }
 
     private func removeMouseClickHandler() {
-        // Remove the click handler
+        // Remove the click handlers
         HotkeyManager.shared.onLeftMouseClick = nil
+        HotkeyManager.shared.onRightMouseClick = nil
 
         // Unregister mouse monitoring
         HotkeyManager.shared.unregisterMouseMonitor()
-        print("ClickItViewModel: Mouse click handler removed")
+        print("ClickItViewModel: Mouse click handlers removed")
     }
 
-    private func handleActiveTargetClick() {
+    private func handleActiveTargetLeftClick() {
         // Prevent re-entrancy from rapid clicks or automated clicks
         guard !isProcessingActiveTargetClick else {
-            print("ClickItViewModel: Ignoring click - already processing")
+            print("ClickItViewModel: Ignoring left-click - already processing")
             return
         }
 
@@ -557,13 +565,11 @@ class ClickItViewModel: ObservableObject {
             }
         }
 
-        print("ClickItViewModel: Active target click detected, isRunning: \(isRunning)")
+        print("ClickItViewModel: Active target LEFT-CLICK detected, isRunning: \(isRunning)")
 
-        // Toggle automation on/off with left click
+        // Left-click: START automation only
         if isRunning {
-            // Stop automation
-            stopAutomation()
-            print("ClickItViewModel: Stopped automation via active target click")
+            print("ClickItViewModel: Automation already running - ignoring left-click (use right-click or ESC to stop)")
         } else {
             // Start automation - but only if other prerequisites are met
             if canStartAutomation || clickSettings.isActiveTargetMode {
@@ -577,10 +583,36 @@ class ClickItViewModel: ObservableObject {
                 }
 
                 startAutomation()
-                print("ClickItViewModel: Started automation via active target click")
+                print("ClickItViewModel: Started automation via left-click")
             } else {
                 print("ClickItViewModel: Cannot start automation - prerequisites not met")
             }
+        }
+    }
+
+    private func handleActiveTargetRightClick() {
+        // Prevent re-entrancy
+        guard !isProcessingActiveTargetClick else {
+            print("ClickItViewModel: Ignoring right-click - already processing")
+            return
+        }
+
+        isProcessingActiveTargetClick = true
+        defer {
+            // Reset the flag after a short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.isProcessingActiveTargetClick = false
+            }
+        }
+
+        print("ClickItViewModel: Active target RIGHT-CLICK detected, isRunning: \(isRunning)")
+
+        // Right-click: STOP automation only
+        if isRunning {
+            stopAutomation()
+            print("ClickItViewModel: Stopped automation via right-click")
+        } else {
+            print("ClickItViewModel: Automation not running - ignoring right-click")
         }
     }
 
