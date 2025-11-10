@@ -24,6 +24,7 @@ let package = Package(
         .executableTarget(
             name: "ClickIt",
             dependencies: [],
+            path: "Sources/ClickIt",
             exclude: ["Lite/ClickItLiteApp.swift"],
             resources: [.process("Resources")]
         ),
@@ -31,6 +32,7 @@ let package = Package(
         .executableTarget(
             name: "ClickItLite",
             dependencies: [],
+            path: "Sources/ClickIt",
             exclude: ["ClickItApp.swift"],
             resources: [.process("Resources")]
         ),
