@@ -231,7 +231,7 @@ class ClickItViewModel: ObservableObject {
             stopOnError: stopOnError,
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            useDynamicMouseTracking: false, // Normal automation uses fixed position
+            useDynamicMouseTracking: clickSettings.isActiveTargetMode, // Use active target mode setting
             showVisualFeedback: showVisualFeedback
         )
     }
