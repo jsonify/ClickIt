@@ -66,21 +66,40 @@ class SimpleCursorManager {
 
     // MARK: - Private Methods
 
+    /// Finds the correct resource bundle for Swift Package Manager
+    private func findResourceBundle() -> Bundle {
+        // For Swift Package Manager, resources are in a separate .bundle
+        // The bundle is named: ClickIt_ClickItLite.bundle
+        if let bundleURL = Bundle.main.url(forResource: "ClickIt_ClickItLite", withExtension: "bundle"),
+           let resourceBundle = Bundle(url: bundleURL) {
+            print("✅ Found SPM resource bundle at: \(bundleURL.path)")
+            return resourceBundle
+        }
+
+        // Fallback to Bundle.main (for Xcode builds or when resources are in main bundle)
+        print("⚠️ Using Bundle.main as fallback")
+        return Bundle.main
+    }
+
     private func setupCustomCursor() {
         // Debug: Print bundle path
         print("🔍 Bundle path: \(Bundle.main.bundlePath)")
         print("🔍 Resource path: \(Bundle.main.resourcePath ?? "nil")")
 
+        // Find the correct resource bundle for Swift Package Manager
+        let bundle = findResourceBundle()
+        print("🔍 Using bundle: \(bundle.bundlePath)")
+
         // Try to load the target image from resources
-        guard let imageURL = Bundle.main.url(forResource: "target-64", withExtension: "png") else {
+        guard let imageURL = bundle.url(forResource: "target-64", withExtension: "png") else {
             print("❌ Failed to find target-64.png in bundle")
-            print("🔍 Searched in: \(Bundle.main.bundleURL)")
+            print("🔍 Searched in: \(bundle.bundleURL)")
 
             // Try to list all resources
-            if let resourcePath = Bundle.main.resourcePath {
+            if let resourcePath = bundle.resourcePath {
                 do {
                     let items = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
-                    print("📁 Available resources: \(items)")
+                    print("📁 Available resources in bundle: \(items)")
                 } catch {
                     print("❌ Could not list resources: \(error)")
                 }
