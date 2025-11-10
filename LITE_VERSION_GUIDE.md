@@ -111,7 +111,9 @@ Then build with:
 swift build -c release --product ClickItLite
 ```
 
-### Option 2: Swap @main (Quick Test)
+### Option 2: Swap @main (Quick Test) ⭐ EASIEST
+
+**NOTE**: The `@main` is already commented out in ClickItLiteApp.swift to avoid build conflicts.
 
 1. **Comment out** the `@main` in `Sources/ClickIt/ClickItApp.swift`:
    ```swift
@@ -119,18 +121,19 @@ swift build -c release --product ClickItLite
    struct ClickItApp: App {
    ```
 
-2. **Ensure** `@main` is active in `Sources/ClickIt/Lite/ClickItLiteApp.swift`:
+2. **Uncomment** `@main` in `Sources/ClickIt/Lite/ClickItLiteApp.swift`:
    ```swift
-   @main  <- Should be uncommented
+   @main  <- Remove the comment slashes
    struct ClickItLiteApp: App {
    ```
 
 3. **Build**:
    ```bash
    swift build -c release
+   # OR use your existing build system (fastlane, xcodebuild, etc.)
    ```
 
-4. **To switch back**: Reverse the comments
+4. **To switch back**: Reverse the comments (uncomment ClickItApp, comment ClickItLiteApp)
 
 ### Option 3: Separate Xcode Project
 
