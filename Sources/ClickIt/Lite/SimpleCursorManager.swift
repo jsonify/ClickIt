@@ -68,15 +68,28 @@ class SimpleCursorManager {
 
     /// Finds the correct resource bundle for Swift Package Manager
     private func findResourceBundle() -> Bundle {
-        // For Swift Package Manager, resources are in a separate .bundle
-        // The bundle is named: ClickIt_ClickItLite.bundle
+        // Strategy 1: Look for SPM resource bundle (swift run / debug builds)
         if let bundleURL = Bundle.main.url(forResource: "ClickIt_ClickItLite", withExtension: "bundle"),
            let resourceBundle = Bundle(url: bundleURL) {
             print("✅ Found SPM resource bundle at: \(bundleURL.path)")
             return resourceBundle
         }
 
-        // Fallback to Bundle.main (for Xcode builds or when resources are in main bundle)
+        // Strategy 2: Look in Contents/Resources for packaged .app builds
+        if let resourcePath = Bundle.main.resourcePath,
+           let bundlePath = Bundle(path: resourcePath + "/ClickIt_ClickItLite.bundle") {
+            print("✅ Found resource bundle in app Resources: \(resourcePath)/ClickIt_ClickItLite.bundle")
+            return bundlePath
+        }
+
+        // Strategy 3: Try Module.bundle (for Xcode builds)
+        if let bundleURL = Bundle.main.url(forResource: "ClickItLite_ClickItLite", withExtension: "bundle"),
+           let resourceBundle = Bundle(url: bundleURL) {
+            print("✅ Found module resource bundle at: \(bundleURL.path)")
+            return resourceBundle
+        }
+
+        // Fallback to Bundle.main (resources might be directly in app bundle)
         print("⚠️ Using Bundle.main as fallback")
         return Bundle.main
     }
