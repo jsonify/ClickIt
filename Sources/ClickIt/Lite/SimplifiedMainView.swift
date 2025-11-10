@@ -178,11 +178,11 @@ struct SimplifiedMainView: View {
                 .fontWeight(.medium)
 
             if !viewModel.isRunning {
-                Text("Press ESC anytime to stop")
+                Text("Press ESC or SPACEBAR anytime to stop")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } else {
-                Text("Press ESC to emergency stop")
+                Text("Press ESC or SPACEBAR to emergency stop")
                     .font(.caption)
                     .foregroundColor(.red)
             }

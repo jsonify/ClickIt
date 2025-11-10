@@ -12,13 +12,26 @@ let package = Package(
         .executable(
             name: "ClickIt",
             targets: ["ClickIt"]
+        ),
+        .executable(
+            name: "ClickItLite",
+            targets: ["ClickItLite"]
         )
     ],
     dependencies: [],
     targets: [
+        // ClickIt Pro - Full-featured version
         .executableTarget(
             name: "ClickIt",
             dependencies: [],
+            exclude: ["Lite/ClickItLiteApp.swift"],
+            resources: [.process("Resources")]
+        ),
+        // ClickIt Lite - Simplified version
+        .executableTarget(
+            name: "ClickItLite",
+            dependencies: [],
+            exclude: ["ClickItApp.swift"],
             resources: [.process("Resources")]
         ),
         .testTarget(
