@@ -27,80 +27,91 @@ struct ClickTestWindow: View {
     ]
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Header with instructions
-                headerSection
+        VStack(spacing: 0) {
+            // Custom header with close button
+            HStack {
+                Text("Click Test Window")
+                    .font(.headline)
+                    .fontWeight(.semibold)
 
-                Divider()
+                Spacer()
 
-                // Main click testing area
-                ZStack {
-                    // Background
-                    Color(NSColor.controlBackgroundColor)
-
-                    // Target zones - use VStack/HStack layout instead of absolute positioning
-                    VStack(spacing: 40) {
-                        // Top row
-                        HStack(spacing: 80) {
-                            targetView(for: targets[0]) // Top Left
-                            Spacer()
-                            targetView(for: targets[1]) // Top Right
-                        }
-
-                        Spacer()
-
-                        // Center row
-                        HStack {
-                            Spacer()
-                            targetView(for: targets[2]) // Center
-                            Spacer()
-                        }
-
-                        Spacer()
-
-                        // Bottom row
-                        HStack(spacing: 80) {
-                            targetView(for: targets[3]) // Bottom Left
-                            Spacer()
-                            targetView(for: targets[4]) // Bottom Right
-                        }
-                    }
-                    .padding(60)
-
-                    // Click indicator overlay
-                    if showClickIndicator {
-                        Circle()
-                            .fill(Color.yellow.opacity(0.5))
-                            .frame(width: 30, height: 30)
-                            .position(indicatorPosition)
-                            .transition(.scale.combined(with: .opacity))
-                    }
+                Button("Reset") {
+                    resetCounters()
                 }
-                .frame(minHeight: 600)
+                .buttonStyle(.bordered)
 
-                Divider()
-
-                // Statistics panel
-                statisticsPanel
+                Button("Close") {
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.cancelAction)
             }
-            .navigationTitle("Click Test Window")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Reset") {
-                        resetCounters()
-                    }
-                }
+            .padding()
+            .background(Color(NSColor.windowBackgroundColor))
 
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        dismiss()
+            Divider()
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Header with instructions
+                    headerSection
+
+                    Divider()
+
+                    // Main click testing area
+                    ZStack {
+                        // Background
+                        Color(NSColor.controlBackgroundColor)
+
+                        // Target zones - use VStack/HStack layout instead of absolute positioning
+                        VStack(spacing: 30) {
+                            // Top row
+                            HStack(spacing: 60) {
+                                targetView(for: targets[0]) // Top Left
+                                Spacer()
+                                targetView(for: targets[1]) // Top Right
+                            }
+
+                            Spacer()
+
+                            // Center row
+                            HStack {
+                                Spacer()
+                                targetView(for: targets[2]) // Center
+                                Spacer()
+                            }
+
+                            Spacer()
+
+                            // Bottom row
+                            HStack(spacing: 60) {
+                                targetView(for: targets[3]) // Bottom Left
+                                Spacer()
+                                targetView(for: targets[4]) // Bottom Right
+                            }
+                        }
+                        .padding(40)
+
+                        // Click indicator overlay
+                        if showClickIndicator {
+                            Circle()
+                                .fill(Color.yellow.opacity(0.5))
+                                .frame(width: 30, height: 30)
+                                .position(indicatorPosition)
+                                .transition(.scale.combined(with: .opacity))
+                        }
                     }
+                    .frame(height: 500)
+
+                    Divider()
+
+                    // Statistics panel
+                    statisticsPanel
                 }
             }
         }
-        .frame(minWidth: 1000, minHeight: 800)
-        .frame(idealWidth: 1200, idealHeight: 900)
+        .frame(width: 900, height: 750)
     }
 
     // MARK: - View Components
@@ -140,17 +151,17 @@ struct ClickTestWindow: View {
     }
 
     private func targetView(for target: ClickTarget) -> some View {
-        let size: CGFloat = 150
+        let size: CGFloat = 130
 
         return VStack(spacing: 8) {
             // Click counter
             Text("\(clickCounts[target.id] ?? 0)")
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .font(.system(size: 36, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
 
             // Target name
             Text(target.name)
-                .font(.subheadline)
+                .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
         }
