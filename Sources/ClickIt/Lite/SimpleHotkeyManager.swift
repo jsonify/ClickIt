@@ -60,16 +60,13 @@ final class SimpleHotkeyManager {
     }
 
     /// Stop monitoring
-    func stopMonitoring() {
+    nonisolated func stopMonitoring() {
         if let monitor = globalMonitor {
             NSEvent.removeMonitor(monitor)
-            globalMonitor = nil
         }
         if let monitor = localMonitor {
             NSEvent.removeMonitor(monitor)
-            localMonitor = nil
         }
-        onEmergencyStop = nil
     }
 
     /// Start monitoring for right mouse clicks (Live Mouse Mode)
@@ -93,16 +90,13 @@ final class SimpleHotkeyManager {
     }
 
     /// Stop mouse monitoring
-    func stopMouseMonitoring() {
+    nonisolated func stopMouseMonitoring() {
         if let monitor = globalMouseMonitor {
             NSEvent.removeMonitor(monitor)
-            globalMouseMonitor = nil
         }
         if let monitor = localMouseMonitor {
             NSEvent.removeMonitor(monitor)
-            localMouseMonitor = nil
         }
-        onRightMouseClick = nil
     }
 
     // MARK: - Private Methods

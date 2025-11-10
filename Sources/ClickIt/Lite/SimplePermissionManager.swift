@@ -45,7 +45,9 @@ final class SimplePermissionManager: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             // Re-check permissions when app becomes active (e.g., returning from System Settings)
-            self?.checkPermissions()
+            Task { @MainActor in
+                self?.checkPermissions()
+            }
         }
     }
 
