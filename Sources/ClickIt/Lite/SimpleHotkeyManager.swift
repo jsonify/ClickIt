@@ -15,12 +15,12 @@ final class SimpleHotkeyManager {
 
     // MARK: - Properties
 
-    private var globalMonitor: Any?
-    private var localMonitor: Any?
+    nonisolated(unsafe) private var globalMonitor: Any?
+    nonisolated(unsafe) private var localMonitor: Any?
     private var onEmergencyStop: (() -> Void)?
 
-    private var globalMouseMonitor: Any?
-    private var localMouseMonitor: Any?
+    nonisolated(unsafe) private var globalMouseMonitor: Any?
+    nonisolated(unsafe) private var localMouseMonitor: Any?
     private var onRightMouseClick: (() -> Void)?
     private var lastClickTime: TimeInterval = 0
     private let clickDebounceInterval: TimeInterval = 0.1
