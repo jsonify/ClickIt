@@ -15,14 +15,21 @@ final class SimpleClickEngine {
 
     // MARK: - Types
 
-    enum ClickType {
+    enum ClickType: CustomStringConvertible {
         case left
         case right
+
+        var description: String {
+            switch self {
+            case .left: return "left"
+            case .right: return "right"
+            }
+        }
     }
 
     // MARK: - Properties
 
-    private let logger = Logger(subsystem: "com.jsonify.clickit.lite", category: "SimpleClickEngine")
+    private let logger = Logger(subsystem: LoggingConstants.subsystem, category: "SimpleClickEngine")
     private var isRunning = false
     private var clickTask: Task<Void, Never>?
     private var clickCount = 0

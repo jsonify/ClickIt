@@ -17,7 +17,7 @@ class SimpleCursorManager {
 
     // MARK: - Properties
 
-    private let logger = Logger(subsystem: "com.jsonify.clickit.lite", category: "SimpleCursorManager")
+    private let logger = Logger(subsystem: LoggingConstants.subsystem, category: "SimpleCursorManager")
     private var customCursor: NSCursor?
     private var originalCursor: NSCursor?
     private var cursorUpdateTimer: Timer?
@@ -101,6 +101,10 @@ class SimpleCursorManager {
     }
 
     private func setupCustomCursor() {
+        // Define cursor properties at the top for easy modification
+        let cursorDimension: CGFloat = 64
+        let cursorImageName = "target-\(Int(cursorDimension))"
+
         // Debug: Log bundle path
         logger.debug("🔍 Bundle path: \(Bundle.main.bundlePath)")
         logger.debug("🔍 Resource path: \(Bundle.main.resourcePath ?? "nil")")
@@ -110,8 +114,8 @@ class SimpleCursorManager {
         logger.debug("🔍 Using bundle: \(bundle.bundlePath)")
 
         // Try to load the target image from resources
-        guard let imageURL = bundle.url(forResource: "target-64", withExtension: "png") else {
-            logger.error("❌ Failed to find target-64.png in bundle")
+        guard let imageURL = bundle.url(forResource: cursorImageName, withExtension: "png") else {
+            logger.error("❌ Failed to find \(cursorImageName).png in bundle")
             logger.error("🔍 Searched in: \(bundle.bundleURL)")
 
             // Try to list all resources
@@ -133,10 +137,9 @@ class SimpleCursorManager {
             return
         }
 
-        logger.debug("✅ NSImage loaded, original size: \(image.size)")
+        logger.debug("✅ NSImage loaded, original size: \(String(describing: image.size))")
 
         // Set the cursor size
-        let cursorDimension: CGFloat = 64
         image.size = NSSize(width: cursorDimension, height: cursorDimension)
 
         // Create cursor with hotspot at center
