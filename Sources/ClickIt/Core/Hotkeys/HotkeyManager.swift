@@ -17,12 +17,22 @@ class HotkeyManager: ObservableObject {
     @Published var emergencyStopActivated: Bool = false
     
     // MARK: - Private Properties
-    
+
     private var globalEventMonitor: Any?
     private var localEventMonitor: Any?
+    private var globalMouseMonitor: Any?
+    private var localMouseMonitor: Any?
     private var lastHotkeyTime: TimeInterval = 0
     private let hotkeyDebounceInterval: TimeInterval = 0.01 // 10ms debounce for ultra-fast emergency response
     private var responseTimeTracker: EmergencyStopResponseTracker?
+
+    // MARK: - Mouse Click Handling
+
+    /// Callback invoked when right mouse button is clicked (for active target mode - TOGGLE)
+    var onRightMouseClick: (() -> Void)?
+
+    private var lastMouseClickTime: TimeInterval = 0
+    private let mouseClickDebounceInterval: TimeInterval = 0.1 // 100ms debounce for mouse clicks
     
     // MARK: - Initialization
     
@@ -36,6 +46,7 @@ class HotkeyManager: ObservableObject {
     
     func cleanup() {
         unregisterGlobalHotkey()
+        unregisterMouseMonitor()
     }
     
     func registerGlobalHotkey(_ config: HotkeyConfiguration) -> Bool {
@@ -70,14 +81,48 @@ class HotkeyManager: ObservableObject {
             NSEvent.removeMonitor(monitor)
             globalEventMonitor = nil
         }
-        
+
         if let monitor = localEventMonitor {
             NSEvent.removeMonitor(monitor)
             localEventMonitor = nil
         }
-        
+
         isRegistered = false
         print("HotkeyManager: Successfully unregistered hotkey monitoring")
+    }
+
+    /// Register global mouse click monitoring for active target mode
+    func registerMouseMonitor() {
+        // Unregister existing monitors first
+        unregisterMouseMonitor()
+
+        // Monitor right mouse clicks globally (when app is in background)
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            self?.handleMouseClick(event)
+        }
+
+        // Monitor right mouse clicks locally (when app is in foreground)
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            self?.handleMouseClick(event)
+            return event // Pass through the event
+        }
+
+        print("HotkeyManager: Successfully registered right-click monitoring (toggle start/stop)")
+    }
+
+    /// Unregister mouse click monitoring
+    func unregisterMouseMonitor() {
+        if let monitor = globalMouseMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalMouseMonitor = nil
+        }
+
+        if let monitor = localMouseMonitor {
+            NSEvent.removeMonitor(monitor)
+            localMouseMonitor = nil
+        }
+
+        print("HotkeyManager: Successfully unregistered mouse click monitoring")
     }
     
     // MARK: - Private Methods
@@ -91,17 +136,36 @@ class HotkeyManager: ObservableObject {
     
     private func handleMultiKeyEvent(_ event: NSEvent) {
         let currentTime = CFAbsoluteTimeGetCurrent()
-        
+
         // Debounce emergency stop to prevent rapid fire (50ms for emergency response)
         if currentTime - lastHotkeyTime < hotkeyDebounceInterval {
             return
         }
-        
+
         // Check if this event matches any emergency stop key
         if let matchedConfig = matchEmergencyStopKey(event) {
             print("HotkeyManager: Emergency stop key activated - \(matchedConfig.description)")
             lastHotkeyTime = currentTime
             handleEmergencyStop(triggeredBy: matchedConfig)
+        }
+    }
+
+    private func handleMouseClick(_ event: NSEvent) {
+        let currentTime = CFAbsoluteTimeGetCurrent()
+
+        // Debounce mouse clicks to prevent accidental double-clicks
+        if currentTime - lastMouseClickTime < mouseClickDebounceInterval {
+            return
+        }
+
+        lastMouseClickTime = currentTime
+
+        // Handle right-click for toggle (start/stop)
+        if event.type == .rightMouseDown {
+            print("HotkeyManager: Right-click detected for active target mode (TOGGLE)")
+            Task { @MainActor in
+                self.onRightMouseClick?()
+            }
         }
     }
     

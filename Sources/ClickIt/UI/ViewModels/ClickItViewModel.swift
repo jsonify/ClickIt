@@ -21,7 +21,12 @@ class ClickItViewModel: ObservableObject {
 
     // Settings
     @Published var clickSettings = ClickSettings()
-    
+
+    // Expose settings for UI binding
+    var settings: ClickSettings {
+        clickSettings
+    }
+
     // Configuration Properties
     @Published var intervalHours = 0 {
         didSet {
@@ -112,6 +117,9 @@ class ClickItViewModel: ObservableObject {
     // MARK: - Dependencies
     private let clickCoordinator = ClickCoordinator.shared
     private let schedulingManager = SchedulingManager.shared
+
+    // MARK: - Active Target Mode State
+    private var isProcessingActiveTargetClick = false
     
     // MARK: - Initialization
     init() {
@@ -153,8 +161,15 @@ class ClickItViewModel: ObservableObject {
             return
         }
 
-        guard let point = targetPoint, canStartAutomation else {
+        // In active target mode, only require targetPoint and interval
+        // In normal mode, require full canStartAutomation checks
+        let hasMinimumRequirements = targetPoint != nil && totalMilliseconds > 0 && !isRunning
+        let canStart = clickSettings.isActiveTargetMode ? hasMinimumRequirements : canStartAutomation
+
+        guard let point = targetPoint, canStart else {
             print("ClickItViewModel: Cannot start automation - missing prerequisites")
+            print("  targetPoint: \(targetPoint != nil), totalMs: \(totalMilliseconds), isRunning: \(isRunning)")
+            print("  activeTargetMode: \(clickSettings.isActiveTargetMode), canStartAutomation: \(canStartAutomation)")
             return
         }
 
@@ -172,6 +187,13 @@ class ClickItViewModel: ObservableObject {
 
     private func executeAutomation(at point: CGPoint) {
         print("ClickItViewModel: Executing automation immediately")
+
+        // Disable mouse monitoring while automation is running to prevent
+        // automated clicks from triggering the click handler
+        if clickSettings.isActiveTargetMode {
+            HotkeyManager.shared.unregisterMouseMonitor()
+            print("ClickItViewModel: Disabled mouse monitoring during automation")
+        }
 
         let config = createAutomationConfiguration(at: point)
         clickCoordinator.startAutomation(with: config)
@@ -213,10 +235,10 @@ class ClickItViewModel: ObservableObject {
             targetApplication: nil,
             maxClicks: durationMode == .clickCount ? maxClicks : nil,
             maxDuration: durationMode == .timeLimit ? durationSeconds : nil,
-            stopOnError: stopOnError,
+            stopOnError: clickSettings.isActiveTargetMode ? false : stopOnError, // Disable stopOnError for active target mode
             randomizeLocation: randomizeLocation,
             locationVariance: CGFloat(randomizeLocation ? locationVariance : 0),
-            useDynamicMouseTracking: false, // Normal automation uses fixed position
+            useDynamicMouseTracking: clickSettings.isActiveTargetMode, // Use active target mode setting
             showVisualFeedback: showVisualFeedback
         )
     }
@@ -267,6 +289,12 @@ class ClickItViewModel: ObservableObject {
         schedulingManager.cancelScheduledTask() // Cancel any scheduled tasks
         isRunning = false
         appStatus = .ready
+
+        // Re-enable mouse monitoring if active target mode is still enabled
+        if clickSettings.isActiveTargetMode {
+            HotkeyManager.shared.registerMouseMonitor()
+            print("ClickItViewModel: Re-enabled mouse monitoring after automation stopped")
+        }
 
         print("ClickItViewModel: Stopped automation with direct ClickCoordinator")
     }
@@ -453,11 +481,11 @@ class ClickItViewModel: ObservableObject {
             self?.updateStatistics()
         }
         .store(in: &cancellables)
-        
+
         // Monitor automation active state to sync UI state
         clickCoordinator.$isActive.sink { [weak self] isActive in
             guard let self = self else { return }
-            
+
             // Sync ViewModel state with ClickCoordinator state
             if !isActive && (self.isRunning || self.isPaused) {
                 print("ClickItViewModel: Automation stopped externally (e.g., DELETE key), updating UI state")
@@ -466,7 +494,20 @@ class ClickItViewModel: ObservableObject {
                 self.appStatus = .ready
                 // Also cancel any active timer when automation stops
                 self.cancelTimer()
+
+                // Re-enable mouse monitoring if active target mode is still enabled
+                if self.clickSettings.isActiveTargetMode {
+                    HotkeyManager.shared.registerMouseMonitor()
+                    print("ClickItViewModel: Re-enabled mouse monitoring after external stop")
+                }
             }
+        }
+        .store(in: &cancellables)
+
+        // Monitor active target mode changes
+        clickSettings.$isActiveTargetMode.sink { [weak self] isEnabled in
+            guard let self = self else { return }
+            self.handleActiveTargetModeChange(isEnabled)
         }
         .store(in: &cancellables)
     }
@@ -475,22 +516,108 @@ class ClickItViewModel: ObservableObject {
         // SIMPLE WORKING APPROACH: Use ClickCoordinator statistics directly
         statistics = clickCoordinator.getSessionStatistics()
     }
-    
+
+    // MARK: - Active Target Mode Management
+
+    private func handleActiveTargetModeChange(_ isEnabled: Bool) {
+        print("ClickItViewModel: Active target mode changed to \(isEnabled)")
+
+        if isEnabled {
+            // Enable active target mode
+            CursorManager.shared.showTargetCursor()
+            setupMouseClickHandler()
+        } else {
+            // Disable active target mode
+            CursorManager.shared.restoreNormalCursor()
+            removeMouseClickHandler()
+        }
+    }
+
+    private func setupMouseClickHandler() {
+        // Set up the RIGHT click handler for active target mode (TOGGLE start/stop)
+        HotkeyManager.shared.onRightMouseClick = { [weak self] in
+            Task { @MainActor in
+                self?.handleActiveTargetRightClick()
+            }
+        }
+
+        // Register mouse monitoring
+        HotkeyManager.shared.registerMouseMonitor()
+        print("ClickItViewModel: Right-click handler registered (TOGGLE start/stop)")
+    }
+
+    private func removeMouseClickHandler() {
+        // Remove the click handler
+        HotkeyManager.shared.onRightMouseClick = nil
+
+        // Unregister mouse monitoring
+        HotkeyManager.shared.unregisterMouseMonitor()
+        print("ClickItViewModel: Right-click handler removed")
+    }
+
+    private func handleActiveTargetRightClick() {
+        // Prevent re-entrancy from rapid clicks or automated clicks
+        guard !isProcessingActiveTargetClick else {
+            print("ClickItViewModel: Ignoring right-click - already processing")
+            return
+        }
+
+        isProcessingActiveTargetClick = true
+        defer {
+            // Reset the flag after a short delay to allow next click
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.isProcessingActiveTargetClick = false
+            }
+        }
+
+        print("ClickItViewModel: Active target RIGHT-CLICK detected, isRunning: \(isRunning)")
+
+        // Right-click: TOGGLE automation (start if stopped, stop if running)
+        if isRunning {
+            // Stop automation
+            stopAutomation()
+            print("ClickItViewModel: Stopped automation via right-click")
+        } else {
+            // Start automation - but only if other prerequisites are met
+            if canStartAutomation || clickSettings.isActiveTargetMode {
+                // In active target mode, capture the current mouse position
+                // This is just for validation - the actual clicking will use live position
+                if clickSettings.isActiveTargetMode {
+                    let currentMousePosition = NSEvent.mouseLocation
+                    targetPoint = currentMousePosition
+                    clickSettings.clickLocation = currentMousePosition
+                    print("ClickItViewModel: Captured mouse position for active target mode: \(currentMousePosition)")
+                }
+
+                startAutomation()
+                print("ClickItViewModel: Started automation via right-click")
+            } else {
+                print("ClickItViewModel: Cannot start automation - prerequisites not met")
+            }
+        }
+    }
+
     // MARK: - Emergency Stop
     
     /// Performs emergency stop using ClickCoordinator directly
     func emergencyStopAutomation() {
         // SIMPLE WORKING APPROACH: Direct ClickCoordinator call
         clickCoordinator.emergencyStopAutomation()
-        
+
         // Cancel any active timer
         cancelTimer()
-        
+
         // Update UI state immediately
         isRunning = false
         isPaused = false
         appStatus = .ready
-        
+
+        // Re-enable mouse monitoring if active target mode is still enabled
+        if clickSettings.isActiveTargetMode {
+            HotkeyManager.shared.registerMouseMonitor()
+            print("ClickItViewModel: Re-enabled mouse monitoring after emergency stop")
+        }
+
         print("ClickItViewModel: Emergency stop executed with direct ClickCoordinator")
     }
     

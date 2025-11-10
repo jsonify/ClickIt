@@ -31,6 +31,9 @@ struct QuickStartTab: View {
                     // Target Point Selector (with Timer Support)
                     TargetPointSelectionCard(viewModel: viewModel)
 
+                    // Active Target Mode Toggle
+                    ActiveTargetModeCard()
+
                     // Inline Timing Controls
                     InlineTimingControls()
 
@@ -258,19 +261,19 @@ private struct CompactStatisticView: View {
     let title: String
     let value: String
     let icon: String
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 14))
                 .foregroundColor(.blue)
-            
+
             Text(value)
                 .font(.system(.caption, design: .monospaced))
                 .fontWeight(.semibold)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-            
+
             Text(title)
                 .font(.system(size: 9))
                 .foregroundColor(.secondary)
@@ -279,6 +282,47 @@ private struct CompactStatisticView: View {
         .padding(.vertical, 6)
         .background(Color(NSColor.textBackgroundColor))
         .cornerRadius(6)
+    }
+}
+
+// Active Target Mode Card
+private struct ActiveTargetModeCard: View {
+    @EnvironmentObject private var viewModel: ClickItViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "scope")
+                    .foregroundColor(.purple)
+                    .font(.system(size: 14))
+
+                Toggle("Active Target Mode", isOn: $viewModel.clickSettings.isActiveTargetMode)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .toggleStyle(.switch)
+            }
+
+            if viewModel.clickSettings.isActiveTargetMode {
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .foregroundColor(.purple)
+                        .font(.system(size: 10))
+
+                    Text("Cursor becomes crosshair. Right-click to start/stop clicking at cursor position.")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer()
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.textBackgroundColor))
+        )
     }
 }
 

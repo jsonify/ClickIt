@@ -44,6 +44,14 @@ struct ClickItApp: App {
                 }
             }
         }
+
+        // Separate window for click test - can be moved independently
+        WindowGroup(id: "click-test-window") {
+            ClickTestWindow()
+        }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 900, height: 750)
+        .windowToolbarStyle(.unified)
     }
     
     // MARK: - Safe Initialization
@@ -76,6 +84,8 @@ struct ClickItApp: App {
             // Cleanup visual feedback overlay when app terminates
             VisualFeedbackOverlay.shared.cleanup()
             HotkeyManager.shared.cleanup()
+            // Restore cursor to normal
+            CursorManager.shared.forceRestoreNormalCursor()
         }
         
         print("ClickItApp: Safe app initialization completed")

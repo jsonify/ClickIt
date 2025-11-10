@@ -360,21 +360,37 @@ class ClickCoordinator: ObservableObject {
     /// Simple automation step execution from working version
     private func executeAutomationStep(configuration: AutomationConfiguration) async -> ClickResult {
         print("ClickCoordinator: executeAutomationStep() - Simple working approach")
-        
+
+        // Determine click location based on mode
+        let clickLocation: CGPoint  // CoreGraphics coordinates for clicking
+        let visualFeedbackLocation: CGPoint  // AppKit coordinates for visual feedback
+
+        if configuration.useDynamicMouseTracking {
+            // Active target mode: get current mouse position
+            let appKitLocation = NSEvent.mouseLocation
+            clickLocation = convertAppKitToCoreGraphicsMultiMonitor(appKitLocation)
+            visualFeedbackLocation = appKitLocation
+            print("ClickCoordinator: Active target mode - AppKit: \(appKitLocation) → CoreGraphics: \(clickLocation)")
+        } else {
+            // Fixed location mode: use configured location (already in CoreGraphics)
+            clickLocation = configuration.location
+            visualFeedbackLocation = convertCoreGraphicsToAppKitMultiMonitor(configuration.location)
+        }
+
         // Use the working performSingleClick method
         let result = await performSingleClick(
             configuration: ClickConfiguration(
                 type: configuration.clickType,
-                location: configuration.location,
+                location: clickLocation,
                 targetPID: nil
             )
         )
-        
-        // Update visual feedback if enabled
+
+        // Update visual feedback if enabled (requires AppKit coordinates)
         if configuration.showVisualFeedback {
-            VisualFeedbackOverlay.shared.updateOverlay(at: configuration.location, isActive: true)
+            VisualFeedbackOverlay.shared.updateOverlay(at: visualFeedbackLocation, isActive: true)
         }
-        
+
         return result
     }
     

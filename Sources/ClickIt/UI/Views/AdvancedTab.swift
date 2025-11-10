@@ -11,7 +11,8 @@ import SwiftUI
 /// Advanced tab containing developer information and app details
 struct AdvancedTab: View {
     @EnvironmentObject private var viewModel: ClickItViewModel
-    
+    @Environment(\.openWindow) private var openWindow
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
@@ -20,13 +21,13 @@ struct AdvancedTab: View {
                     Image(systemName: "wrench.and.screwdriver")
                         .font(.title2)
                         .foregroundColor(.purple)
-                    
+
                     Text("Advanced")
                         .font(.title2)
                         .fontWeight(.semibold)
-                    
+
                     Spacer()
-                    
+
                     // Build info indicator
                     Text("Debug")
                         .font(.caption)
@@ -38,15 +39,18 @@ struct AdvancedTab: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
-                
+
                 VStack(spacing: 12) {
+                    // Developer Tools
+                    DeveloperTools(openWindow: openWindow)
+
                     // App information
                     AppInformation()
-                    
+
                     // System status
                     SystemStatus()
-                    
-                    // Debug information  
+
+                    // Debug information
                     DebugInformation()
                 }
                 .padding(.horizontal, 16)
@@ -55,6 +59,97 @@ struct AdvancedTab: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(NSColor.windowBackgroundColor))
+    }
+}
+
+// MARK: - Developer Tools Component
+
+private struct DeveloperTools: View {
+    let openWindow: OpenWindowAction
+    @State private var showingWindowDetectionTest = false
+    @State private var isExpanded = true
+
+    var body: some View {
+        DisclosureGroup("Developer Tools", isExpanded: $isExpanded) {
+            VStack(spacing: 12) {
+                // Description
+                Text("Testing utilities for validating auto-clicker functionality")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 8)
+
+                // Click Test Window Button
+                Button {
+                    openWindow(id: "click-test-window")
+                } label: {
+                    HStack {
+                        Image(systemName: "hand.tap.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.blue)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Click Test Window")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            Text("Test auto-clicker with visual targets (opens in separate window)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "arrow.up.right.square")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(10)
+                    .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+                    .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+
+                // Window Detection Test Button
+                Button {
+                    showingWindowDetectionTest = true
+                } label: {
+                    HStack {
+                        Image(systemName: "rectangle.3.offgrid")
+                            .font(.system(size: 16))
+                            .foregroundColor(.green)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Window Detection Test")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            Text("Test window targeting functionality")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "arrow.up.right.square")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(10)
+                    .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+                    .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(12)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+        .sheet(isPresented: $showingWindowDetectionTest) {
+            WindowDetectionTestView()
+        }
     }
 }
 
