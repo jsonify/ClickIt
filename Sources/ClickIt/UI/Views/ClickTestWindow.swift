@@ -39,12 +39,34 @@ struct ClickTestWindow: View {
                     // Background
                     Color(NSColor.controlBackgroundColor)
 
-                    // Target zones
-                    GeometryReader { geometry in
-                        ForEach(targets) { target in
-                            targetView(for: target, in: geometry)
+                    // Target zones - use VStack/HStack layout instead of absolute positioning
+                    VStack(spacing: 40) {
+                        // Top row
+                        HStack(spacing: 80) {
+                            targetView(for: targets[0]) // Top Left
+                            Spacer()
+                            targetView(for: targets[1]) // Top Right
+                        }
+
+                        Spacer()
+
+                        // Center row
+                        HStack {
+                            Spacer()
+                            targetView(for: targets[2]) // Center
+                            Spacer()
+                        }
+
+                        Spacer()
+
+                        // Bottom row
+                        HStack(spacing: 80) {
+                            targetView(for: targets[3]) // Bottom Left
+                            Spacer()
+                            targetView(for: targets[4]) // Bottom Right
                         }
                     }
+                    .padding(60)
 
                     // Click indicator overlay
                     if showClickIndicator {
@@ -55,7 +77,7 @@ struct ClickTestWindow: View {
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
-                .frame(minHeight: 400)
+                .frame(minHeight: 600)
 
                 Divider()
 
@@ -77,8 +99,8 @@ struct ClickTestWindow: View {
                 }
             }
         }
-        .frame(minWidth: 700, minHeight: 600)
-        .frame(idealWidth: 800, idealHeight: 700)
+        .frame(minWidth: 1000, minHeight: 800)
+        .frame(idealWidth: 1200, idealHeight: 900)
     }
 
     // MARK: - View Components
@@ -117,33 +139,31 @@ struct ClickTestWindow: View {
         }
     }
 
-    private func targetView(for target: ClickTarget, in geometry: GeometryProxy) -> some View {
-        let position = calculatePosition(for: target.position, in: geometry)
-        let size: CGFloat = 120
+    private func targetView(for target: ClickTarget) -> some View {
+        let size: CGFloat = 150
 
         return VStack(spacing: 8) {
             // Click counter
             Text("\(clickCounts[target.id] ?? 0)")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.system(size: 40, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
 
             // Target name
             Text(target.name)
-                .font(.caption)
+                .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
         }
         .frame(width: size, height: size)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(target.color.opacity(0.8))
-                .shadow(color: target.color.opacity(0.3), radius: 8, x: 0, y: 4)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(target.color.opacity(0.85))
+                .shadow(color: target.color.opacity(0.4), radius: 10, x: 0, y: 5)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.3), lineWidth: 2)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.4), lineWidth: 3)
         )
-        .position(position)
         .contentShape(Rectangle())
         .onTapGesture {
             handleClick(on: target.id)
@@ -216,25 +236,6 @@ struct ClickTestWindow: View {
     }
 
     // MARK: - Helper Methods
-
-    private func calculatePosition(for position: TargetPosition, in geometry: GeometryProxy) -> CGPoint {
-        let padding: CGFloat = 80
-        let width = geometry.size.width
-        let height = geometry.size.height
-
-        switch position {
-        case .topLeft:
-            return CGPoint(x: padding, y: padding)
-        case .topRight:
-            return CGPoint(x: width - padding, y: padding)
-        case .center:
-            return CGPoint(x: width / 2, y: height / 2)
-        case .bottomLeft:
-            return CGPoint(x: padding, y: height - padding)
-        case .bottomRight:
-            return CGPoint(x: width - padding, y: height - padding)
-        }
-    }
 
     private func handleClick(on targetId: String) {
         // Update click count
