@@ -164,26 +164,88 @@ struct SimplifiedMainView: View {
     private var clickIntervalSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Click Interval")
+                Text("Click Speed")
                     .font(.headline)
                 Spacer()
-                Text("\(String(format: "%.1f", viewModel.clickInterval))s")
+                Text(formatClickSpeed(interval: viewModel.clickInterval))
                     .font(.system(.body, design: .monospaced))
                     .foregroundColor(.blue)
             }
 
-            Slider(value: $viewModel.clickInterval, in: 0.1...10.0, step: 0.1)
-                .disabled(viewModel.isRunning)
+            // Logarithmic slider for CPS
+            // Maps log scale to linear slider for better UX across wide range
+            Slider(
+                value: Binding(
+                    get: {
+                        // Convert interval to log(CPS)
+                        let cps = 1.0 / max(viewModel.clickInterval, 0.001)
+                        return log10(cps)
+                    },
+                    set: { logCPS in
+                        // Convert log(CPS) back to interval
+                        let cps = pow(10.0, logCPS)
+                        let interval = 1.0 / cps
+                        // Clamp to valid range (0.01s to 300s)
+                        viewModel.clickInterval = min(max(interval, 0.01), 300.0)
+                    }
+                ),
+                in: log10(1.0/300.0)...log10(100.0) // log(0.00333) to log(100)
+            )
+            .disabled(viewModel.isRunning)
 
             HStack {
-                Text("0.1s")
+                Text("1 / 5 min")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Spacer()
-                Text("10s")
+                Text("100 CPS")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+
+            // Human-readable description
+            Text(describeClickSpeed(interval: viewModel.clickInterval))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    /// Format click speed for display
+    private func formatClickSpeed(interval: Double) -> String {
+        let cps = 1.0 / interval
+
+        if cps >= 10 {
+            return String(format: "%.0f CPS", cps)
+        } else if cps >= 1 {
+            return String(format: "%.1f CPS", cps)
+        } else if cps >= 0.1 {
+            return String(format: "%.2f CPS", cps)
+        } else {
+            return String(format: "%.3f CPS", cps)
+        }
+    }
+
+    /// Describe click speed in human-readable terms
+    private func describeClickSpeed(interval: Double) -> String {
+        let cps = 1.0 / interval
+
+        if cps >= 50 {
+            return "⚡ Very Fast - \(String(format: "%.1f", interval * 1000))ms per click"
+        } else if cps >= 10 {
+            return "🚀 Fast - \(String(format: "%.2f", interval))s per click"
+        } else if cps >= 1 {
+            return "⏱️ Normal - 1 click every \(String(format: "%.1f", interval))s"
+        } else if interval < 60 {
+            return "🐌 Slow - 1 click every \(String(format: "%.1f", interval))s"
+        } else if interval < 120 {
+            return "🐢 Very Slow - 1 click every \(Int(interval))s (~\(Int(interval/60)) min)"
+        } else {
+            let minutes = Int(interval / 60)
+            return "🦥 Ultra Slow - 1 click every \(minutes) minutes"
         }
     }
 
