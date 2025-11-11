@@ -28,8 +28,8 @@ When updating image assets (like `target-64.png`), you **must** rebuild the app 
 
 **Steps to update an image:**
 1. Replace the image file in `Sources/ClickIt/Lite/Resources/`
-2. Clean the build: `rm -rf .build` (or `swift package clean`)
-3. Rebuild: `swift build` or build in Xcode
+2. Clean the build: `swift package clean` or in Xcode: `Product > Clean Build Folder` (⇧⌘K).
+3. Rebuild: `swift build` or in Xcode: `Product > Build` (⌘B).
 4. The new image will now be bundled and loaded
 
 **Quick command:**
