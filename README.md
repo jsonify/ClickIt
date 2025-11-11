@@ -369,9 +369,9 @@ See the [Development](#development) section below for setup instructions and our
 ClickIt is under active development. Here's what's coming:
 
 ### In Progress
-- ✅ **UI Optimization** - Tabbed interface with improved space utilization (v2.0)
-- ✅ **Timer Automation** - Schedule automatic start/stop times
-- ✅ **Performance Dashboard** - Real-time analytics and monitoring
+- ⏳ **UI Optimization** - Tabbed interface with improved space utilization (v2.0)
+- ⏳ **Timer Automation** - Schedule automatic start/stop times
+- ⏳ **Performance Dashboard** - Real-time analytics and monitoring
 
 ### Planned Features
 - 🔄 **Click Recording** - Record and replay complex click sequences
