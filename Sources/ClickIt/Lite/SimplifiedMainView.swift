@@ -386,8 +386,8 @@ struct SimplifiedMainView: View {
 }
 
 // MARK: - Preview
-// Note: Preview disabled for SPM command-line builds due to macro plugin requirements
-// Uncomment when building in Xcode:
-// #Preview {
-//     SimplifiedMainView()
-// }
+#if DEBUG
+#Preview {
+    SimplifiedMainView()
+}
+#endif
