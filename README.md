@@ -178,11 +178,27 @@ fastlane auto_beta
 ```
 
 #### **Production Release**
-```bash
-# 1. Promote staging to main
-git checkout main && git merge staging
 
-# 2. Automated release with version bumping
+**NEW: Automated with Release Please**
+```bash
+# 1. Use conventional commits
+git commit -m "feat: add new feature"  # Minor bump
+git commit -m "fix: correct bug"       # Patch bump
+git commit -m "feat!: breaking change" # Major bump
+
+# 2. Merge to main (via PR)
+# Release Please automatically:
+# - Creates a release PR with version bump
+# - Updates CHANGELOG.md
+# - Creates GitHub release when PR is merged
+# - Triggers build workflow
+
+# See docs/RELEASE_PROCESS.md for details
+```
+
+**Legacy: Manual Release (Deprecated)**
+```bash
+# Old process - use Release Please instead
 fastlane bump_and_release bump:minor  # 1.0.0 → 1.1.0
 ```
 
@@ -190,12 +206,16 @@ fastlane bump_and_release bump:minor  # 1.0.0 → 1.1.0
 - **[CLAUDE.md](CLAUDE.md)** - Development guidance and project overview
 - **[BUILD_AND_DEPLOY.md](BUILD_AND_DEPLOY.md)** - Manual build and deployment instructions
 - **[CERTIFICATE_SETUP.md](CERTIFICATE_SETUP.md)** - Code signing certificate setup
+- **[docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)** - Automated release process with Release Please
 
 ## Contributing
 
 Contributions are welcome! Please read our contributing guidelines and check the Issues tab for open tasks.
 
-**Before contributing**: Read the [Git Workflow Guide](docs/git-workflow-guide.md) to understand our branch strategy and release process.
+**Before contributing**:
+- Read the [Git Workflow Guide](docs/git-workflow-guide.md) to understand our branch strategy
+- Use [Conventional Commits](https://www.conventionalcommits.org/) format for commit messages
+- See [Release Process](docs/RELEASE_PROCESS.md) for how releases are created
 
 ## License
 
