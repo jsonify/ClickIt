@@ -5,9 +5,345 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Tue, 22 Jul 2025 12:10:35 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 11 Nov 2025 06:07:57 +0000</lastBuildDate>
         
 <item>
+    <title><![CDATA[ClickIt v1.6.0]]></title>
+    <description><![CDATA[## What's New
+
+
+
+---
+🤖 Generated with [Claude Code](https://claude.ai/code)
+📱 Compatible with macOS 14.0 or later]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.6.0</link>
+    <sparkle:version>1.6.0</sparkle:version>
+    <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Tue, 11 Nov 2025 06:02:25 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.0/ClickIt-1.6.0.zip" 
+               length="2290293" 
+               type="application/octet-stream" 
+               sparkle:version="1.6.0" 
+               sparkle:shortVersionString="1.6.0" />
+</item>
+        <item>
+    <title><![CDATA[ClickIt v1.5.5]]></title>
+    <description><![CDATA[# ClickIt v1.5.5
+
+🎉 **Native macOS Auto-Clicker Application**
+
+## ✨ Features
+- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy
+- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon
+- 🎯 **Background Operation**: Works without requiring app focus
+- ⚡ **Global Hotkeys**: ESC key controls for instant stop
+- 🔧 **Advanced Configuration**: CPS rates, click types, and presets
+- 👁️ **Visual Feedback**: Real-time overlay indicators
+- 🔄 **Auto-Updates**: Built-in Sparkle framework integration
+
+## 📋 System Requirements
+- **macOS**: 14.0 or later
+- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)
+- **Permissions**: Accessibility and Screen Recording access required
+
+## 🚀 Installation
+1. Download `ClickIt.app.zip` below
+2. Extract and move `ClickIt.app` to Applications folder
+3. First launch: Right-click → Open (to bypass Gatekeeper)
+4. Grant Accessibility and Screen Recording permissions when prompted
+
+## 📈 Changes Since v1.5.3
+```
+- Add scheduling functionality with high-precision timing
+```
+
+---
+
+🏗️ **Built with**: Xcode on GitHub Actions
+📅 **Build Date**: 2025-10-10 20:18:18 UTC
+🔖 **Version**: 1.5.5
+🎯 **Target**: macOS 14.0+
+]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.5.5</link>
+    <sparkle:version>1.5.5</sparkle:version>
+    <sparkle:shortVersionString>1.5.5</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Fri, 10 Oct 2025 20:18:20 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.5/ClickIt.app.zip" 
+               length="1903313" 
+               type="application/octet-stream" 
+               sparkle:version="1.5.5" 
+               sparkle:shortVersionString="1.5.5" />
+</item>
+        <item>
+    <title><![CDATA[ClickIt v1.5.4]]></title>
+    <description><![CDATA[# ClickIt v1.5.4
+
+🎉 **Native macOS Auto-Clicker Application**
+
+## ✨ Features
+- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy
+- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon
+- 🎯 **Background Operation**: Works without requiring app focus
+- ⚡ **Global Hotkeys**: ESC key controls for instant stop
+- 🔧 **Advanced Configuration**: CPS rates, click types, and presets
+- 👁️ **Visual Feedback**: Real-time overlay indicators
+- 🔄 **Auto-Updates**: Built-in Sparkle framework integration
+
+## 📋 System Requirements
+- **macOS**: 14.0 or later
+- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)
+- **Permissions**: Accessibility and Screen Recording access required
+
+## 🚀 Installation
+1. Download `ClickIt.app.zip` below
+2. Extract and move `ClickIt.app` to Applications folder
+3. First launch: Right-click → Open (to bypass Gatekeeper)
+4. Grant Accessibility and Screen Recording permissions when prompted
+
+## 📈 Changes Since v1.5.3
+```
+- Add scheduling functionality with high-precision timing
+```
+
+---
+
+🏗️ **Built with**: Xcode on GitHub Actions
+📅 **Build Date**: 2025-10-10 14:59:13 UTC
+🔖 **Version**: 1.5.4
+🎯 **Target**: macOS 14.0+
+]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.5.4</link>
+    <sparkle:version>1.5.4</sparkle:version>
+    <sparkle:shortVersionString>1.5.4</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Fri, 10 Oct 2025 14:59:13 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.4/ClickIt.app.zip" 
+               length="1903337" 
+               type="application/octet-stream" 
+               sparkle:version="1.5.4" 
+               sparkle:shortVersionString="1.5.4" />
+</item>
+        <item>
+    <title><![CDATA[ClickIt v1.5.3]]></title>
+    <description><![CDATA[# ClickIt v1.5.3
+
+🎉 **Native macOS Auto-Clicker Application**
+
+## ✨ Features
+- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy
+- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon
+- 🎯 **Background Operation**: Works without requiring app focus
+- ⚡ **Global Hotkeys**: ESC key controls for instant stop
+- 🔧 **Advanced Configuration**: CPS rates, click types, and presets
+- 👁️ **Visual Feedback**: Real-time overlay indicators
+- 🔄 **Auto-Updates**: Built-in Sparkle framework integration
+
+## 📋 System Requirements
+- **macOS**: 14.0 or later
+- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)
+- **Permissions**: Accessibility and Screen Recording access required
+
+## 🚀 Installation
+1. Download `ClickIt.app.zip` below
+2. Extract and move `ClickIt.app` to Applications folder
+3. First launch: Right-click → Open (to bypass Gatekeeper)
+4. Grant Accessibility and Screen Recording permissions when prompted
+
+## 📈 Changes Since v1.5.2
+```
+- Feature/UI refresh (#10)
+```
+
+---
+
+🏗️ **Built with**: Xcode on GitHub Actions
+📅 **Build Date**: 2025-09-20 16:55:27 UTC
+🔖 **Version**: 1.5.3
+🎯 **Target**: macOS 14.0+
+]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.5.3</link>
+    <sparkle:version>1.5.3</sparkle:version>
+    <sparkle:shortVersionString>1.5.3</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Sat, 20 Sep 2025 16:55:27 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.3/ClickIt.app.zip" 
+               length="1739731" 
+               type="application/octet-stream" 
+               sparkle:version="1.5.3" 
+               sparkle:shortVersionString="1.5.3" />
+</item>
+        <item>
+    <title><![CDATA[ClickIt v1.5.2]]></title>
+    <description><![CDATA[# ClickIt v1.5.2
+
+🎉 **Native macOS Auto-Clicker Application**
+
+## ✨ Features
+- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy
+- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon
+- 🎯 **Background Operation**: Works without requiring app focus
+- ⚡ **Global Hotkeys**: ESC key controls for instant stop
+- 🔧 **Advanced Configuration**: CPS rates, click types, and presets
+- 👁️ **Visual Feedback**: Real-time overlay indicators
+- 🔄 **Auto-Updates**: Built-in Sparkle framework integration
+
+## 📋 System Requirements
+- **macOS**: 14.0 or later
+- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)
+- **Permissions**: Accessibility and Screen Recording access required
+
+## 🚀 Installation
+1. Download `ClickIt.app.zip` below
+2. Extract and move `ClickIt.app` to Applications folder
+3. First launch: Right-click → Open (to bypass Gatekeeper)
+4. Grant Accessibility and Screen Recording permissions when prompted
+
+## 📈 Changes Since v1.5.1
+```
+- refactor: Consolidate coordinate conversion methods into CoordinateUtils for better reusability
+```
+
+---
+
+🏗️ **Built with**: Xcode on GitHub Actions
+📅 **Build Date**: 2025-07-25 05:59:16 UTC
+🔖 **Version**: 1.5.2
+🎯 **Target**: macOS 14.0+
+]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.5.2</link>
+    <sparkle:version>1.5.2</sparkle:version>
+    <sparkle:shortVersionString>1.5.2</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Fri, 25 Jul 2025 05:59:18 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.2/ClickIt.app.zip" 
+               length="1190382" 
+               type="application/octet-stream" 
+               sparkle:version="1.5.2" 
+               sparkle:shortVersionString="1.5.2" />
+</item>
+        <item>
+    <title><![CDATA[ClickIt v1.5.1]]></title>
+    <description><![CDATA[# ClickIt v1.5.1
+
+🎉 **Native macOS Auto-Clicker Application**
+
+## ✨ Features
+- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy
+- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon
+- 🎯 **Background Operation**: Works without requiring app focus
+- ⚡ **Global Hotkeys**: ESC key controls for instant stop
+- 🔧 **Advanced Configuration**: CPS rates, click types, and presets
+- 👁️ **Visual Feedback**: Real-time overlay indicators
+- 🔄 **Auto-Updates**: Built-in Sparkle framework integration
+
+## 📋 System Requirements
+- **macOS**: 14.0 or later
+- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)
+- **Permissions**: Accessibility and Screen Recording access required
+
+## 🚀 Installation
+1. Download `ClickIt.app.zip` below
+2. Extract and move `ClickIt.app` to Applications folder
+3. First launch: Right-click → Open (to bypass Gatekeeper)
+4. Grant Accessibility and Screen Recording permissions when prompted
+
+## 📈 Changes Since v1.5.0
+```
+- Fix concurrency issues in TimerAutomationEngine and PermissionManager (#9)
+- feat: Implement Enhanced "Refresh Status" Button with smart permission reset
+```
+
+---
+
+🏗️ **Built with**: Xcode on GitHub Actions
+📅 **Build Date**: 2025-07-25 05:49:28 UTC
+🔖 **Version**: 1.5.1
+🎯 **Target**: macOS 14.0+
+]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.5.1</link>
+    <sparkle:version>1.5.1</sparkle:version>
+    <sparkle:shortVersionString>1.5.1</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Fri, 25 Jul 2025 05:49:29 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.1/ClickIt.app.zip" 
+               length="1190302" 
+               type="application/octet-stream" 
+               sparkle:version="1.5.1" 
+               sparkle:shortVersionString="1.5.1" />
+</item>
+        <item>
+    <title><![CDATA[ClickIt v1.5.0]]></title>
+    <description><![CDATA[# ClickIt v1.5.0
+
+🎉 **Native macOS Auto-Clicker Application**
+
+## ✨ Features
+- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy
+- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon
+- 🎯 **Background Operation**: Works without requiring app focus
+- ⚡ **Global Hotkeys**: ESC key controls for instant stop
+- 🔧 **Advanced Configuration**: CPS rates, click types, and presets
+- 👁️ **Visual Feedback**: Real-time overlay indicators
+- 🔄 **Auto-Updates**: Built-in Sparkle framework integration
+
+## 📋 System Requirements
+- **macOS**: 14.0 or later
+- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)
+- **Permissions**: Accessibility and Screen Recording access required
+
+## 🚀 Installation
+1. Download `ClickIt.app.zip` below
+2. Extract and move `ClickIt.app` to Applications folder
+3. First launch: Right-click → Open (to bypass Gatekeeper)
+4. Grant Accessibility and Screen Recording permissions when prompted
+
+## 📈 Changes Since v1.4.15
+```
+- Improve error handling in user authentication (#8)
+- Merge branch 'phase1-completion'
+- Merge pull request #7 from jsonify:phase1-completion
+- feat: Implement Enhanced Timer Automation Engine for robust automation loops
+- chore: Remove obsolete project configuration files
+- feat: Mark Advanced CPS Randomization as complete in the product roadmap
+- Implement advanced CPS randomization for human-like timing patterns
+- feat: Implement comprehensive performance optimization system for sub-10ms timing
+- feat: Implement main application structure with permission and hotkey management
+- feat: Enhance CI test execution with improved error handling and non-blocking behavior
+- feat: Improve Swift Package Manager test execution with platform specification and fallback handling
+- feat: Enhance error logging in PresetManager for better debugging
+- feat: Update CI workflow to use SPM and adjust timer duration in ViewModel
+- feat: Implement comprehensive error recovery system
+- feat: Update emergency stop functionality and adjust visual feedback settings
+- feat: Enhance code signing process and add development certificate creation script
+- feat: Implement comprehensive preset management system
+- feat: Implement emergency stop functionality with visual feedback and configuration options
+- Merge pull request #6 from jsonify/phase1-completion
+- feat: Reorganize task list for enhanced emergency stop system and other features
+- feat: Implement pause/resume UI controls for automation
+- feat: Enhance Agent OS Documentation and Product Specifications
+```
+
+---
+
+🏗️ **Built with**: Xcode on GitHub Actions
+📅 **Build Date**: 2025-07-24 11:53:16 UTC
+🔖 **Version**: 1.5.0
+🎯 **Target**: macOS 14.0+
+]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.5.0</link>
+    <sparkle:version>1.5.0</sparkle:version>
+    <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Thu, 24 Jul 2025 11:53:18 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.0/ClickIt.app.zip" 
+               length="1246159" 
+               type="application/octet-stream" 
+               sparkle:version="1.5.0" 
+               sparkle:shortVersionString="1.5.0" />
+</item>
+        <item>
     <title><![CDATA[ClickIt v1.4.15]]></title>
     <description><![CDATA[## What's New
 
