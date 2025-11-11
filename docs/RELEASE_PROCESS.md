@@ -156,7 +156,7 @@ Beta releases trigger the `beta_release` job in `cicd.yml`.
 - `.release-please-manifest.json` - Current version tracking
 - `release-please-config.json` - Release Please configuration
 - `CHANGELOG.md` - Auto-generated changelog
-- `ClickIt/Info.plist` - Version source of truth
+- `ClickIt/Info.plist` - App version file, updated by Release Please
 
 ## Troubleshooting
 
