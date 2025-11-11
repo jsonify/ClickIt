@@ -386,7 +386,8 @@ struct SimplifiedMainView: View {
 }
 
 // MARK: - Preview
-
+#if DEBUG
 #Preview {
     SimplifiedMainView()
 }
+#endif
