@@ -30,16 +30,17 @@ struct PresetActions: View {
         VStack(spacing: 8) {
             // Primary actions row
             HStack(spacing: 12) {
-                // Save current settings
+                // Create new template
                 Button(action: {
                     showingSaveDialog = true
                 }) {
-                    Label("Save Current", systemImage: "plus.circle.fill")
+                    Label("Create New Template", systemImage: "plus.circle.fill")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(viewModel.isRunning)
+                .help("Create a new preset from current settings")
                 
                 // Load selected preset
                 Button(action: {
@@ -133,16 +134,16 @@ struct PresetActions: View {
                 Image(systemName: "bookmark.circle.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.blue)
-                
-                Text("Save Current Configuration")
+
+                Text("Create New Template")
                     .font(.title2)
                     .fontWeight(.bold)
-                
-                Text("Enter a name for this preset configuration:")
+
+                Text("Enter a name for this template:")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                
-                TextField("Preset Name", text: $newPresetName)
+
+                TextField("Template Name", text: $newPresetName)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit {
                         saveCurrentPreset()
@@ -154,8 +155,8 @@ struct PresetActions: View {
                         newPresetName = ""
                     }
                     .buttonStyle(.bordered)
-                    
-                    Button("Save") {
+
+                    Button("Create") {
                         saveCurrentPreset()
                     }
                     .buttonStyle(.borderedProminent)
@@ -164,12 +165,12 @@ struct PresetActions: View {
             }
             .padding(24)
             .frame(width: 350)
-            .navigationTitle("Save Preset")
+            .navigationTitle("Create Template")
         }
         .onAppear {
             // Generate a default name
             let timestamp = DateFormatter.presetName.string(from: Date())
-            newPresetName = "Preset \(timestamp)"
+            newPresetName = "Template \(timestamp)"
         }
     }
     
