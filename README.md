@@ -105,8 +105,25 @@ A native macOS automation tool built with SwiftUI that delivers sub-10ms timing 
 
 ## Installation
 
-### Quick Install (Coming Soon)
-Download the latest release from the [Releases page](https://github.com/jsonify/ClickIt/releases) and drag ClickIt.app to your Applications folder.
+### Download & Install
+1. Download the latest `.dmg` from the [Releases page](https://github.com/jsonify/ClickIt/releases/latest)
+2. Open the DMG and drag `ClickIt.app` to your `/Applications` folder
+
+### macOS Security Warning (Required Step)
+
+Because ClickIt is not signed with an Apple Developer certificate, macOS will block it with a **"damaged and can't be opened"** message. This is a Gatekeeper false positive — the app is safe.
+
+**Fix it with one command in Terminal:**
+
+```bash
+xattr -cr /Applications/ClickIt.app
+```
+
+Then double-click the app normally. You only need to do this once.
+
+> **Alternative:** Right-click (or Control-click) the app and choose **Open**. macOS will show an "Open Anyway" button on the warning dialog. After opening once this way, you can double-click normally going forward.
+>
+> Or go to **System Settings → Privacy & Security** and click **"Open Anyway"** after your first blocked launch attempt.
 
 ### First Launch Setup
 1. **Launch ClickIt** - Double-click the app from Applications
@@ -114,12 +131,6 @@ Download the latest release from the [Releases page](https://github.com/jsonify/
    - ✅ **Accessibility Permission** - Required for click automation
    - ✅ **Screen Recording Permission** - Required for window targeting
 3. **Start Automating** - Configure your first preset and start clicking!
-
-The permission setup is streamlined with:
-- Clear visual indicators showing permission status
-- One-click access to System Settings
-- Real-time permission monitoring
-- Detailed help documentation for each permission type
 
 ### Troubleshooting Installation
 If permissions aren't working after granting them:

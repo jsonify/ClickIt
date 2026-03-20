@@ -368,6 +368,32 @@ jobs:
           allowUpdates: true
           replacesArtifacts: true
 
+      - name: 🍺 Update Homebrew Tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "⚠️  HOMEBREW_TAP_TOKEN not set, skipping tap update"
+            exit 0
+          fi
+
+          SHA256=$(shasum -a 256 "dist/${APP_NAME}-${VERSION}.dmg" | awk '{print $1}')
+          echo "SHA256: $SHA256"
+          echo "Version: $VERSION"
+
+          git clone https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/jsonify/homebrew-clickit.git tap
+
+          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" tap/Casks/clickit.rb
+          sed -i '' "s/sha256 \".*\"/sha256 \"${SHA256}\"/" tap/Casks/clickit.rb
+
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/clickit.rb
+          git commit -m "chore: update clickit to v${VERSION}"
+          git push
+          echo "✅ Homebrew tap updated to v${VERSION}"
+
       - name: 📡 Generate Production Appcast
         run: |
           mkdir -p docs
