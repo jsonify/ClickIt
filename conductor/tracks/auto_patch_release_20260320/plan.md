@@ -29,5 +29,5 @@
     with a clear description of the new automatic behavior
   - Explain: merge to main → auto patch bump → tag → release pipeline
 
-- [ ] Task: Conductor - User Manual Verification 'Implement Workflow'
+- [x] Task: Conductor - User Manual Verification 'Implement Workflow'
   (Protocol in workflow.md)

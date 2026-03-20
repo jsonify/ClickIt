@@ -1,7 +1,7 @@
 {
   "track_id": "auto_patch_release_20260320",
   "type": "chore",
-  "status": "new",
+  "status": "complete",
   "priority": "critical",
   "depends_on": [],
   "estimated_hours": 1,
