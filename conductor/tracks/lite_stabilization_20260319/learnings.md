@@ -10,6 +10,19 @@ Patterns, gotchas, and context discovered during implementation.
 
 <!-- Learnings from implementation will be appended below -->
 
+## [2026-03-19] - Phase 3: Test Coverage Baseline
+
+- **Implemented:** Fixed Swift 6 concurrency errors in test suite; documented pre-existing flaky tests
+- **Files changed:** `Tests/ClickItTests/PerformanceBenchmarkTests.swift`, `Tests/ClickItTests/TimerAutomationEngineTests.swift`
+- **Commit:** fc5f5db
+- **Learnings:**
+  - Gotchas: Swift 6 strict concurrency rejects `@MainActor`-isolated property access from nonisolated test contexts — add `@MainActor` to the test class or mark functions `async`
+  - Gotchas: `PerformanceReport` struct evolved (added 7 fields) but `MockPerformanceMonitor` wasn't updated — mock drift is a maintenance hazard
+  - Gotchas: `RecoveryAction` init added `maxRetries` but mock wasn't updated — same mock drift pattern
+  - Patterns: To run tests without `sudo xcode-select`, use `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` env var with full Xcode toolchain path
+  - Context: 2 pre-existing flaky tests: `testPatternBreakup` (random boundary) and `testHighFrequencyCPSAccuracy` (timing precision, fails in debug mode)
+---
+
 ## [2026-03-19] - Phase 2: Build Script & Launch Fixes
 
 - **Implemented:** Fixed arg parsing bug in build script; added ad-hoc signing fallback; confirmed Lite launches and functions correctly on Apple Silicon

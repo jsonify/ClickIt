@@ -13,8 +13,11 @@
 
 ## Platform
 - **macOS 15.0+ (Sequoia)** minimum deployment target
-- **Apple Silicon (arm64)** — sole supported architecture going forward
-- Intel (x86_64) support discontinued
+- **Apple Silicon (arm64)** — sole supported architecture
+
+## Build Notes
+- Ad-hoc signing required for debug builds on macOS 26 (no developer cert needed): `codesign --sign - --force --deep <app.bundle>`
+- Run tests via Xcode toolchain (no `sudo xcode-select` needed): `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer .../XcodeDefault.xctoolchain/usr/bin/swift test --arch arm64`
 
 ## Products
 - **ClickIt Pro** — full-featured, `Sources/ClickIt/` (excluding `Lite/`)
