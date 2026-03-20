@@ -37,7 +37,7 @@ jobs:
   beta_release:
     name: 🚀 Beta Release
     runs-on: macos-15
-    if: startsWith(github.ref_name, 'beta')
+    if: startsWith(github.ref_name, 'beta') || (github.event_name == 'workflow_dispatch' && startsWith(inputs.tag, 'beta'))
     timeout-minutes: 30
 
     steps:
@@ -277,7 +277,7 @@ jobs:
   production_release:
     name: 🚀 Production Release
     runs-on: macos-15
-    if: startsWith(github.ref_name, 'v')
+    if: startsWith(github.ref_name, 'v') || (github.event_name == 'workflow_dispatch' && startsWith(inputs.tag, 'v'))
     timeout-minutes: 30
 
     steps:
