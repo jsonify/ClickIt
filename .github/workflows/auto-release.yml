@@ -110,4 +110,14 @@ jobs:
           git tag "$TAG"
           git push origin main
           git push origin "$TAG"
-          echo "✅ Pushed tag $TAG — cicd.yml release pipeline should now trigger"
+          echo "✅ Pushed tag $TAG"
+
+      - name: 🎬 Trigger release pipeline
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          TAG="v${{ steps.next_version.outputs.next }}"
+          echo "Dispatching cicd.yml for $TAG..."
+          gh workflow run cicd.yml --ref "$TAG"
+          echo "✅ cicd.yml dispatched for $TAG"
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
