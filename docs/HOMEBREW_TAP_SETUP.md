@@ -43,11 +43,6 @@ cask "clickit" do
 
   app "ClickIt.app"
 
-  postinstall do
-    system_command "/usr/bin/xattr",
-                   args: ["-cr", "#{appdir}/ClickIt.app"]
-  end
-
   uninstall quit: "com.jsonify.clickit"
 
   zap trash: [
