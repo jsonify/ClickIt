@@ -2,7 +2,7 @@
 
 set -e  # Exit on any error
 
-# Build ClickIt as a proper macOS app bundle with universal binary support
+# Build ClickIt as a proper macOS app bundle (Apple Silicon / arm64)
 
 BUILD_MODE="${1:-release}"  # Default to release, allow override
 DIST_DIR="dist"
@@ -19,60 +19,27 @@ rm -rf "$DIST_DIR/$APP_NAME.app"
 rm -rf "$DIST_DIR/binaries"
 mkdir -p "$DIST_DIR/binaries"
 
-# Detect available architectures
-echo "🔍 Detecting available architectures..."
-ARCH_LIST=()
-if swift build -c "$BUILD_MODE" --arch x86_64 --show-bin-path > /dev/null 2>&1; then
-    ARCH_LIST+=("x86_64")
-fi
-if swift build -c "$BUILD_MODE" --arch arm64 --show-bin-path > /dev/null 2>&1; then
-    ARCH_LIST+=("arm64")
-fi
-
-if [ ${#ARCH_LIST[@]} -eq 0 ]; then
-    echo "❌ No supported architectures found"
+# Build for Apple Silicon (arm64)
+echo "⚙️  Building for arm64..."
+if ! swift build -c "$BUILD_MODE" --arch arm64; then
+    echo "❌ Build failed for arm64"
     exit 1
 fi
 
-echo "📱 Building for architectures: ${ARCH_LIST[*]}"
+BUILD_PATH=$(swift build -c "$BUILD_MODE" --arch arm64 --show-bin-path)
+BINARY_PATH="$BUILD_PATH/$APP_NAME"
 
-# Build for each architecture
-BINARY_PATHS=()
-for arch in "${ARCH_LIST[@]}"; do
-    echo "⚙️  Building for $arch..."
-    if ! swift build -c "$BUILD_MODE" --arch "$arch"; then
-        echo "❌ Build failed for $arch"
-        exit 1
-    fi
-    
-    # Get the actual build path
-    BUILD_PATH=$(swift build -c "$BUILD_MODE" --arch "$arch" --show-bin-path)
-    BINARY_PATH="$BUILD_PATH/$APP_NAME"
-    
-    if [ ! -f "$BINARY_PATH" ]; then
-        echo "❌ Binary not found at $BINARY_PATH"
-        exit 1
-    fi
-    
-    # Copy binary to dist directory
-    cp "$BINARY_PATH" "$DIST_DIR/binaries/$APP_NAME-$arch"
-    BINARY_PATHS+=("$DIST_DIR/binaries/$APP_NAME-$arch")
-done
-
-# Create universal binary if multiple architectures
-if [ ${#BINARY_PATHS[@]} -gt 1 ]; then
-    echo "🔗 Creating universal binary..."
-    lipo -create -output "$DIST_DIR/binaries/$APP_NAME-universal" "${BINARY_PATHS[@]}"
-    FINAL_BINARY="$DIST_DIR/binaries/$APP_NAME-universal"
-else
-    echo "📦 Using single architecture binary..."
-    FINAL_BINARY="${BINARY_PATHS[0]}"
+if [ ! -f "$BINARY_PATH" ]; then
+    echo "❌ Binary not found at $BINARY_PATH"
+    exit 1
 fi
 
+cp "$BINARY_PATH" "$DIST_DIR/binaries/$APP_NAME-arm64"
+FINAL_BINARY="$DIST_DIR/binaries/$APP_NAME-arm64"
+
 # Verify binary
-echo "🔍 Verifying binary architectures..."
+echo "🔍 Verifying binary..."
 file "$FINAL_BINARY"
-lipo -info "$FINAL_BINARY" 2>/dev/null || echo "Single architecture binary"
 
 # Create app bundle structure
 echo "📁 Creating app bundle structure..."
@@ -260,8 +227,7 @@ echo "📋 Creating build metadata..."
 cat > "$DIST_DIR/build-info.txt" << EOF
 Build Date: $(date)
 Mode: $BUILD_MODE
-Architectures: ${ARCH_LIST[*]}
-Binary Type: $([ ${#BINARY_PATHS[@]} -gt 1 ] && echo "Universal" || echo "Single Architecture")
+Architecture: arm64
 Version: $VERSION
 Build Number: $BUILD_NUMBER
 Bundle ID: $BUNDLE_ID

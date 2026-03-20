@@ -94,7 +94,7 @@ jobs:
     strategy:
       matrix:
         configuration: [debug, release]
-        architecture: [x86_64, arm64]
+        architecture: [arm64]
     
     steps:
       - name: 📥 Checkout Code

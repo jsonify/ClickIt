@@ -2,10 +2,10 @@
 
 ## Phase 1: Intel/Universal Binary Removal
 
-- [ ] Task: Remove x86_64 arch detection from `build_app_unified.sh`
-- [ ] Task: Remove `lipo` universal binary creation step from `build_app_unified.sh`
-- [ ] Task: Remove x86_64 from `build_app.sh` (legacy script)
-- [ ] Task: Update `.github/workflows/cicd.yml` to remove Intel arch from CI
+- [x] Task: Remove x86_64 arch detection from `build_app_unified.sh`
+- [x] Task: Remove `lipo` universal binary creation step from `build_app_unified.sh`
+- [x] Task: Remove x86_64 from `build_app.sh` (legacy script)
+- [x] Task: Update `.github/workflows/cicd.yml` to remove Intel arch from CI
 - [ ] Task: Update `README.md` — system requirements and build docs (arm64 only)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Intel/Universal Binary Removal' (Protocol in workflow.md)
 

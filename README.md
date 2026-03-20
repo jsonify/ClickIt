@@ -15,7 +15,7 @@ A native macOS automation tool built with SwiftUI that delivers sub-10ms timing 
 1. **True Native Performance** - Built specifically for macOS with SwiftUI, not a cross-platform port
 2. **Advanced Window Targeting** - Click on specific apps even when they're minimized or in background
 3. **Sub-10ms Precision** - Professional-grade timing accuracy that competitors can't match
-4. **Universal Binary** - Fully optimized for both Intel and Apple Silicon processors
+4. **Apple Silicon Native** - Built and optimized for Apple Silicon (M1/M2/M3/M4)
 5. **Enterprise Features** - Timer automation, preset management, and performance analytics
 6. **Zero Telemetry** - Your automation stays completely private and offline
 
@@ -23,7 +23,7 @@ A native macOS automation tool built with SwiftUI that delivers sub-10ms timing 
 
 - ⚡ **Lightning Fast** - Sub-10ms click timing accuracy with precision interval control
 - 🎯 **Smart Targeting** - Advanced window detection that works even when apps are minimized
-- 🌐 **Universal Binary** - Optimized for both Intel x64 and Apple Silicon processors
+- 🌐 **Apple Silicon Native** - Optimized for Apple Silicon (M1/M2/M3/M4)
 - 🎮 **Always Active** - Background operation without requiring app focus or interruption
 - ⌨️ **Global Control** - System-wide hotkey support (ESC key) for instant start/stop
 - 💾 **Preset System** - Save and instantly load custom clicking configurations
@@ -91,7 +91,7 @@ A native macOS automation tool built with SwiftUI that delivers sub-10ms timing 
 
 ### Minimum Requirements
 - **Operating System**: macOS 15.0 (Sequoia) or later
-- **Processor**: Intel x64 or Apple Silicon (M1/M2/M3/M4)
+- **Processor**: Apple Silicon (M1/M2/M3/M4)
 - **Memory**: 50 MB RAM
 - **Storage**: 10 MB available disk space
 - **Permissions**:
@@ -221,7 +221,7 @@ swift build -c release
 
 #### Legacy Build System
 ```bash
-# Create universal app bundle (Intel + Apple Silicon)
+# Create app bundle (Apple Silicon / arm64)
 ./build_app.sh
 
 # Create debug app bundle
@@ -246,11 +246,9 @@ swift build -c release
 - `dist/build-info.txt` - Build metadata
 - `.build/` - Swift Package Manager build cache
 
-### Universal Binary Support
-The build system automatically detects available architectures and creates universal binaries when possible:
-- **Intel x64**: `x86_64-apple-macosx`
-- **Apple Silicon**: `arm64-apple-macosx`
-- **Universal**: Combined binary supporting both architectures
+### Architecture Support
+ClickIt targets Apple Silicon (arm64) exclusively:
+- **Apple Silicon**: `arm64-apple-macosx` (M1/M2/M3/M4)
 
 ### Code Signing for Permission Persistence
 
@@ -351,7 +349,7 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
 1. **Check Existing Issues** - Browse the [Issues](https://github.com/jsonify/ClickIt/issues) tab for tasks that need help
 2. **Fork & Branch** - Create a feature branch from `main` following our [Git Workflow Guide](docs/git-workflow-guide.md)
 3. **Make Changes** - Write clean, well-documented code following our style guidelines
-4. **Test Thoroughly** - Ensure your changes work on both Intel and Apple Silicon
+4. **Test Thoroughly** - Ensure your changes work on Apple Silicon
 5. **Submit PR** - Use [Conventional Commits](https://www.conventionalcommits.org/) format for commit messages
 
 ### Areas We Need Help With
@@ -394,7 +392,7 @@ Want to see a feature added? [Open a feature request](https://github.com/jsonify
 
 ### Reporting Issues
 When reporting bugs, please include:
-- macOS version and processor type (Intel/Apple Silicon)
+- macOS version and Apple Silicon chip (M1/M2/M3/M4)
 - ClickIt version number
 - Steps to reproduce the issue
 - Expected vs. actual behavior
