@@ -43,7 +43,7 @@ jobs:
       id: tests
       continue-on-error: true
       run: |
-        swift test --verbose 2>&1 | tee test-output.txt
+        swift test 2>&1 | tee test-output.txt
         echo "TEST_EXIT_CODE=${PIPESTATUS[0]}" >> $GITHUB_ENV
 
     - name: 📊 Annotate Test Results
