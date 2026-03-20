@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "ClickIt",
+  "project_id": "9994e769-c580-40a1-8e79-fdfa89c56efd"
+}

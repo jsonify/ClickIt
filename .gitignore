@@ -99,3 +99,7 @@ slather_output/
 *.gcov
 *.gcda
 *.gcno
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
