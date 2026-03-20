@@ -5,8 +5,21 @@ set -e  # Exit on any error
 # Unified ClickIt build script supporting both SPM and Xcode workflows
 
 BUILD_MODE="${1:-release}"   # Default to release, allow override
-BUILD_SYSTEM="${2:-auto}"    # auto, spm, xcode
-APP_VERSION="${3:-pro}"      # pro or lite, default to pro
+
+# Allow APP_VERSION (lite/pro) and BUILD_SYSTEM (auto/spm/xcode) in either order
+# as args 2 and 3. Detect by value.
+_ARG2="${2:-}"
+_ARG3="${3:-}"
+if [ "$_ARG2" = "lite" ] || [ "$_ARG2" = "pro" ]; then
+    APP_VERSION="$_ARG2"
+    BUILD_SYSTEM="${_ARG3:-auto}"
+elif [ "$_ARG3" = "lite" ] || [ "$_ARG3" = "pro" ]; then
+    APP_VERSION="$_ARG3"
+    BUILD_SYSTEM="${_ARG2:-auto}"
+else
+    BUILD_SYSTEM="${_ARG2:-auto}"
+    APP_VERSION="${_ARG3:-pro}"
+fi
 DIST_DIR="dist"
 BUNDLE_ID="com.jsonify.clickit"
 
@@ -354,9 +367,9 @@ if [ -n "$CERT_NAME" ]; then
         echo "⚠️  Code signing failed, but app will still work (permissions may not persist)"
     fi
 else
-    echo "⚠️  No code signing certificates found"
-    echo "📋 To improve permission persistence, create a self-signed certificate:"
-    echo "   See CERTIFICATE_SETUP.md for instructions"
+    echo "⚠️  No developer certificate found — using ad-hoc signing"
+    codesign --sign - --force --deep "$APP_BUNDLE"
+    echo "✅ Ad-hoc signed (app will run but permissions won't persist across rebuilds)"
 fi
 
 fi  # End of code signing conditional
