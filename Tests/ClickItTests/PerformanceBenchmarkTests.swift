@@ -11,6 +11,7 @@ import Foundation
 @testable import ClickIt
 
 /// Comprehensive performance benchmark tests for sub-10ms timing accuracy and resource usage
+@MainActor
 final class PerformanceBenchmarkTests: XCTestCase {
     
     // MARK: - Test Properties

@@ -87,7 +87,7 @@ final class TimerAutomationEngineTests: XCTestCase {
         XCTAssertEqual(timerEngine.currentSession?.configuration.clickInterval, configuration.clickInterval)
     }
     
-    func testPauseAutomationPreservesState() {
+    func testPauseAutomationPreservesState() async {
         // Given
         let configuration = createTestConfiguration()
         timerEngine.startAutomation(with: configuration)
@@ -541,6 +541,7 @@ class MockErrorRecoveryManager: ErrorRecoveryManagerProtocol {
         return RecoveryAction(
             strategy: .automaticRetry,
             shouldRetry: shouldRetry,
+            maxRetries: 3,
             retryDelay: 0.01
         )
     }
@@ -559,19 +560,33 @@ class MockPerformanceMonitor: PerformanceMonitorProtocol {
     }
     
     func getPerformanceReport() -> PerformanceReport {
+        let stableTrend = MemoryTrend(direction: .stable, changeRate: 0, confidence: 1)
+        let stableCPUTrend = CPUTrend(direction: .stable, changeRate: 0, confidence: 1)
         if simulateResourceExhaustion {
             return PerformanceReport(
                 memoryUsageMB: 45.0,
-                cpuUsage: 0.8,
-                isOptimal: false,
-                timestamp: Date()
+                peakMemoryUsageMB: 45.0,
+                memoryTargetMB: 50.0,
+                cpuUsagePercent: 80.0,
+                cpuTargetPercent: 5.0,
+                performanceStatus: .critical,
+                activeAlerts: [],
+                memoryTrend: stableTrend,
+                cpuTrend: stableCPUTrend,
+                recommendations: []
             )
         } else {
             return PerformanceReport(
                 memoryUsageMB: 20.0,
-                cpuUsage: 0.02,
-                isOptimal: true,
-                timestamp: Date()
+                peakMemoryUsageMB: 20.0,
+                memoryTargetMB: 50.0,
+                cpuUsagePercent: 2.0,
+                cpuTargetPercent: 5.0,
+                performanceStatus: .optimal,
+                activeAlerts: [],
+                memoryTrend: stableTrend,
+                cpuTrend: stableCPUTrend,
+                recommendations: []
             )
         }
     }
