@@ -24,7 +24,7 @@
     8. Check if tag `vX.Y.Z` already exists; exit 0 if so
     9. Create and push tag `vX.Y.Z` → triggers `cicd.yml`
 
-- [ ] Task 3: Update README.md Production Release section
+- [x] Task 3: Update README.md Production Release section
   - Replace the "Legacy: Manual Release (Deprecated)" Fastlane block
     with a clear description of the new automatic behavior
   - Explain: merge to main → auto patch bump → tag → release pipeline

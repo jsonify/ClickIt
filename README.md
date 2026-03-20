@@ -309,30 +309,36 @@ git checkout staging && git merge feature/my-feature
 fastlane auto_beta
 ```
 
-#### **Production Release**
+#### **Production Release (Automatic)**
 
-**NEW: Automated with Release Please**
-```bash
-# 1. Use conventional commits
-git commit -m "feat: add new feature"  # Minor bump
-git commit -m "fix: correct bug"       # Patch bump
-git commit -m "feat!: breaking change" # Major bump
+Patch releases are **fully automatic**. Simply merge your feature branch into `main`:
 
-# 2. Merge to main (via PR)
-# Release Please automatically:
-# - Creates a release PR with version bump
-# - Updates CHANGELOG.md
-# - Creates GitHub release when PR is merged
-# - Triggers build workflow
-
-# See docs/RELEASE_PROCESS.md for details
+```
+merge PR → main
+    ↓
+auto-release.yml fires
+    ↓
+patch version bumped (e.g. 1.5.5 → 1.5.6)
+Info.plist updated, committed [skip ci]
+v1.5.6 tag pushed
+    ↓
+cicd.yml triggers → builds, signs, creates GitHub release
 ```
 
-**Legacy: Manual Release (Deprecated)**
+No manual steps required. The workflow (`auto-release.yml`) handles everything.
+
+**For major or minor bumps** (not automatic — do these manually):
 ```bash
-# Old process - use Release Please instead
-fastlane bump_and_release bump:minor  # 1.0.0 → 1.1.0
+# Get the latest tag, then create the next tag manually
+git tag v2.0.0 && git push origin v2.0.0   # major bump
+git tag v1.6.0 && git push origin v1.6.0   # minor bump
+# cicd.yml picks up the tag and runs the full release pipeline
 ```
+
+**Setup requirement:** Add a Personal Access Token with `repo` scope as a
+repository secret named `RELEASE_TOKEN` (Settings → Secrets → Actions).
+Without it, the workflow falls back to `GITHUB_TOKEN` and the tag push
+will NOT trigger `cicd.yml`.
 
 ### 📚 **Additional Documentation**
 - **[CLAUDE.md](CLAUDE.md)** - Development guidance and project overview
