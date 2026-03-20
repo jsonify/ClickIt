@@ -387,7 +387,9 @@ struct SimplifiedMainView: View {
 
 // MARK: - Preview
 #if DEBUG
-#Preview {
-    SimplifiedMainView()
+struct SimplifiedMainView_Previews: PreviewProvider {
+    static var previews: some View {
+        SimplifiedMainView()
+    }
 }
 #endif

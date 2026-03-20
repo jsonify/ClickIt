@@ -33,6 +33,7 @@ let package = Package(
             name: "ClickItLite",
             dependencies: [],
             path: "Sources/ClickIt/Lite",
+            exclude: ["README.md"],
             resources: [.process("Resources")]
         ),
         .testTarget(
