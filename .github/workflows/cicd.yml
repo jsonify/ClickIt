@@ -378,7 +378,13 @@ jobs:
             exit 0
           fi
 
-          SHA256=$(shasum -a 256 "dist/${APP_NAME}-${VERSION}.dmg" | awk '{print $1}')
+          # Download the published DMG from GitHub to get the authoritative SHA256.
+          # Computing SHA256 from the local build artifact is unreliable because
+          # replacesArtifacts:true can re-upload a new binary after the cask is updated.
+          DMG_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${APP_NAME}-${VERSION}.dmg"
+          echo "Downloading published DMG to verify checksum: $DMG_URL"
+          curl -fsSL -o /tmp/verify-release.dmg "$DMG_URL"
+          SHA256=$(shasum -a 256 /tmp/verify-release.dmg | awk '{print $1}')
           echo "SHA256: $SHA256"
           echo "Version: $VERSION"
 
