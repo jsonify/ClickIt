@@ -49,4 +49,4 @@
       <!-- files: .github/workflows/release.yml, .github/workflows/cicd.yml -->
 - [x] Task: Verify end-to-end release pipeline produces zip + dmg + GitHub Release + appcast <!-- c270773 -->
 - [x] Task: Commit with `ci: complete release pipeline — signatures, appcast, deployment` <!-- c270773 -->
-- [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
