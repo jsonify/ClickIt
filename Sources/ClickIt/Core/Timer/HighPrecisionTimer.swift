@@ -233,8 +233,8 @@ final class HighPrecisionTimer: @unchecked Sendable {
                 timingErrors.removeFirst(timingErrors.count - maxTimingErrorHistory)
             }
             
-            // Log significant timing errors
-            if timingError > 0.005 { // 5ms threshold
+            // Log significant timing errors (suppressed on CI — runners lack real-time scheduling precision)
+            if timingError > 0.005 && ProcessInfo.processInfo.environment["CI"] == nil { // 5ms threshold
                 print("[HighPrecisionTimer] Timing error: \(timingError * 1000)ms (target: \(targetInterval * 1000)ms, actual: \(actualInterval * 1000)ms)")
             }
         }
