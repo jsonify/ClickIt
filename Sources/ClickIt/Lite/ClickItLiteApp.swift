@@ -5,6 +5,7 @@
 //  App entry point for ClickIt Lite - the simplified auto-clicker.
 //
 import SwiftUI
+import ClickItLiteUI
 
 @main
 struct ClickItLiteApp: App {

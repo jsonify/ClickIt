@@ -20,21 +20,39 @@ let package = Package(
     ],
     dependencies: [],
     targets: [
+        // Shared Lite UI library — used by both ClickIt (Pro) and ClickItLite binaries.
+        // Contains all Lite UI source files and resources; excludes the @main entry point.
+        .target(
+            name: "ClickItLiteUI",
+            dependencies: [],
+            path: "Sources/ClickIt/Lite",
+            exclude: ["README.md", "ClickItLiteApp.swift"],
+            resources: [.process("Resources")]
+        ),
         // ClickIt Pro - Full-featured version
         .executableTarget(
             name: "ClickIt",
-            dependencies: [],
+            dependencies: ["ClickItLiteUI"],
             path: "Sources/ClickIt",
             exclude: ["Lite"],
             resources: [.process("Resources")]
         ),
-        // ClickIt Lite - Simplified version
+        // ClickIt Lite - Simplified standalone version (entry point only; UI from ClickItLiteUI)
         .executableTarget(
             name: "ClickItLite",
-            dependencies: [],
+            dependencies: ["ClickItLiteUI"],
             path: "Sources/ClickIt/Lite",
-            exclude: ["README.md"],
-            resources: [.process("Resources")]
+            exclude: [
+                "README.md",
+                "LoggingConstants.swift",
+                "SimpleClickEngine.swift",
+                "SimpleCursorManager.swift",
+                "SimpleHotkeyManager.swift",
+                "SimplePermissionManager.swift",
+                "SimpleViewModel.swift",
+                "SimplifiedMainView.swift",
+                "Resources"
+            ]
         ),
         .testTarget(
             name: "ClickItTests",
