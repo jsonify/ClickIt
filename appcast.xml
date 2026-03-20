@@ -5,9 +5,102 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Tue, 11 Nov 2025 06:07:57 +0000</lastBuildDate>
-        
+        <lastBuildDate>Fri, 20 Mar 2026 18:47:57 +0000</lastBuildDate>
+
 <item>
+    <title><![CDATA[ClickIt v1.6.4]]></title>
+    <description><![CDATA[## What's New
+
+
+
+---
+📱 Compatible with macOS 14.0 or later]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.6.4</link>
+    <sparkle:version>1.6.4</sparkle:version>
+    <sparkle:shortVersionString>1.6.4</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Fri, 20 Mar 2026 18:47:18 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.4/ClickIt-1.6.4.zip"
+               length="1099494"
+               type="application/octet-stream"
+               sparkle:version="1.6.4"
+               sparkle:shortVersionString="1.6.4" />
+</item>
+        <item>
+    <title><![CDATA[ClickIt v1.6.1]]></title>
+    <description><![CDATA[# ClickIt v1.6.1
+
+🎉 **Native macOS Auto-Clicker Application**
+
+## ✨ Features
+- 🖱️ **Precision Clicking**: Sub-10ms timing accuracy
+- 🌐 **Universal Binary**: Native support for Intel x64 + Apple Silicon
+- 🎯 **Background Operation**: Works without requiring app focus
+- ⚡ **Global Hotkeys**: ESC key controls for instant stop
+- 🔧 **Advanced Configuration**: CPS rates, click types, and presets
+- 👁️ **Visual Feedback**: Real-time overlay indicators
+- 🔄 **Auto-Updates**: Built-in Sparkle framework integration
+
+## 📋 System Requirements
+- **macOS**: 14.0 or later
+- **Architecture**: Universal Binary (Intel x64 + Apple Silicon)
+- **Permissions**: Accessibility and Screen Recording access required
+
+## 🚀 Installation
+1. Download `ClickIt.app.zip` below
+2. Extract and move `ClickIt.app` to Applications folder
+3. First launch: Right-click → Open (to bypass Gatekeeper)
+4. Grant Accessibility and Screen Recording permissions when prompted
+
+## 📈 Changes Since v1.6.0
+```
+- chore: bump version to v1.6.1 [skip ci]
+- ci: switch auto-release trigger from push to PR merge (#23)
+- conductor(archive): archive auto_patch_release_20260320 track
+- chore(conductor): complete auto_patch_release_20260320 track [skip ci]
+- chore(conductor): capture learnings for auto_patch_release track [skip ci]
+- docs: document auto patch release flow in README
+- feat(ci): add auto-release workflow for patch bumps on main merge
+- chore(conductor): verify Info.plist path for auto-release workflow
+- conductor(archive): archive cicd_optimization_20260319 track
+- chore(conductor): complete cicd_optimization_20260319 track
+- docs: update BUILD_AND_DEPLOY.md for current CI/CD; remove BUILD_VERSIONS_GUIDE.md
+- feat(tracks): add CI/CD workflow audit and optimization documentation
+- ci: complete release pipeline — signatures, appcast, deployment
+- ci: consolidate overlapping workflow triggers
+- ci: optimize ci.yml — cache, single config, pin xcode
+- fix(tests): suppress HighPrecisionTimer timing noise in CI
+- conductor(archive): archive lite_stabilization_20260319 track
+- conductor(track): complete lite_stabilization_20260319
+- fix(tests): fix Swift 6 concurrency errors blocking test build
+- chore(conductor): document Phase 3 blocked — Xcode required for tests
+- fix(build): fix lite arg parsing and add ad-hoc signing fallback
+- fix(lite): fix SPM build errors in ClickIt Lite
+- chore: untrack beads credential key, add to .gitignore
+- chore: remove Intel/x86_64 and universal binary support
+- conductor(setup): Add conductor setup files
+- bd init: initialize beads issue tracking
+```
+
+---
+
+🏗️ **Built with**: Xcode on GitHub Actions
+📅 **Build Date**: 2026-03-20 17:22:59 UTC
+🔖 **Version**: 1.6.1
+🎯 **Target**: macOS 14.0+
+]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.6.1</link>
+    <sparkle:version>1.6.1</sparkle:version>
+    <sparkle:shortVersionString>1.6.1</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Fri, 20 Mar 2026 17:23:00 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.1/ClickIt.app.zip"
+               length="1099502"
+               type="application/octet-stream"
+               sparkle:version="1.6.1"
+               sparkle:shortVersionString="1.6.1" />
+</item>
+        <item>
     <title><![CDATA[ClickIt v1.6.0]]></title>
     <description><![CDATA[## What's New
 
@@ -21,10 +114,10 @@
     <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Tue, 11 Nov 2025 06:02:25 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.0/ClickIt-1.6.0.zip" 
-               length="2290293" 
-               type="application/octet-stream" 
-               sparkle:version="1.6.0" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.0/ClickIt-1.6.0.zip"
+               length="2290293"
+               type="application/octet-stream"
+               sparkle:version="1.6.0"
                sparkle:shortVersionString="1.6.0" />
 </item>
         <item>
@@ -70,10 +163,10 @@
     <sparkle:shortVersionString>1.5.5</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Fri, 10 Oct 2025 20:18:20 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.5/ClickIt.app.zip" 
-               length="1903313" 
-               type="application/octet-stream" 
-               sparkle:version="1.5.5" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.5/ClickIt.app.zip"
+               length="1903313"
+               type="application/octet-stream"
+               sparkle:version="1.5.5"
                sparkle:shortVersionString="1.5.5" />
 </item>
         <item>
@@ -119,10 +212,10 @@
     <sparkle:shortVersionString>1.5.4</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Fri, 10 Oct 2025 14:59:13 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.4/ClickIt.app.zip" 
-               length="1903337" 
-               type="application/octet-stream" 
-               sparkle:version="1.5.4" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.4/ClickIt.app.zip"
+               length="1903337"
+               type="application/octet-stream"
+               sparkle:version="1.5.4"
                sparkle:shortVersionString="1.5.4" />
 </item>
         <item>
@@ -168,10 +261,10 @@
     <sparkle:shortVersionString>1.5.3</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Sat, 20 Sep 2025 16:55:27 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.3/ClickIt.app.zip" 
-               length="1739731" 
-               type="application/octet-stream" 
-               sparkle:version="1.5.3" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.3/ClickIt.app.zip"
+               length="1739731"
+               type="application/octet-stream"
+               sparkle:version="1.5.3"
                sparkle:shortVersionString="1.5.3" />
 </item>
         <item>
@@ -217,10 +310,10 @@
     <sparkle:shortVersionString>1.5.2</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Fri, 25 Jul 2025 05:59:18 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.2/ClickIt.app.zip" 
-               length="1190382" 
-               type="application/octet-stream" 
-               sparkle:version="1.5.2" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.2/ClickIt.app.zip"
+               length="1190382"
+               type="application/octet-stream"
+               sparkle:version="1.5.2"
                sparkle:shortVersionString="1.5.2" />
 </item>
         <item>
@@ -267,10 +360,10 @@
     <sparkle:shortVersionString>1.5.1</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Fri, 25 Jul 2025 05:49:29 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.1/ClickIt.app.zip" 
-               length="1190302" 
-               type="application/octet-stream" 
-               sparkle:version="1.5.1" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.1/ClickIt.app.zip"
+               length="1190302"
+               type="application/octet-stream"
+               sparkle:version="1.5.1"
                sparkle:shortVersionString="1.5.1" />
 </item>
         <item>
@@ -337,10 +430,10 @@
     <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Thu, 24 Jul 2025 11:53:18 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.0/ClickIt.app.zip" 
-               length="1246159" 
-               type="application/octet-stream" 
-               sparkle:version="1.5.0" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.5.0/ClickIt.app.zip"
+               length="1246159"
+               type="application/octet-stream"
+               sparkle:version="1.5.0"
                sparkle:shortVersionString="1.5.0" />
 </item>
         <item>
@@ -357,10 +450,10 @@
     <sparkle:shortVersionString>1.4.15</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Tue, 22 Jul 2025 12:07:54 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.15/ClickIt-1.4.15.zip" 
-               length="971135" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.15" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.15/ClickIt-1.4.15.zip"
+               length="971135"
+               type="application/octet-stream"
+               sparkle:version="1.4.15"
                sparkle:shortVersionString="1.4.15" />
 </item>
         <item>
@@ -377,10 +470,10 @@
     <sparkle:shortVersionString>1.4.14</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 22:57:06 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.14/ClickIt-1.4.14.zip" 
-               length="3868244" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.14" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.14/ClickIt-1.4.14.zip"
+               length="3868244"
+               type="application/octet-stream"
+               sparkle:version="1.4.14"
                sparkle:shortVersionString="1.4.14" />
 </item>
         <item>
@@ -397,10 +490,10 @@
     <sparkle:shortVersionString>1.4.13</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 22:51:41 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.13/ClickIt-1.4.13.zip" 
-               length="3907574" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.13" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.13/ClickIt-1.4.13.zip"
+               length="3907574"
+               type="application/octet-stream"
+               sparkle:version="1.4.13"
                sparkle:shortVersionString="1.4.13" />
 </item>
         <item>
@@ -417,10 +510,10 @@
     <sparkle:shortVersionString>1.4.12</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 04:48:19 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.12/ClickIt-1.4.12.zip" 
-               length="3907404" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.12" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.12/ClickIt-1.4.12.zip"
+               length="3907404"
+               type="application/octet-stream"
+               sparkle:version="1.4.12"
                sparkle:shortVersionString="1.4.12" />
 </item>
         <item>
@@ -437,10 +530,10 @@
     <sparkle:shortVersionString>1.4.11</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 04:32:17 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.11/ClickIt-1.4.11.zip" 
-               length="3907311" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.11" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.11/ClickIt-1.4.11.zip"
+               length="3907311"
+               type="application/octet-stream"
+               sparkle:version="1.4.11"
                sparkle:shortVersionString="1.4.11" />
 </item>
         <item>
@@ -457,10 +550,10 @@
     <sparkle:shortVersionString>1.4.10</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 04:04:42 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.10/ClickIt-1.4.10.zip" 
-               length="875503" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.10" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.10/ClickIt-1.4.10.zip"
+               length="875503"
+               type="application/octet-stream"
+               sparkle:version="1.4.10"
                sparkle:shortVersionString="1.4.10" />
 </item>
         <item>
@@ -477,10 +570,10 @@
     <sparkle:shortVersionString>1.4.9</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 03:41:52 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.9/ClickIt-1.4.9.zip" 
-               length="877312" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.9" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.9/ClickIt-1.4.9.zip"
+               length="877312"
+               type="application/octet-stream"
+               sparkle:version="1.4.9"
                sparkle:shortVersionString="1.4.9" />
 </item>
         <item>
@@ -497,10 +590,10 @@
     <sparkle:shortVersionString>1.4.8</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 03:31:11 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.8/ClickIt-1.4.8.zip" 
-               length="876770" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.8" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.8/ClickIt-1.4.8.zip"
+               length="876770"
+               type="application/octet-stream"
+               sparkle:version="1.4.8"
                sparkle:shortVersionString="1.4.8" />
 </item>
         <item>
@@ -517,10 +610,10 @@
     <sparkle:shortVersionString>1.4.7</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 03:21:27 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.7/ClickIt-1.4.7.zip" 
-               length="877832" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.7" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.7/ClickIt-1.4.7.zip"
+               length="877832"
+               type="application/octet-stream"
+               sparkle:version="1.4.7"
                sparkle:shortVersionString="1.4.7" />
 </item>
         <item>
@@ -566,10 +659,10 @@
     <sparkle:shortVersionString>1.4.6</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 03:03:30 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.6/ClickIt.app.zip" 
-               length="875799" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.6" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.6/ClickIt.app.zip"
+               length="875799"
+               type="application/octet-stream"
+               sparkle:version="1.4.6"
                sparkle:shortVersionString="1.4.6" />
 </item>
         <item>
@@ -586,10 +679,10 @@
     <sparkle:shortVersionString>1.4.5</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 02:57:01 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.5/ClickIt-1.4.5.zip" 
-               length="877790" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.5" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.5/ClickIt-1.4.5.zip"
+               length="877790"
+               type="application/octet-stream"
+               sparkle:version="1.4.5"
                sparkle:shortVersionString="1.4.5" />
 </item>
         <item>
@@ -606,10 +699,10 @@
     <sparkle:shortVersionString>1.4.4</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Mon, 21 Jul 2025 02:49:41 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.4/ClickIt-1.4.4.zip" 
-               length="875993" 
-               type="application/octet-stream" 
-               sparkle:version="1.4.4" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.4.4/ClickIt-1.4.4.zip"
+               length="875993"
+               type="application/octet-stream"
+               sparkle:version="1.4.4"
                sparkle:shortVersionString="1.4.4" />
 </item>
         <item>
@@ -620,10 +713,10 @@
     <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Sun, 20 Jul 2025 22:08:23 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.2.0/ClickIt.app.zip" 
-               length="2075134" 
-               type="application/octet-stream" 
-               sparkle:version="1.2.0" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.2.0/ClickIt.app.zip"
+               length="2075134"
+               type="application/octet-stream"
+               sparkle:version="1.2.0"
                sparkle:shortVersionString="1.2.0" />
 </item>
         <item>
@@ -652,10 +745,10 @@ This release includes the ClickIt.app bundle for macOS 15.0+]]></description>
     <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Sun, 20 Jul 2025 08:56:36 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.1.1/ClickIt.app.zip" 
-               length="1976843" 
-               type="application/octet-stream" 
-               sparkle:version="1.1.1" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.1.1/ClickIt.app.zip"
+               length="1976843"
+               type="application/octet-stream"
+               sparkle:version="1.1.1"
                sparkle:shortVersionString="1.1.1" />
 </item>
         <item>
@@ -684,12 +777,12 @@ This release includes the ClickIt.app bundle for macOS 15.0+]]></description>
     <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Sat, 19 Jul 2025 06:45:05 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.0.0/ClickIt.app.zip" 
-               length="995327" 
-               type="application/octet-stream" 
-               sparkle:version="1.0.0" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.0.0/ClickIt.app.zip"
+               length="995327"
+               type="application/octet-stream"
+               sparkle:version="1.0.0"
                sparkle:shortVersionString="1.0.0" />
 </item>
-        
+
     </channel>
 </rss>

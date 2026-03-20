@@ -5,8 +5,8 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Tue, 11 Nov 2025 06:07:57 +0000</lastBuildDate>
-        
+        <lastBuildDate>Fri, 20 Mar 2026 18:47:57 +0000</lastBuildDate>
+
 <item>
     <title><![CDATA[Beta Release beta-v1.0.0-202507200129]]></title>
     <description><![CDATA[Beta release for testing and feedback]]></description>
@@ -15,10 +15,10 @@
     <sparkle:shortVersionString>1.0.0-202507200129</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Sun, 20 Jul 2025 08:30:19 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/beta-v1.0.0-202507200129/ClickIt.app.zip" 
-               length="1976844" 
-               type="application/octet-stream" 
-               sparkle:version="1.0.0-202507200129" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/beta-v1.0.0-202507200129/ClickIt.app.zip"
+               length="1976844"
+               type="application/octet-stream"
+               sparkle:version="1.0.0-202507200129"
                sparkle:shortVersionString="1.0.0-202507200129" />
 </item>
         <item>
@@ -43,12 +43,12 @@ This is a beta release. Please report any issues or feedback\!]]></description>
     <sparkle:shortVersionString>1.0.0-20250718</sparkle:shortVersionString>
     <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
     <pubDate>Sat, 19 Jul 2025 06:32:45 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/beta-v1.0.0-20250718/ClickIt.app.zip" 
-               length="995331" 
-               type="application/octet-stream" 
-               sparkle:version="1.0.0-20250718" 
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/beta-v1.0.0-20250718/ClickIt.app.zip"
+               length="995331"
+               type="application/octet-stream"
+               sparkle:version="1.0.0-20250718"
                sparkle:shortVersionString="1.0.0-20250718" />
 </item>
-        
+
     </channel>
 </rss>
