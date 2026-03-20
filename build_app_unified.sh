@@ -42,11 +42,11 @@ get_version_from_plist() {
     /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" ClickIt/Info.plist 2>/dev/null || echo "1.0.0"
 }
 
-VERSION=$(get_version_from_plist)
+VERSION="${RELEASE_VERSION:-$(get_version_from_plist)}"
 BUILD_NUMBER=$(date +%Y%m%d%H%M)
 
 echo "🔨 Building $APP_NAME app bundle ($BUILD_MODE mode)..."
-echo "📦 Version: $VERSION (from Info.plist, synced with GitHub releases)"
+echo "📦 Version: $VERSION (${RELEASE_VERSION:+from RELEASE_VERSION env var}${RELEASE_VERSION:-from Info.plist})"
 echo "🏷️  Edition: $([ "$APP_VERSION" = "lite" ] && echo "Lite (Simplified)" || echo "Pro (Full Featured)")"
 
 # Validate version is synchronized with GitHub (optional validation)

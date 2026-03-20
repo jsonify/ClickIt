@@ -1,10 +1,9 @@
 name: 🚀 Build and Release ClickIt
 
 on:
-  push:
-    tags:
-      - 'v*'  # Trigger on version tags like v1.3.0
-  workflow_dispatch:  # Allow manual triggering
+  # Manual fallback only — automatic releases are handled by cicd.yml (tag-triggered).
+  # Use this if cicd.yml fails and you need to re-run a release manually.
+  workflow_dispatch:
     inputs:
       tag:
         description: 'Tag to build (e.g., v1.3.0)'
@@ -34,7 +33,7 @@ jobs:
     - name: 🔍 Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: latest-stable
+        xcode-version: '16.2'
     
     - name: 📋 Extract Version from Tag
       id: version
@@ -49,19 +48,14 @@ jobs:
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "📦 Building version: ${VERSION} (tag: ${TAG_NAME})"
     
-    - name: 🔧 Update Version in Build Script
-      run: |
-        sed -i '' "s/VERSION=\"1.0.0\"/VERSION=\"${{ steps.version.outputs.version }}\"/" build_app_unified.sh
-        echo "✅ Updated version to ${{ steps.version.outputs.version }}"
-    
     - name: 🏗️ Build Universal App with SPM
       run: |
         echo "🔨 Building ${{ env.APP_NAME }} with Swift Package Manager..."
-        # Set environment variables for CI build (disable code signing, fix deployment target)
         export CODE_SIGN_IDENTITY=""
         export CODE_SIGNING_REQUIRED=NO
         export CODE_SIGNING_ALLOWED=NO
         export MACOSX_DEPLOYMENT_TARGET=14.0
+        export RELEASE_VERSION="${{ steps.version.outputs.version }}"
         ./build_app_unified.sh release spm
         
         echo "📦 Creating release archive..."
