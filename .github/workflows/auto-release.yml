@@ -117,7 +117,7 @@ jobs:
         run: |
           TAG="v${{ steps.next_version.outputs.next }}"
           echo "Dispatching cicd.yml for $TAG..."
-          gh workflow run cicd.yml --ref "$TAG"
+          gh workflow run cicd.yml --ref "$TAG" -f tag="$TAG"
           echo "✅ cicd.yml dispatched for $TAG"
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
