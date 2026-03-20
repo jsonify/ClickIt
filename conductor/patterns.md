@@ -12,8 +12,14 @@ Reusable patterns discovered during development. Read this before starting new w
 ## CI/CD
 - SPM cache key: `${{ runner.os }}-spm-${{ hashFiles('Package.resolved', 'Package.swift') }}` with `restore-keys: ${{ runner.os }}-spm-` — standard pattern for GitHub Actions (from: cicd_optimization_20260319, 2026-03-20)
 - Lint/grep-only CI jobs should use `ubuntu-latest`, not `macos-15` — macOS runners are ~10× more expensive and unnecessary for shell/static checks (from: cicd_optimization_20260319, 2026-03-20)
+- Use `ubuntu-latest` + Python `plistlib` to edit XML `.plist` files in CI — avoids macOS runner cost; `plistlib.dump(plist, f, fmt=plistlib.FMT_XML)` preserves XML format (from: auto_patch_release_20260320, 2026-03-20)
+- `GITHUB_TOKEN` pushes do NOT trigger other workflows (GitHub anti-loop protection) — use a PAT (e.g. `RELEASE_TOKEN` secret) when a workflow push/tag needs to trigger a downstream workflow like a release pipeline (from: auto_patch_release_20260320, 2026-03-20)
+- Prevent recursive workflow triggering: add `[skip ci]` to the bot commit message AND add `if: "!contains(github.event.head_commit.message, '[skip ci]')"` to the job condition (from: auto_patch_release_20260320, 2026-03-20)
 - Detect GitHub Actions in Swift: `ProcessInfo.processInfo.environment["CI"] == nil` — GitHub Actions always sets `CI=true`; use this to suppress CI-unfriendly logging (from: cicd_optimization_20260319, 2026-03-20)
 - Shell script version override pattern: `VERSION="${RELEASE_VERSION:-$(get_version_from_plist)}"` — env var takes priority, falls back to Info.plist; set `RELEASE_VERSION` from the git tag in CI (from: cicd_optimization_20260319, 2026-03-20)
+
+## Info.plist
+- Source `Info.plist` is at `ClickIt/Info.plist` (repo-root-relative). Only update `CFBundleShortVersionString` in CI — `CFBundleVersion` is `$(CURRENT_PROJECT_VERSION)`, an Xcode build variable that must not be overwritten (from: auto_patch_release_20260320, 2026-03-20)
 
 ## Gotchas
 - macOS 26 (Sequoia) kills unsigned app bundles with `SIGKILL (Code Signature Invalid)` even for local debug builds — always ad-hoc sign with `codesign --sign - --force --deep <app.bundle>` when no developer cert is available (from: lite_stabilization_20260319, 2026-03-19)
@@ -26,4 +32,4 @@ Reusable patterns discovered during development. Read this before starting new w
 - 3 known flaky tests in the suite: `testPatternBreakup` (random boundary condition), `testHighFrequencyCPSAccuracy` (timing precision, fails in debug mode), `testErrorRecoveryIntegration` (timing-sensitive) — not regressions (from: lite_stabilization_20260319 + cicd_optimization_20260319, 2026-03-20)
 
 ---
-Last refreshed: 2026-03-20
+Last refreshed: 2026-03-20 (auto_patch_release_20260320)
