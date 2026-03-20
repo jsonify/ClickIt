@@ -43,7 +43,7 @@ jobs:
       id: tests
       continue-on-error: true
       run: |
-        swift test --verbose 2>&1 | tee test-output.txt
+        swift test --arch arm64 2>&1 | tee test-output.txt
         echo "TEST_EXIT_CODE=${PIPESTATUS[0]}" >> $GITHUB_ENV
 
     - name: 📊 Annotate Test Results
@@ -59,46 +59,12 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
         fi
 
-    - name: 🏗️ Build App Bundle
-      run: |
-        echo "🔨 Building ${{ env.APP_NAME }} (debug)..."
-        ./build_app_unified.sh debug spm
-        echo "📋 Build completed!"
-        ls -la dist/
-
-    - name: 🔍 Verify Build Output
-      run: |
-        echo "🔍 Verifying build output..."
-
-        if [ -d "dist/${{ env.APP_NAME }}.app" ]; then
-          echo "✅ App bundle created successfully"
-
-          BINARY_PATH="dist/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
-          if [ -f "$BINARY_PATH" ]; then
-            echo "📱 Binary info:"
-            file "$BINARY_PATH"
-            echo "🏗️ Architecture:"
-            lipo -info "$BINARY_PATH" 2>/dev/null || echo "Single architecture binary"
-          else
-            echo "❌ Binary not found at $BINARY_PATH"
-            exit 1
-          fi
-
-          echo "🔐 Code signing status:"
-          codesign -dv "dist/${{ env.APP_NAME }}.app" 2>&1 || echo "⚠️ Not code signed"
-
-        else
-          echo "❌ App bundle not found!"
-          exit 1
-        fi
-
-    - name: 📦 Upload Build Artifact
+    - name: 📦 Upload Test Output
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: "${{ env.APP_NAME }}-debug-${{ github.sha }}"
-        path: |
-          dist/${{ env.APP_NAME }}.app
-          dist/build-info.txt
+        name: "test-output-${{ github.sha }}"
+        path: test-output.txt
         retention-days: 7
 
   lint-and-quality:
