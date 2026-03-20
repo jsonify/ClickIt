@@ -1,5 +1,5 @@
 # Auto Patch Release
-# Triggered when a pull request is merged into main.
+# Triggered when a pull request is merged into main. (PAT scope: workflow + Actions)
 # Bumps the patch version, updates Info.plist, commits, then pushes a v* tag
 # which triggers the full release pipeline in cicd.yml.
 #
