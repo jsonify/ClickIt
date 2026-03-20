@@ -8,6 +8,12 @@ name: Release Pipeline
 on:
   push:
     tags: [ 'v*', 'beta*' ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.6.1)'
+        required: true
+        type: string
 
 # Prevent overlapping release builds
 concurrency:
