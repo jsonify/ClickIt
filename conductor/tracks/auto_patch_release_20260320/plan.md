@@ -7,7 +7,7 @@
     `CFBundleShortVersionString` and `CFBundleVersion`
   - Note: path is referenced in fastlane/Fastfile — verify it's repo-relative
 
-- [ ] Task 2: Create `.github/workflows/auto-release.yml`
+- [x] Task 2: Create `.github/workflows/auto-release.yml`
   - Trigger: `on: push: branches: [main]`
   - Job-level guard: skip if commit message contains `[skip ci]`
     (prevents the workflow's own bump commit from re-triggering it)

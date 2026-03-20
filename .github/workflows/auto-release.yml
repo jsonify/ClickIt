@@ -1,0 +1,112 @@
+# Auto Patch Release
+# Triggered on every push to main (i.e. when a feature branch is merged).
+# Bumps the patch version, updates Info.plist, commits, then pushes a v* tag
+# which triggers the full release pipeline in cicd.yml.
+#
+# IMPORTANT: Requires a Personal Access Token (PAT) stored as RELEASE_TOKEN.
+# The built-in GITHUB_TOKEN cannot trigger other workflows (cicd.yml).
+# Create a PAT with 'repo' scope → Settings → Secrets → RELEASE_TOKEN.
+
+name: 🔖 Auto Patch Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  auto-release:
+    name: 🔖 Bump Patch & Tag
+    runs-on: ubuntu-latest
+
+    # Skip version-bump commits to prevent recursive triggering
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # PAT required so the tag push triggers cicd.yml.
+          # Falls back to GITHUB_TOKEN (tag push will NOT trigger cicd.yml).
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: ⚠️ Warn if RELEASE_TOKEN not set
+        run: |
+          if [ -z "${{ secrets.RELEASE_TOKEN }}" ]; then
+            echo "::warning::RELEASE_TOKEN secret is not set. The tag push will use GITHUB_TOKEN and will NOT trigger cicd.yml. Add a PAT with 'repo' scope as the RELEASE_TOKEN repository secret."
+          fi
+
+      - name: 🔍 Get current version
+        id: current_version
+        run: |
+          LATEST_TAG=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          if [ -z "$LATEST_TAG" ]; then
+            CURRENT="0.0.0"
+          else
+            CURRENT="${LATEST_TAG#v}"
+          fi
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "Current version: $CURRENT"
+
+      - name: 🔢 Compute next patch version
+        id: next_version
+        run: |
+          CURRENT="${{ steps.current_version.outputs.current }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          PATCH=$((PATCH + 1))
+          NEXT="${MAJOR}.${MINOR}.${PATCH}"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Next version: $NEXT"
+
+      - name: 🏷️ Check if tag already exists
+        id: check_tag
+        run: |
+          TAG="v${{ steps.next_version.outputs.next }}"
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG already exists — skipping release"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG does not exist — proceeding"
+          fi
+
+      - name: 📝 Update Info.plist version
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          NEW_VERSION="${{ steps.next_version.outputs.next }}"
+          python3 - <<EOF
+          import plistlib
+
+          plist_path = "ClickIt/Info.plist"
+          with open(plist_path, "rb") as f:
+              plist = plistlib.load(f)
+
+          plist["CFBundleShortVersionString"] = "$NEW_VERSION"
+
+          with open(plist_path, "wb") as f:
+              plistlib.dump(plist, f, fmt=plistlib.FMT_XML)
+
+          print(f"Updated CFBundleShortVersionString to $NEW_VERSION")
+          EOF
+
+      - name: 💾 Commit version bump
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          NEW_VERSION="${{ steps.next_version.outputs.next }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ClickIt/Info.plist
+          git commit -m "chore: bump version to v${NEW_VERSION} [skip ci]"
+
+      - name: 🚀 Push commit and tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          NEW_VERSION="${{ steps.next_version.outputs.next }}"
+          TAG="v${NEW_VERSION}"
+          git tag "$TAG"
+          git push origin main
+          git push origin "$TAG"
+          echo "✅ Pushed tag $TAG — cicd.yml release pipeline should now trigger"
