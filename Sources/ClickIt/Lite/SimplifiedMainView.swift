@@ -48,7 +48,7 @@ package struct SimplifiedMainView: View {
 
     // MARK: - Scheduler State
 
-    @State private var scheduledDate: Date = Date().addingTimeInterval(60)
+    @State private var scheduledDate: Date = Self.nextMinute()
     @State private var schedulerError: String? = nil
 
     // MARK: - Body
@@ -351,8 +351,12 @@ package struct SimplifiedMainView: View {
 
                 Button("Schedule Click") {
                     schedulerError = nil
+                    // Truncate seconds so the scheduled time matches what DatePicker displays
+                    var c = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: scheduledDate)
+                    c.second = 0
+                    let truncated = Calendar.current.date(from: c) ?? scheduledDate
                     do {
-                        try viewModel.scheduleClick(at: scheduledDate)
+                        try viewModel.scheduleClick(at: truncated)
                     } catch ScheduledClickManager.ScheduleError.dateInPast {
                         schedulerError = "Please select a future date and time."
                     } catch {
@@ -393,6 +397,14 @@ package struct SimplifiedMainView: View {
                 }
             }
         }
+    }
+
+    /// Returns the start of the next minute (seconds = 0, at least 60s from now).
+    private static func nextMinute() -> Date {
+        let future = Date().addingTimeInterval(60)
+        var components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: future)
+        components.second = 0
+        return Calendar.current.date(from: components) ?? future
     }
 
     /// Formats a TimeInterval as HH:mm:ss for the countdown display.
