@@ -44,6 +44,7 @@ let package = Package(
             path: "Sources/ClickIt/Lite",
             exclude: [
                 "README.md",
+                "LiteScheduler.swift",
                 "LoggingConstants.swift",
                 "ScheduledClickManager.swift",
                 "SimpleClickEngine.swift",
