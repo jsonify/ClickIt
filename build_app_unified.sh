@@ -261,22 +261,22 @@ EOF
     # Make executable
     chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
-    # Copy SPM resource bundles to app bundle
+    # Copy all SPM resource bundles to app bundle
+    # SPM can generate multiple bundles (e.g. ClickIt_ClickItLiteUI.bundle from a library
+    # dependency), so we copy every *.bundle in the build output rather than guessing a name.
     echo "📦 Copying resource bundles..."
-    # For ClickItLite: ClickIt_ClickItLite.bundle
-    # For ClickIt: ClickIt_ClickIt.bundle
-    RESOURCE_BUNDLE_NAME="ClickIt_${SPM_TARGET}.bundle"
+    BUNDLE_COUNT=0
+    for BUNDLE in "$BUILD_PATH"/*.bundle; do
+        if [ -d "$BUNDLE" ]; then
+            BUNDLE_NAME=$(basename "$BUNDLE")
+            cp -R "$BUNDLE" "$APP_BUNDLE/Contents/Resources/"
+            echo "✅ Copied $BUNDLE_NAME to app bundle"
+            BUNDLE_COUNT=$((BUNDLE_COUNT + 1))
+        fi
+    done
 
-    # Find the resource bundle in the build output
-    RESOURCE_BUNDLE_PATH="$BUILD_PATH/$RESOURCE_BUNDLE_NAME"
-    if [ -d "$RESOURCE_BUNDLE_PATH" ]; then
-        echo "✅ Found resource bundle at: $RESOURCE_BUNDLE_PATH"
-        cp -R "$RESOURCE_BUNDLE_PATH" "$APP_BUNDLE/Contents/Resources/"
-        echo "✅ Copied $RESOURCE_BUNDLE_NAME to app bundle"
-    fi
-
-    if [ ! -d "$APP_BUNDLE/Contents/Resources/$RESOURCE_BUNDLE_NAME" ]; then
-        echo "⚠️  Warning: Resource bundle $RESOURCE_BUNDLE_NAME not found"
+    if [ "$BUNDLE_COUNT" -eq 0 ]; then
+        echo "⚠️  Warning: No resource bundles found in $BUILD_PATH"
         echo "   App may not be able to load custom resources"
     fi
 
