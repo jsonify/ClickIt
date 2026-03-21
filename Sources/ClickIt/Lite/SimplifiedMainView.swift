@@ -324,29 +324,31 @@ package struct SimplifiedMainView: View {
             Text("Schedule a Click")
                 .font(.headline)
 
-            DatePicker(
-                "Date & Time",
-                selection: $scheduledDate,
-                in: Date()...,
-                displayedComponents: [.date, .hourAndMinute]
-            )
-            .datePickerStyle(.compact)
-            .disabled(viewModel.isRunning || viewModel.schedulerState != .idle)
-            .onChange(of: scheduledDate) { _ in
-                schedulerError = nil
-            }
-
-            if let error = schedulerError {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(.red)
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
+            switch viewModel.schedulerState {
+            case .idle, .fired:
+                // Date picker and schedule button
+                DatePicker(
+                    "Date & Time",
+                    selection: $scheduledDate,
+                    in: Date()...,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+                .datePickerStyle(.compact)
+                .disabled(viewModel.isRunning)
+                .onChange(of: scheduledDate) { _ in
+                    schedulerError = nil
                 }
-            }
 
-            if viewModel.schedulerState == .idle {
+                if let error = schedulerError {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundColor(.red)
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
+
                 Button("Schedule Click") {
                     schedulerError = nil
                     do {
@@ -359,8 +361,47 @@ package struct SimplifiedMainView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(viewModel.isRunning || !permissionManager.hasAccessibilityPermission)
+
+            case .scheduled(let targetDate):
+                // Countdown display
+                VStack(spacing: 6) {
+                    Text(formatCountdown(viewModel.schedulerCountdown))
+                        .font(.system(.title2, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.orange)
+
+                    Text("Scheduled for \(targetDate.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(8)
+
+                HStack(spacing: 12) {
+                    Button("Edit") {
+                        viewModel.cancelSchedule()
+                        scheduledDate = targetDate
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("Cancel", role: .destructive) {
+                        viewModel.cancelSchedule()
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
         }
+    }
+
+    /// Formats a TimeInterval as HH:mm:ss for the countdown display.
+    private func formatCountdown(_ interval: TimeInterval) -> String {
+        let total = max(0, Int(interval))
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let seconds = total % 60
+        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 
     private var startStopButton: some View {

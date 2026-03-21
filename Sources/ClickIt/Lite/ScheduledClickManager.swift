@@ -39,6 +39,11 @@ final class ScheduledClickManager: ObservableObject {
     private var timer: Timer?
     private let clickAction: () -> Void
 
+    // MARK: - Callbacks
+
+    /// Called immediately after the scheduled click fires, before state resets to idle.
+    var onFired: (() -> Void)?
+
     // MARK: - Initialization
 
     /// Creates a scheduler with an injectable click action for testability.
@@ -102,6 +107,7 @@ final class ScheduledClickManager: ObservableObject {
         countdown = 0
         logger.info("Scheduled click firing")
         clickAction()
+        onFired?()
         state = .idle
     }
 
