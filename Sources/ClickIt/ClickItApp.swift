@@ -1,32 +1,43 @@
 // swiftlint:disable file_header
 import SwiftUI
+import ClickItLiteUI
 
 @main
 struct ClickItApp: App {
+    @AppStorage("appMode") private var appModeRawValue: String = AppMode.lite.rawValue
+
     @StateObject private var permissionManager = PermissionManager.shared
     @StateObject private var hotkeyManager = HotkeyManager.shared
     @StateObject private var viewModel = ClickItViewModel()
-    
+
+    private var currentMode: AppMode {
+        AppMode(rawValue: appModeRawValue) ?? .lite
+    }
+
     init() {
         // All initialization moved to onAppear to avoid concurrency issues during App init
         print("ClickItApp: Initialized App structure")
     }
-    
+
     var body: some Scene {
         WindowGroup {
             Group {
-                if permissionManager.allPermissionsGranted {
-                    ContentView()
-                        .environmentObject(permissionManager)
-                        .environmentObject(hotkeyManager)
-                        .environmentObject(viewModel)
-                } else {
-                    PermissionsGateView()
-                        .environmentObject(permissionManager)
+                switch currentMode {
+                case .lite:
+                    SimplifiedMainView()
+                case .pro:
+                    if permissionManager.allPermissionsGranted {
+                        ContentView()
+                            .environmentObject(permissionManager)
+                            .environmentObject(hotkeyManager)
+                            .environmentObject(viewModel)
+                    } else {
+                        PermissionsGateView()
+                            .environmentObject(permissionManager)
+                    }
                 }
             }
             .onAppear {
-                // Initialize app safely on MainActor
                 initializeApp()
             }
         }
@@ -45,7 +56,7 @@ struct ClickItApp: App {
             }
         }
 
-        // Separate window for click test - can be moved independently
+        // Separate window for click test - can be moved independently (Pro mode only)
         WindowGroup(id: "click-test-window") {
             ClickTestWindow()
         }
@@ -53,41 +64,45 @@ struct ClickItApp: App {
         .defaultSize(width: 900, height: 750)
         .windowToolbarStyle(.unified)
     }
-    
+
     // MARK: - Safe Initialization
-    
+
     private func initializeApp() {
-        print("ClickItApp: Starting safe app initialization")
-        
+        print("ClickItApp: Starting safe app initialization (mode: \(currentMode.rawValue))")
+
         // Force app to appear in foreground when launched from command line
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        
+
         // Additional window activation
         if let window = NSApp.windows.first {
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
         }
-        
-        // Initialize hotkey manager safely
-        HotkeyManager.shared.initialize()
-        
-        // Start permission monitoring
-        permissionManager.startPermissionMonitoring()
-        
-        // Register app termination handler for cleanup
-        NotificationCenter.default.addObserver(
-            forName: NSApplication.willTerminateNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
-            // Cleanup visual feedback overlay when app terminates
-            VisualFeedbackOverlay.shared.cleanup()
-            HotkeyManager.shared.cleanup()
-            // Restore cursor to normal
-            CursorManager.shared.forceRestoreNormalCursor()
+
+        switch currentMode {
+        case .lite:
+            SimpleCursorManager.shared.activateCustomCursor()
+
+        case .pro:
+            // Initialize hotkey manager safely
+            HotkeyManager.shared.initialize()
+
+            // Start permission monitoring
+            permissionManager.startPermissionMonitoring()
+
+            // Register app termination handler for cleanup
+            NotificationCenter.default.addObserver(
+                forName: NSApplication.willTerminateNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                VisualFeedbackOverlay.shared.cleanup()
+                HotkeyManager.shared.cleanup()
+                CursorManager.shared.forceRestoreNormalCursor()
+            }
         }
-        
+
         print("ClickItApp: Safe app initialization completed")
     }
 }
