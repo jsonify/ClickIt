@@ -29,12 +29,15 @@ final class SimpleViewModel: ObservableObject {
     @Published var clickCount = 0
     @Published var statusMessage = "Stopped"
     @Published var coordinateMode: CoordinateMode = .screenCoordinates
+    @Published private(set) var schedulerState: ScheduledClickManager.State = .idle
+    @Published private(set) var schedulerCountdown: TimeInterval = 0
 
     // MARK: - Private Properties
 
     private let clickEngine = SimpleClickEngine()
     private let hotkeyManager = SimpleHotkeyManager.shared
     private let permissionManager = SimplePermissionManager.shared
+    private let scheduledClickManager = ScheduledClickManager()
 
     // MARK: - Initialization
 
@@ -43,6 +46,9 @@ final class SimpleViewModel: ObservableObject {
         hotkeyManager.startMonitoring { [weak self] in
             self?.stopClicking()
         }
+        // Mirror scheduler state and countdown into our published properties
+        scheduledClickManager.$state.assign(to: &$schedulerState)
+        scheduledClickManager.$countdown.assign(to: &$schedulerCountdown)
     }
 
     deinit {
@@ -120,6 +126,29 @@ final class SimpleViewModel: ObservableObject {
     /// Update click location
     func updateClickLocation(x: Double, y: Double) {
         clickLocation = CGPoint(x: x, y: y)
+    }
+
+    // MARK: - Scheduler Methods
+
+    /// Schedule a single click at the given future date.
+    /// Scheduling does not require permissions; permissions are checked at fire time.
+    /// - Throws: `ScheduledClickManager.ScheduleError.dateInPast` if date is not in the future.
+    func scheduleClick(at date: Date) throws {
+        guard !isRunning else { return }
+        try scheduledClickManager.schedule(at: date)
+        statusMessage = "Click scheduled"
+    }
+
+    /// Cancel the pending scheduled click.
+    func cancelSchedule() {
+        scheduledClickManager.cancel()
+        statusMessage = "Stopped"
+    }
+
+    /// Update the scheduled click time.
+    /// - Throws: `ScheduledClickManager.ScheduleError.dateInPast` if new date is not in the future.
+    func editSchedule(to date: Date) throws {
+        try scheduledClickManager.schedule(at: date)
     }
 }
 
