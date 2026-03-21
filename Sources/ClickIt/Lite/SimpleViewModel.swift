@@ -50,7 +50,7 @@ final class SimpleViewModel: ObservableObject {
         scheduledClickManager.$state.assign(to: &$schedulerState)
         scheduledClickManager.$countdown.assign(to: &$schedulerCountdown)
         // Update status message when scheduled click fires
-        scheduledClickManager.onFired = { [weak self] in
+        scheduledClickManager.executionHandler = { [weak self] in
             self?.statusMessage = "Scheduled click fired!"
         }
     }
