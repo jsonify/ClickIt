@@ -30,6 +30,15 @@ Reusable patterns discovered during development. Read this before starting new w
 - **Swift 5.9 `package` access level**: Use `package` instead of `public` to share types across targets within the same SPM package. All targets in a package compile with `-package-name <name>`, so `package` types are visible across modules without the overhead of `public`. (from: pro_lite_switcher_20260320, 2026-03-20)
 - **SwiftUI `View` access level**: If a struct is `package`, its `var body` must also be `package` — SwiftUI's `View` protocol requires `body` to match the enclosing type's access level. (from: pro_lite_switcher_20260320, 2026-03-20)
 - **Partitioning one directory into multiple SPM targets**: Use `exclude:` lists in `Package.swift` to assign disjoint file sets to different targets that share the same `path`. (from: pro_lite_switcher_20260320, 2026-03-20)
+- **New `Lite/` source files must be excluded from `ClickItLite` target**: Every `.swift` file added to `Sources/ClickIt/Lite/` must be added to the `exclude:` list in the `ClickItLite` executableTarget in `Package.swift` — otherwise SPM reports "overlapping sources" at build time. (from: datetime_scheduler_20260320, 2026-03-21)
+- **Testing `ClickItLiteUI` internals**: Use `@testable import ClickItLiteUI` (not `@testable import ClickIt`) and add `ClickItLiteUI` to `ClickItTests` dependencies in `Package.swift` — `@testable import` only exposes internals of the directly-named module, not transitive dependencies. (from: datetime_scheduler_20260320, 2026-03-21)
+
+## SwiftUI Date/Time Pickers
+- **Truncate seconds for `DatePicker` with `.hourAndMinute`**: The picker displays only hour:minute, but `Date()` carries seconds. Always zero out seconds before scheduling: extract `[.year, .month, .day, .hour, .minute]` components and set `second = 0`. Initialize picker defaults with a `nextMinute()` helper (same truncation) so displayed time matches fired time. (from: datetime_scheduler_20260320, 2026-03-21)
+
+## Swift Actor Isolation
+- **`nonisolated` + `MainActor.assumeIsolated` for static defaults**: Default parameter expressions cannot call `@MainActor` methods. Mark the static method `nonisolated` and wrap the AppKit/UIKit calls in `MainActor.assumeIsolated { }` — safe when the method is always invoked from an `@MainActor` call site. (from: datetime_scheduler_20260320, 2026-03-21)
+- **`onFired` callback over Combine for transient state**: If a state transition (e.g. `.fired`) is set and immediately reset in the same synchronous call, Combine subscribers won't see it — the value is already overwritten before the publisher fires. Use an explicit callback property (`var onFired: (() -> Void)?`) instead. (from: datetime_scheduler_20260320, 2026-03-21)
 
 ## Gotchas
 - macOS 26 (Sequoia) kills unsigned app bundles with `SIGKILL (Code Signature Invalid)` even for local debug builds — always ad-hoc sign with `codesign --sign - --force --deep <app.bundle>` when no developer cert is available (from: lite_stabilization_20260319, 2026-03-19)
@@ -42,4 +51,4 @@ Reusable patterns discovered during development. Read this before starting new w
 - 3 known flaky tests in the suite: `testPatternBreakup` (random boundary condition), `testHighFrequencyCPSAccuracy` (timing precision, fails in debug mode), `testErrorRecoveryIntegration` (timing-sensitive) — not regressions (from: lite_stabilization_20260319 + cicd_optimization_20260319, 2026-03-20)
 
 ---
-Last refreshed: 2026-03-20 (pro_lite_switcher_20260320)
+Last refreshed: 2026-03-21 (datetime_scheduler_20260320)
