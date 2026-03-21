@@ -7,7 +7,11 @@
 
 import SwiftUI
 
-struct SimplifiedMainView: View {
+package struct SimplifiedMainView: View {
+
+    // MARK: - Initialization
+
+    package init() {}
 
     // MARK: - Speed Configuration
 
@@ -44,7 +48,7 @@ struct SimplifiedMainView: View {
 
     // MARK: - Body
 
-    var body: some View {
+    package var body: some View {
         VStack(spacing: 20) {
             // Title
             Text("ClickIt Lite")

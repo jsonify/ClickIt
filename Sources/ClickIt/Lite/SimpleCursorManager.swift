@@ -9,11 +9,11 @@ import AppKit
 import SwiftUI
 import os.log
 
-class SimpleCursorManager {
+package class SimpleCursorManager {
 
     // MARK: - Singleton
 
-    static let shared = SimpleCursorManager()
+    package static let shared = SimpleCursorManager()
 
     // MARK: - Properties
 
@@ -32,7 +32,7 @@ class SimpleCursorManager {
     // MARK: - Public Methods
 
     /// Activates the custom target cursor system-wide
-    func activateCustomCursor() {
+    package func activateCustomCursor() {
         guard let customCursor = customCursor else {
             logger.error("❌ Custom cursor not available")
             showDebugAlert("Cursor Failed", "Custom cursor could not be loaded. Check console for details.")
@@ -78,7 +78,7 @@ class SimpleCursorManager {
     }
 
     /// Restores the default system cursor
-    func restoreDefaultCursor() {
+    package func restoreDefaultCursor() {
         isCursorActive = false
 
         // Stop the cursor update timer
