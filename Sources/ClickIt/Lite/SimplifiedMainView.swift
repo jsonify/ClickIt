@@ -46,6 +46,11 @@ package struct SimplifiedMainView: View {
     @StateObject private var viewModel = SimpleViewModel()
     @ObservedObject private var permissionManager = SimplePermissionManager.shared
 
+    // MARK: - Scheduler State
+
+    @State private var scheduledDate: Date = Date().addingTimeInterval(60)
+    @State private var schedulerError: String? = nil
+
     // MARK: - Body
 
     package var body: some View {
@@ -74,6 +79,11 @@ package struct SimplifiedMainView: View {
             // Click Type
             clickTypeSection
 
+            Divider()
+
+            // Scheduler
+            schedulerSection
+
             Spacer()
 
             // Start/Stop Button
@@ -85,7 +95,7 @@ package struct SimplifiedMainView: View {
             Spacer()
         }
         .padding(30)
-        .frame(width: 400, height: 600)
+        .frame(width: 400, height: 720)
         .onAppear {
             permissionManager.checkPermissions()
         }
@@ -306,6 +316,50 @@ package struct SimplifiedMainView: View {
             }
             .pickerStyle(.segmented)
             .disabled(viewModel.isRunning)
+        }
+    }
+
+    private var schedulerSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Schedule a Click")
+                .font(.headline)
+
+            DatePicker(
+                "Date & Time",
+                selection: $scheduledDate,
+                in: Date()...,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .datePickerStyle(.compact)
+            .disabled(viewModel.isRunning || viewModel.schedulerState != .idle)
+            .onChange(of: scheduledDate) { _ in
+                schedulerError = nil
+            }
+
+            if let error = schedulerError {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundColor(.red)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+            }
+
+            if viewModel.schedulerState == .idle {
+                Button("Schedule Click") {
+                    schedulerError = nil
+                    do {
+                        try viewModel.scheduleClick(at: scheduledDate)
+                    } catch ScheduledClickManager.ScheduleError.dateInPast {
+                        schedulerError = "Please select a future date and time."
+                    } catch {
+                        schedulerError = "Could not schedule click."
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(viewModel.isRunning || !permissionManager.hasAccessibilityPermission)
+            }
         }
     }
 
