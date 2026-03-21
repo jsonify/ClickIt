@@ -20,7 +20,7 @@ struct ClickItApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main-window") {
             Group {
                 switch currentMode {
                 case .lite:
@@ -53,6 +53,9 @@ struct ClickItApp: App {
                         NSWorkspace.shared.open(url)
                     }
                 }
+            }
+            CommandMenu("View") {
+                SwitchModeCommand()
             }
         }
 
@@ -104,5 +107,28 @@ struct ClickItApp: App {
         }
 
         print("ClickItApp: Safe app initialization completed")
+    }
+}
+
+// MARK: - View Menu Commands
+
+/// Menu item that switches between Pro and Lite modes.
+/// Persists the new mode, closes the current window, and opens a fresh one
+/// sized correctly for the selected mode.
+private struct SwitchModeCommand: View {
+    @AppStorage("appMode") private var appModeRawValue: String = AppMode.lite.rawValue
+    @Environment(\.openWindow) private var openWindow
+
+    private var currentMode: AppMode {
+        AppMode(rawValue: appModeRawValue) ?? .lite
+    }
+
+    var body: some View {
+        Button(currentMode == .pro ? "Switch to Lite" : "Switch to Pro") {
+            let newMode: AppMode = currentMode == .pro ? .lite : .pro
+            AppModeManager.current = newMode
+            NSApp.keyWindow?.close()
+            openWindow(id: "main-window")
+        }
     }
 }
