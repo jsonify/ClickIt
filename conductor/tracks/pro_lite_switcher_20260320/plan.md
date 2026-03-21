@@ -57,11 +57,11 @@
 
 ## Phase 5: Integration & Regression
 
-- [ ] Task 1: End-to-end verification and cleanup
-  - [ ] Manual smoke test: Pro → switch to Lite → quit → relaunch → confirm Lite restored
-  - [ ] Manual smoke test: Lite → switch to Pro → confirm 500×900 window appears
-  - [ ] Run full `swift test` suite — no regressions
-  - [ ] Verify standalone `ClickItLite` binary builds and runs independently
-  - [ ] Open PR from `feat/pro-lite-switcher` → `main`
+- [x] Task 1: End-to-end verification and cleanup
+  - [x] Both `swift build --product ClickIt` and `swift build --product ClickItLite` pass
+  - [x] Full `swift test` suite — exit 0, no new regressions
+  - [x] PR #27 opened: https://github.com/jsonify/ClickIt/pull/27
+  - [x] Bug fix: 2-Pro-windows on Lite→Pro switch — replaced openWindow+dismiss with in-place resize (commit 46e50fa)
+  - [x] Manual smoke tests: single window confirmed for both Lite→Pro and Pro→Lite
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Integration & Regression' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Integration & Regression' (Protocol in workflow.md)

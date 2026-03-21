@@ -21,6 +21,16 @@ Reusable patterns discovered during development. Read this before starting new w
 ## Info.plist
 - Source `Info.plist` is at `ClickIt/Info.plist` (repo-root-relative). Only update `CFBundleShortVersionString` in CI — `CFBundleVersion` is `$(CURRENT_PROJECT_VERSION)`, an Xcode build variable that must not be overwritten (from: auto_patch_release_20260320, 2026-03-20)
 
+## SwiftUI Window Management (macOS)
+- **In-place mode switching**: For single-window apps that swap content based on a mode, use `@AppStorage` + `switch` in the root view body. Resize the window in `onChange` via `NSApp.mainWindow?.setContentSize()` + `center()`. Never use `openWindow(id:)` + `dismiss()` — `openWindow` always spawns a *new* `WindowGroup` instance and combining it with `dismiss` causes a double-window race condition. (from: pro_lite_switcher_20260320, 2026-03-20)
+- **`NSApp.keyWindow` is unreliable** when a floating overlay window (e.g. `VisualFeedbackOverlay`) is present — it returns the overlay, not the main window. Use `NSApp.mainWindow` instead. (from: pro_lite_switcher_20260320, 2026-03-20)
+- **`@Environment` in `CommandMenu`**: To access `@Environment` values (like `openWindow`, `dismiss`) inside a `CommandMenu`, wrap the content in a private `View` struct — closures in `CommandMenu` don't participate in SwiftUI environment injection. (from: pro_lite_switcher_20260320, 2026-03-20)
+
+## SPM Multi-Target Sharing
+- **Swift 5.9 `package` access level**: Use `package` instead of `public` to share types across targets within the same SPM package. All targets in a package compile with `-package-name <name>`, so `package` types are visible across modules without the overhead of `public`. (from: pro_lite_switcher_20260320, 2026-03-20)
+- **SwiftUI `View` access level**: If a struct is `package`, its `var body` must also be `package` — SwiftUI's `View` protocol requires `body` to match the enclosing type's access level. (from: pro_lite_switcher_20260320, 2026-03-20)
+- **Partitioning one directory into multiple SPM targets**: Use `exclude:` lists in `Package.swift` to assign disjoint file sets to different targets that share the same `path`. (from: pro_lite_switcher_20260320, 2026-03-20)
+
 ## Gotchas
 - macOS 26 (Sequoia) kills unsigned app bundles with `SIGKILL (Code Signature Invalid)` even for local debug builds — always ad-hoc sign with `codesign --sign - --force --deep <app.bundle>` when no developer cert is available (from: lite_stabilization_20260319, 2026-03-19)
 - Mock drift: when a struct adds fields, mocks using its initializer break silently until next build — audit mocks when changing structs with many fields (from: lite_stabilization_20260319, 2026-03-19)
@@ -32,4 +42,4 @@ Reusable patterns discovered during development. Read this before starting new w
 - 3 known flaky tests in the suite: `testPatternBreakup` (random boundary condition), `testHighFrequencyCPSAccuracy` (timing precision, fails in debug mode), `testErrorRecoveryIntegration` (timing-sensitive) — not regressions (from: lite_stabilization_20260319 + cicd_optimization_20260319, 2026-03-20)
 
 ---
-Last refreshed: 2026-03-20 (auto_patch_release_20260320)
+Last refreshed: 2026-03-20 (pro_lite_switcher_20260320)

@@ -44,3 +44,13 @@ Patterns, gotchas, and context discovered during implementation.
   - Gotchas: `swift test` requires Xcode license agreement (`sudo xcodebuild -license accept`) on this machine — CommandLineTools does not include XCTest.
   - Gotchas: `ClickItLite` entry point file `ClickItLiteApp.swift` needs `import ClickItLiteUI` after moving shared types to the library module.
 ---
+
+## [2026-03-20] - Phase 5 Bug Fix: Window Switch Double-Open
+- **Implemented:** Replaced close/reopen approach with in-place content swap + window resize
+- **Files changed:** `Sources/ClickIt/ClickItApp.swift`
+- **Commit:** 46e50fa
+- **Learnings:**
+  - Gotchas: `openWindow(id:)` on a `WindowGroup` ALWAYS opens a NEW window — it does not focus or reuse an existing one. Combining it with `dismiss()` creates a race condition where the old window may not close before the new one opens, resulting in 2 windows.
+  - Patterns: For single-window mode switching in SwiftUI macOS apps, the correct pattern is in-place content swap (via `@AppStorage` + `switch` in the view) + programmatic window resize (`NSApp.mainWindow?.setContentSize()`) in `onChange`. No `openWindow` or `dismiss` needed.
+  - Gotchas: `NSApp.keyWindow` is unreliable when a floating overlay window (like `VisualFeedbackOverlay`) is present — it returns the overlay, not the main app window. Use `NSApp.mainWindow` instead.
+---
