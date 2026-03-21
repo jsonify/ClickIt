@@ -4,7 +4,7 @@
 //
 
 import XCTest
-@testable import ClickIt
+@testable import ClickItLiteUI
 
 @MainActor
 final class ScheduledClickManagerTests: XCTestCase {

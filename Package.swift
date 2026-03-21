@@ -45,6 +45,7 @@ let package = Package(
             exclude: [
                 "README.md",
                 "LoggingConstants.swift",
+                "ScheduledClickManager.swift",
                 "SimpleClickEngine.swift",
                 "SimpleCursorManager.swift",
                 "SimpleHotkeyManager.swift",
@@ -56,7 +57,7 @@ let package = Package(
         ),
         .testTarget(
             name: "ClickItTests",
-            dependencies: ["ClickIt"],
+            dependencies: ["ClickIt", "ClickItLiteUI"],
             path: "Tests"
         )
     ]
