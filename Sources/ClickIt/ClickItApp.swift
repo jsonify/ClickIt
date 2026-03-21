@@ -101,11 +101,10 @@ struct ClickItApp: App {
 
 // MARK: - Main Window Content
 
-/// Root content of the main window. Self-closes via `dismiss` when the mode changes,
-/// ensuring exactly one window is visible after a mode switch.
+/// Root content of the main window. Swaps content in-place when the mode changes
+/// and resizes the window to fit the new mode — no second window is ever opened.
 private struct MainWindowContent: View {
     @AppStorage("appMode") private var appModeRawValue: String = AppMode.lite.rawValue
-    @Environment(\.dismiss) private var dismiss
 
     let permissionManager: PermissionManager
     let hotkeyManager: HotkeyManager
@@ -132,9 +131,13 @@ private struct MainWindowContent: View {
                 }
             }
         }
-        // When the mode changes, self-close so only the newly opened window remains.
+        // When the mode changes, resize the existing window to match the new mode.
         .onChange(of: appModeRawValue) { _ in
-            dismiss()
+            let size: CGSize = currentMode == .lite
+                ? CGSize(width: 400, height: 600)
+                : CGSize(width: 500, height: 900)
+            NSApp.mainWindow?.setContentSize(size)
+            NSApp.mainWindow?.center()
         }
     }
 }
@@ -142,10 +145,9 @@ private struct MainWindowContent: View {
 // MARK: - View Menu Commands
 
 /// Menu item that switches between Pro and Lite modes.
-/// Persists the new mode and opens a fresh window; MainWindowContent closes the old one.
+/// Only persists the new mode — MainWindowContent reacts and resizes in place.
 private struct SwitchModeCommand: View {
     @AppStorage("appMode") private var appModeRawValue: String = AppMode.lite.rawValue
-    @Environment(\.openWindow) private var openWindow
 
     private var currentMode: AppMode {
         AppMode(rawValue: appModeRawValue) ?? .lite
@@ -155,7 +157,6 @@ private struct SwitchModeCommand: View {
         Button(currentMode == .pro ? "Switch to Lite" : "Switch to Pro") {
             let newMode: AppMode = currentMode == .pro ? .lite : .pro
             AppModeManager.current = newMode
-            openWindow(id: "main-window")
         }
     }
 }
