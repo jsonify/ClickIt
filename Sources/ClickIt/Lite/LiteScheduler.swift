@@ -55,6 +55,8 @@ final class LiteScheduler {
     var countdownUpdateHandler: ((TimeInterval) -> Void)?
     /// Called once immediately after the scheduled task executes.
     var executionHandler: (() -> Void)?
+    /// Called once with a `TimingRecord` after each firing. Delivered on the main queue.
+    var onTimingRecord: ((TimingRecord) -> Void)?
 
     // MARK: - Initialization
 
@@ -185,18 +187,26 @@ final class LiteScheduler {
     }
 
     private func executeTask() {
-        logger.info("LiteScheduler: executing task at \(Date())")
+        // Capture actualAt first — before any other work — for maximum timing accuracy.
+        let actualAt = Date()
+        logger.info("LiteScheduler: executing task at \(actualAt)")
         finalCountdownTimer?.cancel()
         finalCountdownTimer = nil
 
         let task = scheduledTask
         let handler = executionHandler
+        let timingCallback = onTimingRecord
+        let scheduledAt = targetDate
         scheduledTask = nil
         targetDate = nil
 
         DispatchQueue.main.async {
             task?()
             handler?()
+            if let scheduledAt, let timingCallback {
+                let record = TimingRecord(scheduledAt: scheduledAt, actualAt: actualAt)
+                timingCallback(record)
+            }
         }
     }
 

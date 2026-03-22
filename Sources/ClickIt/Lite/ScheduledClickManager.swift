@@ -44,6 +44,11 @@ final class ScheduledClickManager: ObservableObject {
 
     /// Called immediately after the scheduled click fires, before state resets to idle.
     var executionHandler: (() -> Void)?
+    /// Called once per firing with a timing accuracy record. Forwarded from `LiteScheduler`.
+    var onTimingRecord: ((TimingRecord) -> Void)? {
+        get { scheduler.onTimingRecord }
+        set { scheduler.onTimingRecord = newValue }
+    }
 
     // MARK: - Initialization
 
