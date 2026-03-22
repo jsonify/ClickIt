@@ -5,9 +5,28 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Sun, 22 Mar 2026 04:39:46 +0000</lastBuildDate>
+        <lastBuildDate>Sun, 22 Mar 2026 05:00:52 +0000</lastBuildDate>
 
 <item>
+    <title><![CDATA[ClickIt v1.6.8]]></title>
+    <description><![CDATA[## What's New
+
+
+
+---
+📱 Compatible with macOS 14.0 or later]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.6.8</link>
+    <sparkle:version>1.6.8</sparkle:version>
+    <sparkle:shortVersionString>1.6.8</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Sun, 22 Mar 2026 05:00:14 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.8/ClickIt-1.6.8.zip"
+               length="1205961"
+               type="application/octet-stream"
+               sparkle:version="1.6.8"
+               sparkle:shortVersionString="1.6.8" />
+</item>
+        <item>
     <title><![CDATA[ClickIt v1.6.7]]></title>
     <description><![CDATA[## What's New
 
@@ -826,38 +845,6 @@ This release includes the ClickIt.app bundle for macOS 15.0+]]></description>
                type="application/octet-stream"
                sparkle:version="1.1.1"
                sparkle:shortVersionString="1.1.1" />
-</item>
-        <item>
-    <title><![CDATA[ClickIt ]]></title>
-    <description><![CDATA[Production release of ClickIt - Native macOS Auto-Clicker
-
-**🎯 Features:**
-- Precision clicking automation
-- Window targeting  
-- Global hotkey controls (ESC)
-- Visual feedback overlay
-- Universal binary (Intel + Apple Silicon)
-
-**📱 Installation:**
-1. Download ClickIt.app.zip
-2. Unzip and move ClickIt.app to Applications
-3. Grant required permissions in System Settings > Privacy & Security:
-   - Accessibility (for mouse events)
-   - Screen Recording (for window detection)
-
-**📋 System Requirements:**
-- macOS 15.0 or later
-- Intel Mac or Apple Silicon Mac]]></description>
-    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.0.0</link>
-    <sparkle:version>1.0.0</sparkle:version>
-    <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
-    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-    <pubDate>Sat, 19 Jul 2025 06:45:05 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.0.0/ClickIt.app.zip"
-               length="995327"
-               type="application/octet-stream"
-               sparkle:version="1.0.0"
-               sparkle:shortVersionString="1.0.0" />
 </item>
 
     </channel>
