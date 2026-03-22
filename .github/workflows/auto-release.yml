@@ -13,6 +13,7 @@ on:
   pull_request:
     branches: [main]
     types: [closed]
+  workflow_dispatch:  # Allow manual trigger when pushing directly to main
 
 permissions:
   contents: write
@@ -22,8 +23,8 @@ jobs:
     name: 🔖 Bump Patch & Tag
     runs-on: ubuntu-latest
 
-    # Only run when the PR was actually merged (not just closed)
-    if: github.event.pull_request.merged == true
+    # Run when a PR is merged, or when manually dispatched
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: 📥 Checkout
