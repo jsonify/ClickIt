@@ -5,9 +5,28 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Sun, 22 Mar 2026 05:31:30 +0000</lastBuildDate>
+        <lastBuildDate>Sun, 22 Mar 2026 05:46:22 +0000</lastBuildDate>
 
 <item>
+    <title><![CDATA[ClickIt v1.6.11]]></title>
+    <description><![CDATA[## What's New
+
+
+
+---
+📱 Compatible with macOS 14.0 or later]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.6.11</link>
+    <sparkle:version>1.6.11</sparkle:version>
+    <sparkle:shortVersionString>1.6.11</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Sun, 22 Mar 2026 05:45:43 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.11/ClickIt-1.6.11.zip"
+               length="1205816"
+               type="application/octet-stream"
+               sparkle:version="1.6.11"
+               sparkle:shortVersionString="1.6.11" />
+</item>
+        <item>
     <title><![CDATA[ClickIt v1.6.10]]></title>
     <description><![CDATA[## What's New
 
@@ -851,38 +870,6 @@
                type="application/octet-stream"
                sparkle:version="1.2.0"
                sparkle:shortVersionString="1.2.0" />
-</item>
-        <item>
-    <title><![CDATA[ClickIt v1.1.1]]></title>
-    <description><![CDATA[## What's New in v1.1.1
-
-- 🔧 **Enhanced Fastlane Automation**: Improved auto_prod lane to handle existing tags gracefully without failing
-- 🏷️ **Better Error Handling**: Fixed tag creation logic to skip existing tags instead of erroring out
-- ⚙️ **Improved Release Workflow**: More robust automated release process with better validation
-
-## Bug Fixes
-
-- Fixed `auto_prod` lane failing when trying to create already existing tags
-- Improved tag existence checking using `git rev-parse --verify`
-- Enhanced error messages and workflow clarity
-
-## Technical Improvements
-
-- Updated `fastlane/Fastfile` with better tag handling logic
-- Added proper tag existence validation before attempting creation
-- Improved release automation reliability
-
-This release includes the ClickIt.app bundle for macOS 15.0+]]></description>
-    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.1.1</link>
-    <sparkle:version>1.1.1</sparkle:version>
-    <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
-    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-    <pubDate>Sun, 20 Jul 2025 08:56:36 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.1.1/ClickIt.app.zip"
-               length="1976843"
-               type="application/octet-stream"
-               sparkle:version="1.1.1"
-               sparkle:shortVersionString="1.1.1" />
 </item>
 
     </channel>
