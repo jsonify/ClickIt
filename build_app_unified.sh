@@ -261,16 +261,18 @@ EOF
     # Make executable
     chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
-    # Copy all SPM resource bundles to app bundle
-    # SPM can generate multiple bundles (e.g. ClickIt_ClickItLiteUI.bundle from a library
-    # dependency), so we copy every *.bundle in the build output rather than guessing a name.
+    # Copy all SPM resource bundles to the root of the .app bundle.
+    # SPM's generated Bundle.module code searches via:
+    #   Bundle.main.bundleURL.appendingPathComponent("ClickIt_XYZ.bundle")
+    # For a macOS .app, Bundle.main.bundleURL is the .app root (e.g. ClickIt.app/),
+    # so bundles must live at ClickIt.app/*.bundle — NOT inside Contents/Resources/.
     echo "📦 Copying resource bundles..."
     BUNDLE_COUNT=0
     for BUNDLE in "$BUILD_PATH"/*.bundle; do
         if [ -d "$BUNDLE" ]; then
             BUNDLE_NAME=$(basename "$BUNDLE")
-            cp -R "$BUNDLE" "$APP_BUNDLE/Contents/Resources/"
-            echo "✅ Copied $BUNDLE_NAME to app bundle"
+            cp -R "$BUNDLE" "$APP_BUNDLE/"
+            echo "✅ Copied $BUNDLE_NAME to app bundle root"
             BUNDLE_COUNT=$((BUNDLE_COUNT + 1))
         fi
     done
