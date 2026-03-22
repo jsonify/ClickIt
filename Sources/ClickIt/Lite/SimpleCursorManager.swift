@@ -20,7 +20,7 @@ package class SimpleCursorManager {
     private let logger = Logger(subsystem: LoggingConstants.subsystem, category: "SimpleCursorManager")
     private var customCursor: NSCursor?
     private var originalCursor: NSCursor?
-    private var cursorUpdateTimer: Timer?
+    private var cursorEventMonitor: Any?
     private var isCursorActive = false
 
     // MARK: - Initialization
@@ -53,14 +53,13 @@ package class SimpleCursorManager {
         // Set custom cursor immediately
         customCursor.set()
 
-        // Keep re-setting the cursor on a timer to ensure it stays active
-        // This is needed because macOS resets cursor on window focus changes and other events
-        cursorUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        // Re-apply on every mouse move instead of polling — avoids flicker from timer-based set()
+        cursorEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]) { [weak self] _ in
             guard let self = self, self.isCursorActive else { return }
             self.customCursor?.set()
         }
 
-        logger.info("✅ Custom target cursor activated with continuous refresh")
+        logger.info("✅ Custom target cursor activated with event-driven refresh")
         // Optional: Uncomment to show success alert
         // showDebugAlert("Cursor Active", "Custom target cursor has been activated")
     }
@@ -81,9 +80,11 @@ package class SimpleCursorManager {
     package func restoreDefaultCursor() {
         isCursorActive = false
 
-        // Stop the cursor update timer
-        cursorUpdateTimer?.invalidate()
-        cursorUpdateTimer = nil
+        // Remove the cursor event monitor
+        if let monitor = cursorEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            cursorEventMonitor = nil
+        }
 
         // Restore arrow cursor
         NSCursor.arrow.set()
