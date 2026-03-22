@@ -53,7 +53,8 @@ let package = Package(
                 "SimplePermissionManager.swift",
                 "SimpleViewModel.swift",
                 "SimplifiedMainView.swift",
-                "Resources"
+                "Resources",
+                "TimingDiagnostic"
             ]
         ),
         .testTarget(
