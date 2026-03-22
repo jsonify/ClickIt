@@ -73,11 +73,14 @@ class VisualFeedbackOverlay: ObservableObject {
         let stateChanged = isActive != isAutomationActive
         guard locationChanged || stateChanged else { return }
 
-        clickLocation = location
-        isAutomationActive = isActive
-
-        if locationChanged { positionOverlay(at: location) }
-        if stateChanged { updateOverlayAppearance(isActive: isActive) }
+        if locationChanged {
+            clickLocation = location
+            positionOverlay(at: location)
+        }
+        if stateChanged {
+            isAutomationActive = isActive
+            updateOverlayAppearance(isActive: isActive)
+        }
     }
     
     /// Hides the visual feedback overlay
