@@ -35,7 +35,6 @@ final class ScheduledClickManagerTests: XCTestCase {
 
     func testScheduleCurrentDate_throwsDateInPast() {
         let manager = ScheduledClickManager(clickAction: {})
-        // Exactly now (or slightly in the past by the time validation runs)
         let now = Date().addingTimeInterval(-0.01)
 
         XCTAssertThrowsError(try manager.schedule(at: now)) { error in
@@ -73,7 +72,7 @@ final class ScheduledClickManagerTests: XCTestCase {
 
         try manager.schedule(at: futureDate)
 
-        // Wait for the first timer tick (1+ seconds)
+        // Wait for at least one countdown update from the scheduler (~1s)
         try await Task.sleep(nanoseconds: 1_200_000_000) // 1.2s
 
         // After 1.2s, countdown should be approximately 1.8s (between 1.0 and 2.5)
@@ -85,14 +84,32 @@ final class ScheduledClickManagerTests: XCTestCase {
         manager.cancel()
     }
 
+    // MARK: - Callback API Tests (post-refactor: executionHandler replaces onFired)
+
+    func testExecutionHandler_calledWhenClickFires() async throws {
+        var callbackFired = false
+        let manager = ScheduledClickManager(clickAction: {})
+        let expectation = expectation(description: "executionHandler called")
+
+        // executionHandler is the renamed onFired — set before scheduling
+        manager.executionHandler = {
+            callbackFired = true
+            expectation.fulfill()
+        }
+
+        try manager.schedule(at: Date().addingTimeInterval(1.0))
+        await fulfillment(of: [expectation], timeout: 3.0)
+
+        XCTAssertTrue(callbackFired)
+    }
+
     // MARK: - Fire and Reset Tests
 
     func testFiresAndResetsToIdle() async throws {
         var clickFired = false
         let manager = ScheduledClickManager(clickAction: { clickFired = true })
 
-        // Schedule 1.5s in the future — timer tick at t≈1s sees remaining>0,
-        // tick at t≈2s sees remaining≤0 and fires.
+        // LiteScheduler fires within ≤5ms of target; 1.5s + generous poll window
         let futureDate = Date().addingTimeInterval(1.5)
         try manager.schedule(at: futureDate)
 

@@ -3,6 +3,7 @@
 //  ClickIt Lite
 //
 //  Manages scheduling a single one-time click at a future date and time.
+//  Uses LiteScheduler (DispatchSourceTimer) for ≤5ms firing accuracy.
 //
 
 import Foundation
@@ -36,13 +37,13 @@ final class ScheduledClickManager: ObservableObject {
     // MARK: - Private Properties
 
     private let logger = Logger(subsystem: LoggingConstants.subsystem, category: "ScheduledClickManager")
-    private var timer: Timer?
+    private let scheduler: LiteScheduler
     private let clickAction: () -> Void
 
     // MARK: - Callbacks
 
     /// Called immediately after the scheduled click fires, before state resets to idle.
-    var onFired: (() -> Void)?
+    var executionHandler: (() -> Void)?
 
     // MARK: - Initialization
 
@@ -51,6 +52,7 @@ final class ScheduledClickManager: ObservableObject {
     ///   Defaults to a left click at the current cursor position.
     init(clickAction: @escaping () -> Void = ScheduledClickManager.performLeftClickAtCursor) {
         self.clickAction = clickAction
+        self.scheduler = LiteScheduler()
     }
 
     // MARK: - Public Methods
@@ -61,16 +63,34 @@ final class ScheduledClickManager: ObservableObject {
         guard date > Date() else {
             throw ScheduleError.dateInPast
         }
-        stopTimer()
         state = .scheduled(date)
         countdown = date.timeIntervalSinceNow
-        startTimer()
+
+        scheduler.countdownUpdateHandler = { [weak self] remaining in
+            self?.countdown = remaining
+        }
+
+        scheduler.executionHandler = { [weak self] in
+            self?.fire()
+        }
+
+        let scheduled = scheduler.schedule(for: date, task: { [weak self] in
+            self?.clickAction()
+        })
+
+        if !scheduled {
+            // Date slipped past between guard and schedule call — treat as past
+            state = .idle
+            countdown = 0
+            throw ScheduleError.dateInPast
+        }
+
         logger.info("Scheduled click at \(date)")
     }
 
     /// Cancel the pending scheduled click and reset to idle.
     func cancel() {
-        stopTimer()
+        scheduler.cancel()
         state = .idle
         countdown = 0
         logger.info("Scheduled click cancelled")
@@ -78,36 +98,11 @@ final class ScheduledClickManager: ObservableObject {
 
     // MARK: - Private Methods
 
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.tick()
-            }
-        }
-    }
-
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-
-    private func tick() {
-        guard case .scheduled(let targetDate) = state else { return }
-        let remaining = targetDate.timeIntervalSinceNow
-        if remaining <= 0 {
-            fire()
-        } else {
-            countdown = remaining
-        }
-    }
-
     private func fire() {
-        stopTimer()
         state = .fired
         countdown = 0
-        logger.info("Scheduled click firing")
-        clickAction()
-        onFired?()
+        logger.info("Scheduled click fired")
+        executionHandler?()
         state = .idle
     }
 

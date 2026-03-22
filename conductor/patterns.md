@@ -44,6 +44,7 @@ Reusable patterns discovered during development. Read this before starting new w
 - macOS 26 (Sequoia) kills unsigned app bundles with `SIGKILL (Code Signature Invalid)` even for local debug builds — always ad-hoc sign with `codesign --sign - --force --deep <app.bundle>` when no developer cert is available (from: lite_stabilization_20260319, 2026-03-19)
 - Mock drift: when a struct adds fields, mocks using its initializer break silently until next build — audit mocks when changing structs with many fields (from: lite_stabilization_20260319, 2026-03-19)
 - Build script arg parsing: `build_app_unified.sh` arg order is `BUILD_MODE BUILD_SYSTEM APP_VERSION` — passing `lite` as arg 2 was parsed as build system; fixed with value-based detection (from: lite_stabilization_20260319, 2026-03-19)
+- **GCD unresumed DispatchSource crash**: calling `DispatchSource.makeTimerSource(queue:)` and letting the variable go out of scope without calling `.resume()` (or `.cancel()`) causes a SIGTRAP at deallocation. Every created `DispatchSourceTimer` must be either resumed (stored and resumed) or explicitly cancelled before it is discarded. (from: litescheduler_20260321, 2026-03-21)
 
 ## Testing
 - Swift 6 strict concurrency: test classes that access `@MainActor`-isolated types must be annotated `@MainActor`, and test functions using `await fulfillment(of:)` must be `async` (from: lite_stabilization_20260319, 2026-03-19)
@@ -51,4 +52,4 @@ Reusable patterns discovered during development. Read this before starting new w
 - 3 known flaky tests in the suite: `testPatternBreakup` (random boundary condition), `testHighFrequencyCPSAccuracy` (timing precision, fails in debug mode), `testErrorRecoveryIntegration` (timing-sensitive) — not regressions (from: lite_stabilization_20260319 + cicd_optimization_20260319, 2026-03-20)
 
 ---
-Last refreshed: 2026-03-21 (datetime_scheduler_20260320)
+Last refreshed: 2026-03-21 (litescheduler_20260321)
