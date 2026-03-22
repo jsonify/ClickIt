@@ -32,6 +32,11 @@ final class SimpleViewModel: ObservableObject {
     @Published private(set) var schedulerState: ScheduledClickManager.State = .idle
     @Published private(set) var schedulerCountdown: TimeInterval = 0
 
+    // MARK: - Public Properties
+
+    /// Session-scoped timing accuracy data. Populated passively each time a scheduled click fires.
+    let diagnosticSession = DiagnosticSession()
+
     // MARK: - Private Properties
 
     private let clickEngine = SimpleClickEngine()
@@ -52,6 +57,10 @@ final class SimpleViewModel: ObservableObject {
         // Update status message when scheduled click fires
         scheduledClickManager.executionHandler = { [weak self] in
             self?.statusMessage = "Scheduled click fired!"
+        }
+        // Wire timing records into the diagnostic session
+        scheduledClickManager.onTimingRecord = { [weak self] record in
+            self?.diagnosticSession.add(record)
         }
     }
 

@@ -54,50 +54,66 @@ package struct SimplifiedMainView: View {
     // MARK: - Body
 
     package var body: some View {
-        VStack(spacing: 20) {
-            // Title
-            Text("ClickIt Lite")
-                .font(.title)
-                .fontWeight(.bold)
+        TabView {
+            mainTab
+                .tabItem {
+                    Label("Clicker", systemImage: "cursorarrow.click.2")
+                }
 
-            Divider()
-
-            // Permission check
-            if !permissionManager.hasAccessibilityPermission {
-                permissionSection
-            }
-
-            // Coordinate Mode
-            coordinateModeSection
-
-            // Click Location
-            clickLocationSection
-
-            // Click Interval
-            clickIntervalSection
-
-            // Click Type
-            clickTypeSection
-
-            Divider()
-
-            // Scheduler
-            schedulerSection
-
-            Spacer()
-
-            // Start/Stop Button
-            startStopButton
-
-            // Status
-            statusSection
-
-            Spacer()
+            DiagnosticTabView(session: viewModel.diagnosticSession)
+                .tabItem {
+                    Label("Diagnostics", systemImage: "waveform.path.ecg")
+                }
         }
-        .padding(30)
-        .frame(width: 400, height: 720)
+        .frame(width: 420, height: 760)
         .onAppear {
             permissionManager.checkPermissions()
+        }
+    }
+
+    private var mainTab: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Title
+                Text("ClickIt Lite")
+                    .font(.title)
+                    .fontWeight(.bold)
+
+                Divider()
+
+                // Permission check
+                if !permissionManager.hasAccessibilityPermission {
+                    permissionSection
+                }
+
+                // Coordinate Mode
+                coordinateModeSection
+
+                // Click Location
+                clickLocationSection
+
+                // Click Interval
+                clickIntervalSection
+
+                // Click Type
+                clickTypeSection
+
+                Divider()
+
+                // Scheduler
+                schedulerSection
+
+                Spacer()
+
+                // Start/Stop Button
+                startStopButton
+
+                // Status
+                statusSection
+
+                Spacer()
+            }
+            .padding(30)
         }
     }
 
