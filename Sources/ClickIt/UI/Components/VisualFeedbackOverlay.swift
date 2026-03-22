@@ -68,12 +68,16 @@ class VisualFeedbackOverlay: ObservableObject {
     ///   - isActive: Whether automation is currently active
     func updateOverlay(at location: CGPoint, isActive: Bool) {
         guard overlayWindow != nil else { return }
-        
+
+        let locationChanged = location != clickLocation
+        let stateChanged = isActive != isAutomationActive
+        guard locationChanged || stateChanged else { return }
+
         clickLocation = location
         isAutomationActive = isActive
-        
-        positionOverlay(at: location)
-        updateOverlayAppearance(isActive: isActive)
+
+        if locationChanged { positionOverlay(at: location) }
+        if stateChanged { updateOverlayAppearance(isActive: isActive) }
     }
     
     /// Hides the visual feedback overlay
@@ -297,7 +301,6 @@ class VisualFeedbackOverlay: ObservableObject {
         print("VisualFeedbackOverlay: Window isVisible before: \(window.isVisible)")
         
         window.orderFront(nil)
-        window.makeKeyAndOrderFront(nil)
         
         print("VisualFeedbackOverlay: Window isVisible after: \(window.isVisible)")
         print("VisualFeedbackOverlay: showOverlayWindow completed")
