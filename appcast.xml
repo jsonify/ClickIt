@@ -5,9 +5,28 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Sun, 22 Mar 2026 04:28:51 +0000</lastBuildDate>
+        <lastBuildDate>Sun, 22 Mar 2026 04:39:46 +0000</lastBuildDate>
 
 <item>
+    <title><![CDATA[ClickIt v1.6.7]]></title>
+    <description><![CDATA[## What's New
+
+
+
+---
+📱 Compatible with macOS 14.0 or later]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.6.7</link>
+    <sparkle:version>1.6.7</sparkle:version>
+    <sparkle:shortVersionString>1.6.7</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Sun, 22 Mar 2026 04:39:03 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.7/ClickIt-1.6.7.zip"
+               length="1205964"
+               type="application/octet-stream"
+               sparkle:version="1.6.7"
+               sparkle:shortVersionString="1.6.7" />
+</item>
+        <item>
     <title><![CDATA[ClickIt v1.6.6]]></title>
     <description><![CDATA[## What's New
 
