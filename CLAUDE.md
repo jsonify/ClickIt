@@ -18,6 +18,7 @@ ClickIt is a native macOS auto-clicker application built with Swift Package Mana
 ## Development Guidelines
 
 ### Workflow Reminders
+- Always create a new feature branch before doing any coding
 - Always check most recent agent os spec task lists for next feature to work on
 
 ### Image Resource Updates
