@@ -29,26 +29,23 @@ final class LiteDiagnosticIntegrationTests: XCTestCase {
         XCTAssertNotNil(view, "SimplifiedMainView should initialise successfully with diagnostic tab")
     }
 
-    // MARK: - Session Receives Timing Records via ViewModel
+    // MARK: - Session Receives Timing Records via ViewModel Wiring
 
     func testDiagnosticSession_receivesRecord_whenScheduledClickFires() async throws {
-        let viewModel = SimpleViewModel()
+        // Inject a no-op click action so no permissions are needed in CI.
+        let testManager = ScheduledClickManager(clickAction: {})
+        let viewModel = SimpleViewModel(scheduledClickManager: testManager)
         let session = viewModel.diagnosticSession
 
         XCTAssertEqual(session.totalCount, 0, "Session starts empty")
 
-        // Use LiteScheduler directly to fire a timing record through the same
-        // onTimingRecord callback that the view model wires up.
-        let scheduler = LiteScheduler()
-        let expectation = expectation(description: "timing record received")
+        try viewModel.scheduleClick(at: Date().addingTimeInterval(0.2))
 
-        scheduler.onTimingRecord = { record in
-            session.add(record)
-            expectation.fulfill()
+        // Poll until the session is updated or we time out.
+        let deadline = Date.now.addingTimeInterval(2.0)
+        while session.totalCount == 0 && Date.now < deadline {
+            try await Task.sleep(for: .milliseconds(50))
         }
-
-        _ = scheduler.schedule(for: Date().addingTimeInterval(1.0), task: {})
-        await fulfillment(of: [expectation], timeout: 3.0)
 
         XCTAssertEqual(session.totalCount, 1,
             "Session should have 1 record after one firing")

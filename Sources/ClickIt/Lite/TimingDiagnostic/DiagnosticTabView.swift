@@ -13,7 +13,7 @@ struct DiagnosticTabView: View {
 
     // MARK: - Properties
 
-    @State var session: DiagnosticSession
+    let session: DiagnosticSession
 
     // MARK: - Computed Properties
 

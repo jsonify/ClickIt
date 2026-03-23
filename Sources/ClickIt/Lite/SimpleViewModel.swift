@@ -42,24 +42,25 @@ final class SimpleViewModel: ObservableObject {
     private let clickEngine = SimpleClickEngine()
     private let hotkeyManager = SimpleHotkeyManager.shared
     private let permissionManager = SimplePermissionManager.shared
-    private let scheduledClickManager = ScheduledClickManager()
+    private let scheduledClickManager: ScheduledClickManager
 
     // MARK: - Initialization
 
-    init() {
+    init(scheduledClickManager: ScheduledClickManager? = nil) {
+        self.scheduledClickManager = scheduledClickManager ?? ScheduledClickManager()
         // Set up emergency stop handler (already on MainActor)
         hotkeyManager.startMonitoring { [weak self] in
             self?.stopClicking()
         }
         // Mirror scheduler state and countdown into our published properties
-        scheduledClickManager.$state.assign(to: &$schedulerState)
-        scheduledClickManager.$countdown.assign(to: &$schedulerCountdown)
+        self.scheduledClickManager.$state.assign(to: &$schedulerState)
+        self.scheduledClickManager.$countdown.assign(to: &$schedulerCountdown)
         // Update status message when scheduled click fires
-        scheduledClickManager.executionHandler = { [weak self] in
+        self.scheduledClickManager.executionHandler = { [weak self] in
             self?.statusMessage = "Scheduled click fired!"
         }
         // Wire timing records into the diagnostic session
-        scheduledClickManager.onTimingRecord = { [weak self] record in
+        self.scheduledClickManager.onTimingRecord = { [weak self] record in
             self?.diagnosticSession.add(record)
         }
     }
