@@ -84,6 +84,30 @@ final class ScheduledClickManagerTests: XCTestCase {
         manager.cancel()
     }
 
+    // MARK: - Seconds Precision Tests
+
+    func testScheduleWithNonZeroSeconds_preservesSecondsInState() throws {
+        let manager = ScheduledClickManager(clickAction: {})
+        // Build a future date with a specific non-zero seconds component
+        var components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: Date().addingTimeInterval(120)
+        )
+        components.second = 30
+        let futureWithSeconds = Calendar.current.date(from: components)!
+
+        try manager.schedule(at: futureWithSeconds)
+
+        if case .scheduled(let date) = manager.state {
+            let scheduledSecond = Calendar.current.component(.second, from: date)
+            XCTAssertEqual(scheduledSecond, 30,
+                "ScheduledClickManager should preserve the seconds component of the scheduled Date")
+        } else {
+            XCTFail("Expected .scheduled state, got \(manager.state)")
+        }
+        manager.cancel()
+    }
+
     // MARK: - Callback API Tests (post-refactor: executionHandler replaces onFired)
 
     func testExecutionHandler_calledWhenClickFires() async throws {
