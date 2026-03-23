@@ -49,6 +49,7 @@ package struct SimplifiedMainView: View {
     // MARK: - Scheduler State
 
     @State private var scheduledDate: Date = Self.nextMinute()
+    @State private var scheduledSeconds: Int = 0
     @State private var schedulerError: String? = nil
 
     // MARK: - Body
@@ -355,6 +356,35 @@ package struct SimplifiedMainView: View {
                     schedulerError = nil
                 }
 
+                // Seconds stepper — always visible below the date/time picker
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Seconds")
+                            .foregroundColor(.secondary)
+                        Stepper(value: $scheduledSeconds, in: 0...59) {
+                            Text("\(scheduledSeconds)s")
+                                .monospacedDigit()
+                                .frame(minWidth: 32, alignment: .trailing)
+                        }
+                        .disabled(viewModel.isRunning)
+                        .onChange(of: scheduledSeconds) { _ in
+                            schedulerError = nil
+                        }
+                    }
+                    HStack(spacing: 6) {
+                        Text("Quick:")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        ForEach([0, 15, 30, 45], id: \.self) { preset in
+                            Button("\(preset)s") { scheduledSeconds = preset }
+                                .font(.caption2)
+                                .buttonStyle(.bordered)
+                                .controlSize(.mini)
+                                .disabled(viewModel.isRunning)
+                        }
+                    }
+                }
+
                 if let error = schedulerError {
                     HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.circle.fill")
@@ -367,12 +397,12 @@ package struct SimplifiedMainView: View {
 
                 Button("Schedule Click") {
                     schedulerError = nil
-                    // Truncate seconds so the scheduled time matches what DatePicker displays
+                    // Combine DatePicker hour/minute with stepper seconds
                     var c = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: scheduledDate)
-                    c.second = 0
-                    let truncated = Calendar.current.date(from: c) ?? scheduledDate
+                    c.second = scheduledSeconds
+                    let withSeconds = Calendar.current.date(from: c) ?? scheduledDate
                     do {
-                        try viewModel.scheduleClick(at: truncated)
+                        try viewModel.scheduleClick(at: withSeconds)
                     } catch ScheduledClickManager.ScheduleError.dateInPast {
                         schedulerError = "Please select a future date and time."
                     } catch {
@@ -390,7 +420,7 @@ package struct SimplifiedMainView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.orange)
 
-                    Text("Scheduled for \(targetDate.formatted(date: .abbreviated, time: .shortened))")
+                    Text("Scheduled for \(targetDate.formatted(date: .abbreviated, time: .standard))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -403,14 +433,22 @@ package struct SimplifiedMainView: View {
                     Button("Edit") {
                         viewModel.cancelSchedule()
                         scheduledDate = targetDate
+                        scheduledSeconds = Calendar.current.component(.second, from: targetDate)
                     }
                     .buttonStyle(.bordered)
 
                     Button("Cancel", role: .destructive) {
                         viewModel.cancelSchedule()
+                        scheduledSeconds = 0
                     }
                     .buttonStyle(.bordered)
                 }
+            }
+        }
+        .onChange(of: viewModel.schedulerState) { newState in
+            // Reset seconds stepper when scheduler fires (state returns to .idle)
+            if case .idle = newState {
+                scheduledSeconds = 0
             }
         }
     }

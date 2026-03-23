@@ -35,6 +35,9 @@ Reusable patterns discovered during development. Read this before starting new w
 
 ## SwiftUI Date/Time Pickers
 - **Truncate seconds for `DatePicker` with `.hourAndMinute`**: The picker displays only hour:minute, but `Date()` carries seconds. Always zero out seconds before scheduling: extract `[.year, .month, .day, .hour, .minute]` components and set `second = 0`. Initialize picker defaults with a `nextMinute()` helper (same truncation) so displayed time matches fired time. (from: datetime_scheduler_20260320, 2026-03-21)
+- **Combining DatePicker date with a seconds Stepper**: Extract `[.year, .month, .day, .hour, .minute]` from the picker `Date` and set `.second` from the stepper value — never pass the raw picker `Date` directly, as it carries a non-deterministic seconds component from when the picker was last rendered. (from: schedseconds_20260323, 2026-03-23)
+- **`Date.FormatStyle.TimeStyle.standard` includes seconds**: `.shortened` formats as "3:45 PM" (no seconds); `.standard` formats as "3:45:15 PM". Use `.standard` in any display that must show second-level precision. (from: schedseconds_20260323, 2026-03-23)
+- **Reset stepper/state on scheduler fire via `.onChange`**: `ScheduledClickManager.fire()` transitions `.scheduled → .fired → .idle` synchronously on MainActor; SwiftUI may batch these and only deliver `.idle`. Use `.onChange(of: schedulerState) { if case .idle = $0 { ... } }` to catch both cancel and fire resets in a SwiftUI view. (from: schedseconds_20260323, 2026-03-23)
 
 ## Swift Actor Isolation (additions)
 - **`@MainActor` init cannot be used as a default parameter expression** — use `nil` default and construct the instance inside the `@MainActor`-isolated init body instead; use `self.` prefix when a parameter name shadows a stored property (from: timingdiag_20260321, 2026-03-23)
@@ -70,4 +73,4 @@ Reusable patterns discovered during development. Read this before starting new w
 - **Integration tests for scheduler callbacks: use `LiteScheduler` directly** (not `ScheduledClickManager`) to avoid needing Accessibility permissions in CI — permissions are only checked at click-fire time, not at schedule time (from: timingdiag_20260321, 2026-03-23)
 
 ---
-Last refreshed: 2026-03-23 (timingdiag_20260321)
+Last refreshed: 2026-03-23 (schedseconds_20260323)

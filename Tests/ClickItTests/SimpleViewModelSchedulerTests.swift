@@ -78,6 +78,71 @@ final class SimpleViewModelSchedulerTests: XCTestCase {
         viewModel.cancelSchedule()
     }
 
+    // MARK: - Seconds Stepper Integration Tests
+
+    func testScheduleClick_withNonZeroSeconds_preservesSecondsComponent() throws {
+        let viewModel = SimpleViewModel()
+        // Simulate the view combining DatePicker hour/minute + Stepper seconds (= 45)
+        var components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: Date().addingTimeInterval(120)
+        )
+        components.second = 45
+        let dateWithSeconds = Calendar.current.date(from: components)!
+
+        try viewModel.scheduleClick(at: dateWithSeconds)
+
+        if case .scheduled(let date) = viewModel.schedulerState {
+            let second = Calendar.current.component(.second, from: date)
+            XCTAssertEqual(second, 45,
+                "ViewModel should pass seconds-precise Date through to scheduler unchanged")
+        } else {
+            XCTFail("Expected .scheduled state, got \(viewModel.schedulerState)")
+        }
+        viewModel.cancelSchedule()
+    }
+
+    func testScheduleClick_withZeroSeconds_preservesZeroSecondsComponent() throws {
+        let viewModel = SimpleViewModel()
+        // Simulate default stepper value (seconds = 0)
+        var components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: Date().addingTimeInterval(120)
+        )
+        components.second = 0
+        let dateAtZeroSeconds = Calendar.current.date(from: components)!
+
+        try viewModel.scheduleClick(at: dateAtZeroSeconds)
+
+        if case .scheduled(let date) = viewModel.schedulerState {
+            let second = Calendar.current.component(.second, from: date)
+            XCTAssertEqual(second, 0, "Zero seconds should remain zero")
+        } else {
+            XCTFail("Expected .scheduled state, got \(viewModel.schedulerState)")
+        }
+        viewModel.cancelSchedule()
+    }
+
+    // MARK: - Confirmation Message Format Tests
+
+    func testScheduledForMessage_includesSecondsComponent() throws {
+        // Verify that the time format used in the "Scheduled for" label includes seconds.
+        // The view uses `.formatted(date: .abbreviated, time: .standard)` which produces
+        // "Mar 23, 2026 at 3:45:15 PM" style output (seconds included via .standard).
+        var components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: Date().addingTimeInterval(120)
+        )
+        components.second = 30
+        let dateWithSeconds = Calendar.current.date(from: components)!
+
+        let formatted = dateWithSeconds.formatted(date: .abbreviated, time: .standard)
+
+        // .standard includes seconds; the output must contain ":30"
+        XCTAssertTrue(formatted.contains(":30"),
+            "Confirmation message with .time: .standard should include seconds (:30), got: \(formatted)")
+    }
+
     // MARK: - Scheduling Disabled While Running Tests
 
     func testScheduleClick_disabledWhenAutoClickingRunning() throws {
