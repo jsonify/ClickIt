@@ -420,7 +420,7 @@ package struct SimplifiedMainView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.orange)
 
-                    Text("Scheduled for \(targetDate.formatted(date: .abbreviated, time: .shortened))")
+                    Text("Scheduled for \(targetDate.formatted(date: .abbreviated, time: .standard))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

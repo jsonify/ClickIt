@@ -123,6 +123,26 @@ final class SimpleViewModelSchedulerTests: XCTestCase {
         viewModel.cancelSchedule()
     }
 
+    // MARK: - Confirmation Message Format Tests
+
+    func testScheduledForMessage_includesSecondsComponent() throws {
+        // Verify that the time format used in the "Scheduled for" label includes seconds.
+        // The view uses `.formatted(date: .abbreviated, time: .standard)` which produces
+        // "Mar 23, 2026 at 3:45:15 PM" style output (seconds included via .standard).
+        var components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: Date().addingTimeInterval(120)
+        )
+        components.second = 30
+        let dateWithSeconds = Calendar.current.date(from: components)!
+
+        let formatted = dateWithSeconds.formatted(date: .abbreviated, time: .standard)
+
+        // .standard includes seconds; the output must contain ":30"
+        XCTAssertTrue(formatted.contains(":30"),
+            "Confirmation message with .time: .standard should include seconds (:30), got: \(formatted)")
+    }
+
     // MARK: - Scheduling Disabled While Running Tests
 
     func testScheduleClick_disabledWhenAutoClickingRunning() throws {
