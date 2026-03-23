@@ -5,9 +5,28 @@
         <link>https://github.com/jsonify/ClickIt</link>
         <description>Software updates for ClickIt</description>
         <language>en</language>
-        <lastBuildDate>Sun, 22 Mar 2026 05:46:22 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 23 Mar 2026 11:32:34 +0000</lastBuildDate>
 
 <item>
+    <title><![CDATA[ClickIt v1.6.12]]></title>
+    <description><![CDATA[## What's New
+
+
+
+---
+📱 Compatible with macOS 14.0 or later]]></description>
+    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.6.12</link>
+    <sparkle:version>1.6.12</sparkle:version>
+    <sparkle:shortVersionString>1.6.12</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Mon, 23 Mar 2026 11:31:54 +0000</pubDate>
+    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.6.12/ClickIt-1.6.12.zip"
+               length="1231357"
+               type="application/octet-stream"
+               sparkle:version="1.6.12"
+               sparkle:shortVersionString="1.6.12" />
+</item>
+        <item>
     <title><![CDATA[ClickIt v1.6.11]]></title>
     <description><![CDATA[## What's New
 
@@ -856,20 +875,6 @@
                type="application/octet-stream"
                sparkle:version="1.4.4"
                sparkle:shortVersionString="1.4.4" />
-</item>
-        <item>
-    <title><![CDATA[ClickIt v1.2.0]]></title>
-    <description><![CDATA[Production release of ClickIt - Native macOS Auto-Clicker]]></description>
-    <link>https://github.com/jsonify/ClickIt/releases/tag/v1.2.0</link>
-    <sparkle:version>1.2.0</sparkle:version>
-    <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
-    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-    <pubDate>Sun, 20 Jul 2025 22:08:23 +0000</pubDate>
-    <enclosure url="https://github.com/jsonify/ClickIt/releases/download/v1.2.0/ClickIt.app.zip"
-               length="2075134"
-               type="application/octet-stream"
-               sparkle:version="1.2.0"
-               sparkle:shortVersionString="1.2.0" />
 </item>
 
     </channel>
