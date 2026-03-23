@@ -1,0 +1,26 @@
+{
+  "track_id": "timingdiag_20260321",
+  "type": "feature",
+  "status": "complete",
+  "priority": "critical",
+  "depends_on": [],
+  "estimated_hours": 1,
+  "created_at": "2026-03-21T00:00:00Z",
+  "updated_at": "2026-03-21T00:00:00Z",
+  "description": "In-app diagnostic tab for ClickIt Lite that passively observes LiteScheduler and displays scheduled click timing accuracy.",
+  "beads_epic": "ClickIt-3dh",
+  "beads_tasks": {
+    "phase1": "ClickIt-3dh.1",
+    "phase1_task1": "ClickIt-3dh.1.1",
+    "phase1_task2": "ClickIt-3dh.1.2",
+    "phase1_task3": "ClickIt-3dh.1.3",
+    "phase1_task4": "ClickIt-3dh.1.4",
+    "phase1_task5": "ClickIt-3dh.1.5",
+    "phase2": "ClickIt-3dh.2",
+    "phase2_task1": "ClickIt-3dh.2.1",
+    "phase2_task2": "ClickIt-3dh.2.2",
+    "phase3": "ClickIt-3dh.3",
+    "phase3_task1": "ClickIt-3dh.3.1",
+    "phase3_task2": "ClickIt-3dh.3.2"
+  }
+}

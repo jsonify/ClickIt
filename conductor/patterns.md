@@ -36,6 +36,9 @@ Reusable patterns discovered during development. Read this before starting new w
 ## SwiftUI Date/Time Pickers
 - **Truncate seconds for `DatePicker` with `.hourAndMinute`**: The picker displays only hour:minute, but `Date()` carries seconds. Always zero out seconds before scheduling: extract `[.year, .month, .day, .hour, .minute]` components and set `second = 0`. Initialize picker defaults with a `nextMinute()` helper (same truncation) so displayed time matches fired time. (from: datetime_scheduler_20260320, 2026-03-21)
 
+## Swift Actor Isolation (additions)
+- **`@MainActor` init cannot be used as a default parameter expression** — use `nil` default and construct the instance inside the `@MainActor`-isolated init body instead; use `self.` prefix when a parameter name shadows a stored property (from: timingdiag_20260321, 2026-03-23)
+
 ## Swift Actor Isolation
 - **`nonisolated` + `MainActor.assumeIsolated` for static defaults**: Default parameter expressions cannot call `@MainActor` methods. Mark the static method `nonisolated` and wrap the AppKit/UIKit calls in `MainActor.assumeIsolated { }` — safe when the method is always invoked from an `@MainActor` call site. (from: datetime_scheduler_20260320, 2026-03-21)
 - **`onFired` callback over Combine for transient state**: If a state transition (e.g. `.fired`) is set and immediately reset in the same synchronous call, Combine subscribers won't see it — the value is already overwritten before the publisher fires. Use an explicit callback property (`var onFired: (() -> Void)?`) instead. (from: datetime_scheduler_20260320, 2026-03-21)
@@ -51,5 +54,20 @@ Reusable patterns discovered during development. Read this before starting new w
 - Run Xcode tests without `sudo xcode-select`: prefix with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` and use full toolchain path `...Toolchains/XcodeDefault.xctoolchain/usr/bin/swift test` (from: lite_stabilization_20260319, 2026-03-19)
 - 3 known flaky tests in the suite: `testPatternBreakup` (random boundary condition), `testHighFrequencyCPSAccuracy` (timing precision, fails in debug mode), `testErrorRecoveryIntegration` (timing-sensitive) — not regressions (from: lite_stabilization_20260319 + cicd_optimization_20260319, 2026-03-20)
 
+## SwiftUI @Observable
+- **`@Observable` class property can be `let` on a ViewModel** — no `@Published` needed; SwiftUI tracks changes through the `@Observable` macro automatically (from: timingdiag_20260321, 2026-03-23)
+- **Passed-in `@Observable` objects should be `let`, not `@State`** — `@State` implies ownership/creation by the view; for injected `@Observable` instances SwiftUI tracks changes without it (from: timingdiag_20260321, 2026-03-23)
+- **Expose computed display properties as `internal` (not `private`) on SwiftUI views** — allows tests to assert on derived state (e.g. `badgeSeverity`) without needing a renderer or snapshot framework (from: timingdiag_20260321, 2026-03-23)
+- **`TabView` adds ~40px chrome** — adjust window frame when introducing tabs to an existing fixed-size window (from: timingdiag_20260321, 2026-03-23)
+
+## SPM Multi-Target Sharing (additions)
+- **New Lite/ subdirectory: exclude by directory name in `ClickItLite` target**, not individual files — e.g. `"TimingDiagnostic"` covers all files added later without further `Package.swift` edits (from: timingdiag_20260321, 2026-03-23)
+
+## Timing & Precision
+- **Capture `Date()` as the very first line of a timing-sensitive handler** — any timer cancellation or nil-clearing before the capture adds measurable nanoseconds to the recorded delta (from: timingdiag_20260321, 2026-03-23)
+
+## Testing
+- **Integration tests for scheduler callbacks: use `LiteScheduler` directly** (not `ScheduledClickManager`) to avoid needing Accessibility permissions in CI — permissions are only checked at click-fire time, not at schedule time (from: timingdiag_20260321, 2026-03-23)
+
 ---
-Last refreshed: 2026-03-21 (litescheduler_20260321)
+Last refreshed: 2026-03-23 (timingdiag_20260321)
