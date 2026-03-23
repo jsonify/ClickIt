@@ -36,6 +36,9 @@ Reusable patterns discovered during development. Read this before starting new w
 ## SwiftUI Date/Time Pickers
 - **Truncate seconds for `DatePicker` with `.hourAndMinute`**: The picker displays only hour:minute, but `Date()` carries seconds. Always zero out seconds before scheduling: extract `[.year, .month, .day, .hour, .minute]` components and set `second = 0`. Initialize picker defaults with a `nextMinute()` helper (same truncation) so displayed time matches fired time. (from: datetime_scheduler_20260320, 2026-03-21)
 
+## Swift Actor Isolation (additions)
+- **`@MainActor` init cannot be used as a default parameter expression** — use `nil` default and construct the instance inside the `@MainActor`-isolated init body instead; use `self.` prefix when a parameter name shadows a stored property (from: timingdiag_20260321, 2026-03-23)
+
 ## Swift Actor Isolation
 - **`nonisolated` + `MainActor.assumeIsolated` for static defaults**: Default parameter expressions cannot call `@MainActor` methods. Mark the static method `nonisolated` and wrap the AppKit/UIKit calls in `MainActor.assumeIsolated { }` — safe when the method is always invoked from an `@MainActor` call site. (from: datetime_scheduler_20260320, 2026-03-21)
 - **`onFired` callback over Combine for transient state**: If a state transition (e.g. `.fired`) is set and immediately reset in the same synchronous call, Combine subscribers won't see it — the value is already overwritten before the publisher fires. Use an explicit callback property (`var onFired: (() -> Void)?`) instead. (from: datetime_scheduler_20260320, 2026-03-21)
@@ -53,6 +56,7 @@ Reusable patterns discovered during development. Read this before starting new w
 
 ## SwiftUI @Observable
 - **`@Observable` class property can be `let` on a ViewModel** — no `@Published` needed; SwiftUI tracks changes through the `@Observable` macro automatically (from: timingdiag_20260321, 2026-03-23)
+- **Passed-in `@Observable` objects should be `let`, not `@State`** — `@State` implies ownership/creation by the view; for injected `@Observable` instances SwiftUI tracks changes without it (from: timingdiag_20260321, 2026-03-23)
 - **Expose computed display properties as `internal` (not `private`) on SwiftUI views** — allows tests to assert on derived state (e.g. `badgeSeverity`) without needing a renderer or snapshot framework (from: timingdiag_20260321, 2026-03-23)
 - **`TabView` adds ~40px chrome** — adjust window frame when introducing tabs to an existing fixed-size window (from: timingdiag_20260321, 2026-03-23)
 
