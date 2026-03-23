@@ -51,5 +51,19 @@ Reusable patterns discovered during development. Read this before starting new w
 - Run Xcode tests without `sudo xcode-select`: prefix with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` and use full toolchain path `...Toolchains/XcodeDefault.xctoolchain/usr/bin/swift test` (from: lite_stabilization_20260319, 2026-03-19)
 - 3 known flaky tests in the suite: `testPatternBreakup` (random boundary condition), `testHighFrequencyCPSAccuracy` (timing precision, fails in debug mode), `testErrorRecoveryIntegration` (timing-sensitive) — not regressions (from: lite_stabilization_20260319 + cicd_optimization_20260319, 2026-03-20)
 
+## SwiftUI @Observable
+- **`@Observable` class property can be `let` on a ViewModel** — no `@Published` needed; SwiftUI tracks changes through the `@Observable` macro automatically (from: timingdiag_20260321, 2026-03-23)
+- **Expose computed display properties as `internal` (not `private`) on SwiftUI views** — allows tests to assert on derived state (e.g. `badgeSeverity`) without needing a renderer or snapshot framework (from: timingdiag_20260321, 2026-03-23)
+- **`TabView` adds ~40px chrome** — adjust window frame when introducing tabs to an existing fixed-size window (from: timingdiag_20260321, 2026-03-23)
+
+## SPM Multi-Target Sharing (additions)
+- **New Lite/ subdirectory: exclude by directory name in `ClickItLite` target**, not individual files — e.g. `"TimingDiagnostic"` covers all files added later without further `Package.swift` edits (from: timingdiag_20260321, 2026-03-23)
+
+## Timing & Precision
+- **Capture `Date()` as the very first line of a timing-sensitive handler** — any timer cancellation or nil-clearing before the capture adds measurable nanoseconds to the recorded delta (from: timingdiag_20260321, 2026-03-23)
+
+## Testing
+- **Integration tests for scheduler callbacks: use `LiteScheduler` directly** (not `ScheduledClickManager`) to avoid needing Accessibility permissions in CI — permissions are only checked at click-fire time, not at schedule time (from: timingdiag_20260321, 2026-03-23)
+
 ---
-Last refreshed: 2026-03-21 (litescheduler_20260321)
+Last refreshed: 2026-03-23 (timingdiag_20260321)
